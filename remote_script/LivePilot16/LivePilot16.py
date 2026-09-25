@@ -6,8 +6,8 @@ import Live
 from _Framework.ControlSurface import ControlSurface
 from .consts import (
     SYSEX_HEADER, CMD_BANK_INFO, CMD_TRACK_ACTIVE, CMD_BANK_COLORS,
-    CMD_DEVICE_ACTIVE, CMD_PARAM_DATA, CC_BASE_ENCODERS, CC_NAV_TRACK_PREV,
-    CC_NAV_TRACK_NEXT, CC_NAV_GROUP_PREV, CC_NAV_GROUP_NEXT,
+    CMD_DEVICE_ACTIVE, CMD_PARAM_DATA, CMD_SCENE_INFO, CC_BASE_ENCODERS,
+    CC_NAV_TRACK_PREV, CC_NAV_TRACK_NEXT, CC_NAV_GROUP_PREV, CC_NAV_GROUP_NEXT,
     CC_NAV_DEV_PREV, CC_NAV_DEV_NEXT, CC_BASE_TRACK_SEL,
     NUM_TRACKS_PER_BANK, NUM_ENCODERS
 )
@@ -24,11 +24,12 @@ class LivePilot16(ControlSurface):
     - Détection des Pistes de Groupe (Group Tracks & Traitements de Bus).
     - Règle de la touche blanche : Piste sélectionnée sans assignation = BLANC PUR.
     - Bascule Pliage / Dépliage (Fold / Unfold) automatique en cas de ré-appui sur un groupe.
+    - Suivi de la Scène en lecture (Couleur Ableton en fond) & Tempo en haut à droite.
     """
 
     def __init__(self, c_instance):
         super(LivePilot16, self).__init__(c_instance)
-        self.log_message("LivePilot 16 : Initialisation du Remote Script v1.5 (Navigation Groupes)...")
+        self.log_message("LivePilot 16 : Initialisation du Remote Script v1.6 (Scene Banner & Tempo)...")
         
         self._current_bank_index = 0
         self._current_track = None
@@ -36,6 +37,7 @@ class LivePilot16(ControlSurface):
         self._current_device_idx = 0
         self._current_device = None
         self._observed_params = []
+        self._observed_scenes = []
         
         # Initialisation des écouteurs temps réel
         with self.component_guard():
@@ -48,6 +50,7 @@ class LivePilot16(ControlSurface):
         """Nettoyage lors de la fermeture d'Ableton Live"""
         self.log_message("LivePilot 16 : Deconnexion de la surface de controle.")
         self._cleanup_listeners()
+        self._detach_scene_listeners()
         self._remove_parameter_listeners()
         super(LivePilot16, self).disconnect()
 
@@ -58,6 +61,15 @@ class LivePilot16(ControlSurface):
             song.view.add_selected_track_listener(self._on_selected_track_changed)
         if not song.tracks_has_listener(self._on_tracks_changed):
             song.add_tracks_listener(self._on_tracks_changed)
+        if not song.tempo_has_listener(self._on_tempo_changed):
+            song.add_tempo_listener(self._on_tempo_changed)
+        if not song.is_playing_has_listener(self._on_play_state_changed):
+            song.add_is_playing_listener(self._on_play_state_changed)
+        if not song.scenes_has_listener(self._on_scenes_list_changed):
+            song.add_scenes_listener(self._on_scenes_list_changed)
+        if not song.view.selected_scene_has_listener(self._on_scene_selection_changed):
+            song.view.add_selected_scene_listener(self._on_scene_selection_changed)
+        self._attach_scene_listeners()
 
     def _cleanup_listeners(self):
         """Détache proprement les écouteurs"""
@@ -66,6 +78,59 @@ class LivePilot16(ControlSurface):
             song.view.remove_selected_track_listener(self._on_selected_track_changed)
         if song.tracks_has_listener(self._on_tracks_changed):
             song.remove_tracks_listener(self._on_tracks_changed)
+        if song.tempo_has_listener(self._on_tempo_changed):
+            song.remove_tempo_listener(self._on_tempo_changed)
+        if song.is_playing_has_listener(self._on_play_state_changed):
+            song.remove_is_playing_listener(self._on_play_state_changed)
+        if song.scenes_has_listener(self._on_scenes_list_changed):
+            song.remove_scenes_listener(self._on_scenes_list_changed)
+        if song.view.selected_scene_has_listener(self._on_scene_selection_changed):
+            song.view.remove_selected_scene_listener(self._on_scene_selection_changed)
+
+    def _attach_scene_listeners(self):
+        """Attache les écouteurs d'état et de couleur sur toutes les scènes"""
+        self._detach_scene_listeners()
+        for sc in self.song().scenes:
+            try:
+                if not sc.is_playing_has_listener(self._on_scene_status_changed):
+                    sc.add_is_playing_listener(self._on_scene_status_changed)
+                if not sc.name_has_listener(self._on_scene_status_changed):
+                    sc.add_name_listener(self._on_scene_status_changed)
+                if not sc.color_has_listener(self._on_scene_status_changed):
+                    sc.add_color_listener(self._on_scene_status_changed)
+                self._observed_scenes.append(sc)
+            except Exception:
+                pass
+
+    def _detach_scene_listeners(self):
+        """Détache proprement les écouteurs sur les scènes"""
+        for sc in self._observed_scenes:
+            try:
+                if sc.is_playing_has_listener(self._on_scene_status_changed):
+                    sc.remove_is_playing_listener(self._on_scene_status_changed)
+                if sc.name_has_listener(self._on_scene_status_changed):
+                    sc.remove_name_listener(self._on_scene_status_changed)
+                if sc.color_has_listener(self._on_scene_status_changed):
+                    sc.remove_color_listener(self._on_scene_status_changed)
+            except Exception:
+                pass
+        self._observed_scenes = []
+
+    def _on_tempo_changed(self):
+        self._send_scene_info()
+
+    def _on_play_state_changed(self):
+        self._send_scene_info()
+
+    def _on_scenes_list_changed(self):
+        self._attach_scene_listeners()
+        self._send_scene_info()
+
+    def _on_scene_selection_changed(self):
+        self._send_scene_info()
+
+    def _on_scene_status_changed(self):
+        self._send_scene_info()
 
     def _on_tracks_changed(self):
         """Appelé lors de l'ajout, suppression ou regroupement de pistes"""
@@ -347,6 +412,7 @@ class LivePilot16(ControlSurface):
         """Synchronisation globale initiale"""
         self._send_bank_info()
         self._send_bank_colors()
+        self._send_scene_info()
         self._on_selected_track_changed()
 
     def _send_bank_info(self):
@@ -450,3 +516,52 @@ class LivePilot16(ControlSurface):
             else:
                 payload = [CMD_PARAM_DATA, idx, 0, ord('-'), 0x00, 0x00, 0xF7]
             self._send_midi(tuple(list(SYSEX_HEADER) + payload))
+
+    def _send_scene_info(self):
+        """
+        Envoie les informations de la scène en cours de lecture et le tempo.
+        - Ligne 1 Écran Gauche : Tempo affiché en haut à droite (ex: 126.0 BPM).
+        - Ligne 2 Écran Gauche (Bandeau Scène Dédié Pleine Largeur) :
+          Nom de la scène avec en fond d'écran la couleur exacte définie dans Ableton Live !
+        """
+        song = self.song()
+        playing_scene = None
+        playing_idx = 0
+        
+        # Recherche de la scène en cours de lecture
+        for idx, sc in enumerate(song.scenes):
+            if getattr(sc, 'is_playing', False):
+                playing_scene = sc
+                playing_idx = idx
+                break
+                
+        # Si aucune scène ne joue explicitement, on prend la scène sélectionnée dans la vue
+        is_playing = 1 if (playing_scene is not None and song.is_playing) else 0
+        if not playing_scene:
+            playing_scene = song.view.selected_scene
+            try:
+                playing_idx = list(song.scenes).index(playing_scene)
+            except Exception:
+                playing_idx = 0
+
+        # Récupération de la couleur de la scène
+        color_int = getattr(playing_scene, 'color', 0) if playing_scene else 0
+        r = ((color_int >> 16) & 0xFF) >> 1
+        g = ((color_int >> 8) & 0xFF) >> 1
+        b = (color_int & 0xFF) >> 1
+
+        # Récupération du tempo
+        tempo = float(song.tempo)
+        bpm_int = int(tempo)
+        bpm_high = (bpm_int >> 7) & 0x7F
+        bpm_low = bpm_int & 0x7F
+        bpm_dec = int((tempo - bpm_int) * 10) & 0x7F
+
+        # Nom de la scène
+        sc_name = (playing_scene.name if playing_scene and playing_scene.name else "Scene %d" % (playing_idx + 1))[:24]
+        name_bytes = [ord(c) & 0x7F for c in sc_name]
+
+        # Payload SysEx : [CMD_SCENE_INFO, playing_idx, is_playing, bpm_high, bpm_low, bpm_dec, r, g, b, ...name..., 0x00, 0xF7]
+        sysex_msg = list(SYSEX_HEADER) + [CMD_SCENE_INFO, playing_idx & 0x7F, is_playing, bpm_high, bpm_low, bpm_dec, r, g, b] + name_bytes + [0x00, 0xF7]
+        self._send_midi(tuple(sysex_msg))
+

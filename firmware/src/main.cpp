@@ -29,6 +29,13 @@ struct LivePilotState {
     char selectedTrackName[32] = "No Track";
     uint8_t selectedTrackColor[3] = {255, 255, 255}; // Blanc par défaut si non assignée
     
+    // Scène en cours & Tempo Ableton Live
+    uint8_t currentSceneIndex = 0;
+    bool isScenePlaying = false;
+    float currentTempo = 120.0f;
+    char currentSceneName[32] = "Scene 1";
+    uint8_t currentSceneColor[3] = {60, 160, 240}; // Couleur exacte de la scène dans Ableton
+    
     // Device actif & règle de navigation
     uint8_t selectedDeviceIndex = 0;
     uint8_t totalAssignedDevices = 0;  // Nombre de devices avec assignations
@@ -76,15 +83,17 @@ void TaskCore1_UI(void *pvParameters) {
     for (;;) {
         // 1. Parsing des trames SysEx entrantes depuis Ableton :
         //    - CMD_TRACK_ACTIVE : maj state.trackHasAssignments, state.isGroupTrack
+        //    - CMD_SCENE_INFO   : maj state.currentSceneName, state.currentSceneColor, state.isScenePlaying, state.currentTempo
         //    - CMD_DEVICE_ACTIVE : maj state.totalAssignedDevices et state.deviceNavEnabled
         //    - CMD_BANK_COLORS : si piste sélectionnée sans assignation, couleur = Blanc pur
         //    - CMD_PARAM_DATA : maj des 16 valeurs/noms de paramètres
         
-        // 2. Rendu Écran Gauche (Vue Mix & Session - CS GPIO 10) :
-        //    - Affichage de l'en-tête de Banque et badge [GRP]
-        //    - Ruban miroir 2x8 des 16 pistes (noms, numéros, couleurs Ableton)
-        //    - Grand bandeau dédié pleine largeur de la piste sélectionnée (texte 24px)
-        //    - Mise à jour uniquement sur changement de piste ou de banque !
+        // 2. Rendu Écran Gauche (Vue Mix & Session - CS GPIO 10, 480x320) :
+        //    - Ligne 1 (Y: 0..30) : [BANK 02] à gauche, [GRP] Nom_Groupe au centre, 126.0 BPM en haut à droite !
+        //    - Ligne 2 (Y: 32..68) : BANDEAU SCÈNE PLEINE LARGEUR (Fond avec la COULEUR EXACTE Ableton de la scène, texte "▶ SCÈNE 03 : DROP")
+        //    - Ligne 3 (Y: 72..135) : Grand bandeau dédié pleine largeur de la piste sélectionnée (T05: Kick 808)
+        //    - Ligne 4 (Y: 140..315) : Ruban miroir 2x8 des 16 pistes (noms, numéros, couleurs Ableton, état actif)
+        //    - Mise à jour uniquement sur changement d'état !
         
         // 3. Rendu Écran Droit (Vue Plugins & 16 Paramètres - CS GPIO 38) :
         //    - Affichage du plugin actif et indicateur de pagination (> 1)

@@ -22,6 +22,7 @@ enum SysExCommand : uint8_t {
     CMD_BANK_COLORS     = 0x03,  // Palette des 16 pistes (RGB; Blanc pur si piste sélectionnée sans assignation)
     CMD_DEVICE_ACTIVE   = 0x04,  // Plugin actif (index, total_assignes, nav_active: 1/0, nom UTF-8)
     CMD_PARAM_DATA      = 0x05,  // Paramètre (index 0-15, nom, valeur textuelle, valeur 0-127)
+    CMD_SCENE_INFO      = 0x06,  // Scène en cours (index, is_playing: 1/0, bpm_int, bpm_dec, r, g, b, nom UTF-8)
     CMD_FULL_SYNC_REQ   = 0x0F   // Demande de synchronisation complète
 };
 

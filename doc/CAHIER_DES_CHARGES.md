@@ -138,6 +138,7 @@ Le tableau ci-dessous détaille les outils gratuits nécessaires pour chaque bri
     * `0x03` : Palette des 16 pistes de la banque active (16 x Couleur R, G, B).
     * `0x04` : Device actif (Numéro, Nom, Index/Total plugins de la piste).
     * `0x05` : Métadonnées des 16 paramètres (Index, Nom, Valeur textuelle affichée, Valeur flottante 0-127).
+    * `0x06` : Scène active & Tempo (Index, Is_Playing, Tempo BPM int/déc, Couleur R, G, B, Nom UTF-8).
 
 ### Pilier 3 : MIDI Remote Script Ableton Live (Python 3)
 * **Installation transparente** : Le dossier `LivePilot16/` est déposé dans `C:\Users\comme\Documents\Ableton\User Library\Remote Scripts\LivePilot16\`.
@@ -162,19 +163,19 @@ L'architecture à deux écrans couleur IPS séparés apporte la clarté visuelle
 ┌──────────────────────────────────────────────┐  ┌──────────────────────────────────────────────┐
 │           ÉCRAN GAUCHE : MIX & SESSION       │  │        ÉCRAN DROIT : PLUGINS & PARAMS        │
 ├──────────────────────────────────────────────┤  ├──────────────────────────────────────────────┤
-│ BANK 02 [PISTES 17-32]  TOTAL: 28  [● READY] │  │ ACTIVE DEVICE : [D02/03] Glue Compressor     │
+│ [BANK 02]     [GRP] DRUM BUS       126.0 BPM │  │ ACTIVE DEVICE : [D02/03] Glue Compressor     │
 ├──────────────────────────────────────────────┤  ├──────────────────────────────────────────────┤
-│ RUBAN MIROIR 2x8 (Position exacte touches) : │  │ [E01: Thresh]  [E02: Ratio]   [E03: Attack]  │
-│ [17:KICK] [18:SNR ] [19:HH  ] [20:PERC]      │  │   -18.5 dB         4:1             1 ms      │
+│ ▶ SCÈNE 03 : DROP (REFRAIN)                  │  │ [E01: Thresh]  [E02: Ratio]   [E03: Attack]  │
+│ (Bandeau pleine largeur, COULEUR ABLETON)    │  │   -18.5 dB         4:1             1 ms      │
+├──────────────────────────────────────────────┤  │ ──────────────────────────────────────────── │
+│ >>> T23 : [GRP] DRUM BUS <<<                 │  │ [E04: Release] [E05: Makeup]  [E06: Dry/Wet] │
+│ (Plein bandeau actif / Blanc si non assigné) │  │     0.2 s          +4.0 dB         100 %     │
+├──────────────────────────────────────────────┤  ├──────────────────────────────────────────────┤
+│ RUBAN MIROIR 2x8 (Position exacte touches) : │  │ [E07: Range]   [E08: Sidech]  [E09: HP Freq] │
+│ [17:KICK] [18:SNR ] [19:HH  ] [20:PERC]      │  │    -inf dB         In 1           120 Hz     │
 │ [21:BASS] [22:SYNT] [>23:DRUM<] [24:VOX ]    │  │ ──────────────────────────────────────────── │
-│ [25:FX1 ] [26:FX2 ] [27:SUB ] [28:ARP ]      │  │ [E04: Release] [E05: Makeup]  [E06: Dry/Wet] │
-│ [ --   ]  [ --   ]  [ --    ]  [ --   ]      │  │     0.2 s          +4.0 dB         100 %     │
-├──────────────────────────────────────────────┤  ├──────────────────────────────────────────────┤
-│ BANDEAU GÉANT PISTE SÉLECTIONNÉE (Texte 26px)│  │ [E07: Range]   [E08: Sidech]  [E09: HP Freq] │
-│                                              │  │    -inf dB         In 1           120 Hz     │
-│   >>> T23 : [GRP] DRUM BUS <<<               │  │ ──────────────────────────────────────────── │
-│                                              │  │ [E10: SoftClip][E11: Macro 5] [E12: Macro 6] │
-│ (Fond coloré Ableton / Blanc si non assigné) │  │     On             ---            ---        │
+│ [25:FX1 ] [26:FX2 ] [27:SUB ] [28:ARP ]      │  │ [E10: SoftClip][E11: Macro 5] [E12: Macro 6] │
+│ [ --   ]  [ --   ]  [ --    ]  [ --   ]      │  │     On             ---            ---        │
 └──────────────────────────────────────────────┘  └──────────────────────────────────────────────┘
 ```
 
