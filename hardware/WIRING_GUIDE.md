@@ -173,14 +173,17 @@ Les broches de base communes à chaque boîtier MCP23017 sont :
 
 Les 6 boutons de navigation sont câblés directement sur des broches GPIO indépendantes de l'ESP32-S3 pour une réactivité instantanée à zéro latence :
 
-| Touche de Navigation | Broche ESP32-S3 | Autre Côté du Switch | Rôle dans LivePilot 16 |
+| Touche de Navigation | Broche ESP32-S3 | Autre Côté du Switch | Emplacement Physique & Rôle |
 |---|---|---|---|
-| **`TRACK -`** | **GPIO 15** | `GND` | Défilement vers la banque de pistes précédente (-16) |
-| **`TRACK +`** | **GPIO 16** | `GND` | Défilement vers la banque de pistes suivante (+16) |
-| **`GROUP -`** | **GPIO 17** | `GND` | Macro-saut vers le bus/groupe précédent dans le projet |
-| **`GROUP +`** | **GPIO 18** | `GND` | Macro-saut vers le bus/groupe suivant dans le projet |
-| **`DEVICE -`** | **GPIO 1** | `GND` | Plugin assigné précédent (actif si $> 1$ plugin assigné) |
-| **`DEVICE +`** | **GPIO 2** | `GND` | Plugin assigné suivant (actif si $> 1$ plugin assigné) |
+| **`TRACK +`** | **GPIO 16** | `GND` | **À droite de la Rangée 1 des pads (Pistes 1-8)** : Saut banque suivante (+16) |
+| **`TRACK -`** | **GPIO 15** | `GND` | **À droite de la Rangée 2 des pads (Pistes 9-16)** : Saut banque précédente (-16) |
+| **`GROUP -`** | **GPIO 17** | `GND` | **Cluster Supérieur Droit** : Macro-saut vers le bus/groupe précédent |
+| **`GROUP +`** | **GPIO 18** | `GND` | **Cluster Supérieur Droit** : Macro-saut vers le bus/groupe suivant |
+| **`DEVICE -`** | **GPIO 1** | `GND` | **Cluster Supérieur Droit** : Plugin assigné précédent (si $> 1$) |
+| **`DEVICE +`** | **GPIO 2** | `GND` | **Cluster Supérieur Droit** : Plugin assigné suivant (si $> 1$) |
+
+> [!TIP]
+> **Ergonomie Réflexe Immédiate :** Placer `TRACK +` et `TRACK -` directement dans l'alignement horizontal des touches de pistes permet de changer de banque sans jamais déplacer la paume de la main vers le haut du contrôleur.
 
 *Chaque entrée utilise la résistance de rappel au 3.3V interne de l'ESP32-S3 (`pinMode(pin, INPUT_PULLUP)`). Aucun composant externe n'est requis.*
 

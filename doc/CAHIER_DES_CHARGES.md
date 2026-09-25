@@ -210,16 +210,19 @@ Le passage de banque s'opère selon 3 mécanismes complémentaires :
 
 ---
 
-### 5.3. Agencement Strict de l'Interface Physique
-L'interface de **LivePilot 16** a été conçue pour éliminer toute pollution visuelle et toute fausse manipulation sur scène :
-1. **Écran TFT 3.5" (480x320)** : Positionné au centre supérieur. **Aucun bouton satellite à gauche ou à droite de l'écran.**
-2. **16 Encodeurs Rotatifs (2 x 8)** : Disposés en 2 rangées horizontales de 8 sous l'écran, associés 1:1 aux 16 blocs de paramètres affichés.
-3. **16 Boutons de Pistes RGB (2 x 8)** : Disposés en 2 rangées horizontales de 8 (pistes 1 à 8 en rangée 1, pistes 9 à 16 en rangée 2).
-4. **6 Boutons de Navigation Dédiés** : Regroupés en un pavé compact et clair (3 rangées de 2) :
-   * `TRACK -` / `TRACK +` : Défilement des banques de 16 pistes (Banque 1-16, 17-32, etc.).
-   * `GROUP -` / `GROUP +` : Macro-navigation directe de groupe en groupe / bus en bus.
-   * `DEVICE -` / `DEVICE +` : Navigation intelligente entre plugins assignés sur la piste ou le groupe actif.
-   * **Aucun bouton en double, agencement hiérarchique intuitif.**
+### 5.3. Agencement Strict & Ergonomie Aérée de l'Interface Physique
+L'interface de **LivePilot 16** a été calibrée pour offrir un confort maximal et éliminer toute fausse manipulation sur scène :
+1. **Double Écran IPS 3.5" (Surface 960x320 px)** : Positionné au centre supérieur (Écran Gauche = Mix & Session 2x8, Écran Droit = Plugins & Paramètres 2x8).
+2. **16 Encodeurs Rotatifs (2 rangées de 8)** : Entraxe généreux de **32 mm** (au lieu des 24-26 mm habituels) pour permettre une prise en main des boutons avec les doigts sans heurter les potentiomètres voisins.
+3. **16 Boutons de Pistes RGB (2 rangées de 8)** : Alignés 1:1 sous les encodeurs avec le même pas aéré de **32 mm** (Pistes 1 à 8 en rangée 1, Pistes 9 à 16 en rangée 2).
+4. **6 Boutons de Navigation Dédiés (Positionnement Scénique Réflexe)** :
+   * **`TRACK +`** : Placé directement **à l'extrémité droite de la Rangée 1 des pads** (Pistes 1 à 8), au même niveau physique !
+   * **`TRACK -`** : Placé directement **à l'extrémité droite de la Rangée 2 des pads** (Pistes 9 à 16), au même niveau physique !  
+     *Avantage scénique :* La main navigue entre les banques de pistes sans jamais quitter la rangée des pads.
+   * **Cluster Supérieur Droit (4 touches)** :
+     * `GROUP -` / `GROUP +` : Macro-navigation directe de groupe en groupe / bus en bus.
+     * `DEVICE -` / `DEVICE +` : Navigation intelligente entre plugins assignés (condition $> 1$).
+5. **Identité Visuelle & Châssis** : Titre du produit **`LivePilot 16`** gravé au laser dans le coin supérieur droit. Châssis monobloc incliné à 15°.
 
 ---
 
