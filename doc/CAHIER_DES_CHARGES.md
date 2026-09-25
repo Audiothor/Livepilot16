@@ -159,25 +159,23 @@ L'architecture à deux écrans couleur IPS séparés apporte la clarté visuelle
 * **ÉCRAN GAUCHE (480x320 - CS GPIO 10)** : Dédié au **Mix & Session** (aligné au-dessus des 16 touches de pistes).
 * **ÉCRAN DROIT (480x320 - CS GPIO 38)** : Dédié aux **Plugins & Sound Design** (aligné au-dessus des 16 encodeurs rotatifs).
 
-```text
-┌──────────────────────────────────────────────┐  ┌──────────────────────────────────────────────┐
-│           ÉCRAN GAUCHE : MIX & SESSION       │  │        ÉCRAN DROIT : PLUGINS & PARAMS        │
-├──────────────────────────────────────────────┤  ├──────────────────────────────────────────────┤
-│ [BANK 02]     [GRP] DRUM BUS       126.0 BPM │  │ ACTIVE DEVICE : [D02/03] Glue Compressor     │
-├──────────────────────────────────────────────┤  ├──────────────────────────────────────────────┤
-│ ▶ SCÈNE 03 : DROP (REFRAIN)                  │  │ [E01: Thresh]  [E02: Ratio]   [E03: Attack]  │
-│ (Bandeau pleine largeur, COULEUR ABLETON)    │  │   -18.5 dB         4:1             1 ms      │
-├──────────────────────────────────────────────┤  │ ──────────────────────────────────────────── │
-│ >>> T23 : [GRP] DRUM BUS <<<                 │  │ [E04: Release] [E05: Makeup]  [E06: Dry/Wet] │
-│ (Plein bandeau actif / Blanc si non assigné) │  │     0.2 s          +4.0 dB         100 %     │
-├──────────────────────────────────────────────┤  ├──────────────────────────────────────────────┤
-│ RUBAN MIROIR 2x8 (Position exacte touches) : │  │ [E07: Range]   [E08: Sidech]  [E09: HP Freq] │
-│ [17:KICK] [18:SNR ] [19:HH  ] [20:PERC]      │  │    -inf dB         In 1           120 Hz     │
-│ [21:BASS] [22:SYNT] [>23:DRUM<] [24:VOX ]    │  │ ──────────────────────────────────────────── │
-│ [25:FX1 ] [26:FX2 ] [27:SUB ] [28:ARP ]      │  │ [E10: SoftClip][E11: Macro 5] [E12: Macro 6] │
-│ [ --   ]  [ --   ]  [ --    ]  [ --   ]      │  │     On             ---            ---        │
-└──────────────────────────────────────────────┘  └──────────────────────────────────────────────┘
-```
+`	ext
+┌──────────────────────────────────────────────────┐  ┌──────────────────────────────────────────────────┐
+│           ÉCRAN GAUCHE : MIX & SESSION (2x8)     │  │        ÉCRAN DROIT : PLUGINS & PARAMS (2x8)      │
+├──────────────────────────────────────────────────┤  ├──────────────────────────────────────────────────┤
+│ [BANK 02]       [GRP] DRUMS            126.0 BPM │  │ ACTIVE DEVICE : [D02/03] Glue Compressor         │
+├──────────────────────────────────────────────────┤  ├──────────────────────────────────────────────────┤
+│ ▶ SCÈNE 03 : BREAKDOWN & LONG DROP (REFRAIN)     │  │ RANGÉE HAUTE (Encodeurs 1 à 8) :                 │
+│ (Police condensée pour texte long, FOND ABLETON) │  │ [E01]  [E02]  [E03]  [E04]  [E05]  [E06]  [E07]  [E08] │
+├──────────────────────────────────────────────────┤  │ Thres  Ratio  Attak  Relea  Makeu  Dry/W  Range  Sidec │
+│ >>> T23 : [GRP] DRUM BUS <<<                     │  │ -18dB   4:1    1ms   0.2s   +4dB   100%   -inf   On    │
+│ (Bandeau Piste Active / Blanc si non assigné)    │  ├──────────────────────────────────────────────────┤
+├──────────────────────────────────────────────────┤  │ RANGÉE BASSE (Encodeurs 9 à 16) :                │
+│ RUBAN MIROIR 2x8 (Numéros & Noms ultra-lisibles) │  │ [E09]  [E10]  [E11]  [E12]  [E13]  [E14]  [E15]  [E16] │
+│ R1: [17:Kick] [18:Snar] [19:HiHt] [20:Clap]...   │  │ HPFrq  Clip   Macr1  Macr2  Macr3  Macr4  Macr5  Macr6 │
+│ R2: [25:Bass] [26:Synt] [>23:Drum<] [28:Vox]...  │  │ 120Hz   On    50%    25%    75%    0%     100%   ---   │
+└──────────────────────────────────────────────────┘  └──────────────────────────────────────────────────┘
+`
 
 #### Réponse au Défi Ergonomique : Comment identifier la piste DRUM (Piste 23) en 1 seconde ?
 1. **Correspondance spatiale 1:1 (Ruban Miroir 2x8 sur l'Écran Gauche)** :
