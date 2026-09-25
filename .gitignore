@@ -1,0 +1,21 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# KiCad
+*.kicad_prl
+*.bak
+*-save.kicad_*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
