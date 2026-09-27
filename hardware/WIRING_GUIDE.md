@@ -1,11 +1,21 @@
 # LivePilot 16 — Guide Complet de Câblage Électronique & Schéma d'Interconnexion
 
 > **Document de Référence Matérielle**  
-> Ce guide détaille broche par broche l'intégralité des connexions physiques entre l'ESP32-S3, les 4 expandeurs I2C MCP23017, l'écran TFT ILI9488, les 16 encodeurs, les 16 boutons de pistes RGB et les 6 boutons de navigation.
+> Ce guide détaille broche par broche l'intégralité des connexions physiques entre l'ESP32-S3, les 4 expandeurs I2C MCP23017, le double écran TFT ILI9488, les 16 encodeurs de paramètres, le 17ᵉ encodeur master, le bouton [VALID], les 16 boutons de pistes RGB et les 8 boutons de navigation.
 
 ---
 
-## 1. Vue d'Ensemble de l'Architecture Matérielle
+## 1. Schémas Électroniques & Vues d'Interconnexion
+
+### 1.1. Schéma Électronique Fonctionnel Global (Architecture Complète)
+![Schéma Électronique Global LivePilot 16](../doc/assets/livepilot16_schematic_system.jpg)
+
+### 1.2. Schéma d'Implantation Physique & Faisceau de Câblage (Wiring Harness)
+![Schéma de Câblage et d'Interconnexion Physique](../doc/assets/livepilot16_schematic_wiring_harness.jpg)
+
+---
+
+## 2. Vue d'Ensemble de l'Architecture Matérielle (Diagramme Logique)
 
 ```mermaid
 graph TD
@@ -55,7 +65,7 @@ graph TD
 
 ---
 
-## 2. Tableau Complet des Broches de l'ESP32-S3
+## 3. Tableau Complet des Broches de l'ESP32-S3
 
 | Broche ESP32-S3 | Signal / Rôle | Composant Relié | Type I/O | Remarques / Pull-up |
 |---|---|---|---|---|
@@ -91,7 +101,7 @@ graph TD
 
 ---
 
-## 3. Configuration & Câblage des 4 Expandeurs I2C MCP23017
+## 4. Configuration & Câblage des 4 Expandeurs I2C MCP23017
 
 Chaque MCP23017 dispose de 16 broches d'E/S configurables (Port A = GPA0..GPA7, Port B = GPB0..GPB7).  
 Les broches de base communes à chaque boîtier MCP23017 sont :
@@ -178,11 +188,11 @@ Les broches de base communes à chaque boîtier MCP23017 sont :
 
 ---
 
-## 4. Câblage des Commandes Directes : 17ᵉ Encodeur Master, Touche [VALID] et 8 Boutons de Navigation
+## 5. Câblage des Commandes Directes : 17ᵉ Encodeur Master, Touche [VALID] et 8 Boutons de Navigation
 
 Pour garantir une réactivité instantanée à zéro latence et un temps de réponse critique sur scène, le 17ᵉ encodeur master, le bouton de validation et les 8 touches de navigation sont câblés directement sur des broches GPIO dédiées de l'ESP32-S3 (sans passer par les expandeurs I2C) :
 
-### 4.1. 17ᵉ Encodeur Rotatif Master (BPM / Jog / Défilement) & Clic Poussoir
+### 5.1. 17ᵉ Encodeur Rotatif Master (BPM / Jog / Défilement) & Clic Poussoir
 
 | Commande | Broche ESP32-S3 | Autre Côté | Emplacement & Rôle |
 |---|---|---|---|
@@ -190,13 +200,13 @@ Pour garantir une réactivité instantanée à zéro latence et un temps de rép
 | **Phase B** | **GPIO 41** | `GND` (C) | Quadrature B (Sens de rotation) |
 | **Clic Poussoir (Push)** | **GPIO 39** | `GND` | Bascule de mode : Tempo BPM live $\leftrightarrow$ Défilement scènes/paramètres |
 
-### 4.2. Bouton Dédié de Validation [VALID]
+### 5.2. Bouton Dédié de Validation [VALID]
 
 | Commande | Broche ESP32-S3 | Autre Côté | Emplacement & Rôle |
 |---|---|---|---|
 | **`[VALID]`** | **GPIO 42** | `GND` | Directement sous le 17ᵉ encodeur : Lancement de scène sélectionnée / Validation |
 
-### 4.3. Les 8 Boutons de Navigation Dédiés (Colonne 4×2 à Droite)
+### 5.3. Les 8 Boutons de Navigation Dédiés (Colonne 4×2 à Droite)
 
 Les 8 touches sont agencées en une colonne droite claire et intuitive de **4 rangées de 2 boutons** :
 
@@ -229,7 +239,7 @@ Les 8 touches sont agencées en une colonne droite claire et intuitive de **4 ra
 
 ---
 
-## 5. Câblage du Ruban de 16 LEDs RGB NeoPixel (WS2812B-Mini)
+## 6. Câblage du Ruban de 16 LEDs RGB NeoPixel (WS2812B-Mini)
 
 Les 16 LEDs sont montées sous les touches silicone translucides et sont chaînées en guirlande unifilaire (Daisy-Chain) :
 
@@ -244,7 +254,7 @@ Les 16 LEDs sont montées sous les touches silicone translucides et sont chaîn�
 
 ---
 
-## 6. Câblage du Double Écran TFT 3.5" IPS (2x ILI9488 SPI 480x320 = 960x320 px)
+## 7. Câblage du Double Écran TFT 3.5" IPS (2x ILI9488 SPI 480x320 = 960x320 px)
 
 Les deux écrans partagent intégralement les lignes de données SPI, d'horloge, de commande et d'alimentation. Seule la broche **Chip Select (`CS`)** est individualisée :
 
@@ -262,7 +272,7 @@ Les deux écrans partagent intégralement les lignes de données SPI, d'horloge,
 
 ---
 
-## 7. Règles de Protection et Découplage
+## 8. Règles de Protection et Découplage
 
 1. **Découplage haute fréquence** :
    * Chaque circuit intégré (les 4 MCP23017 et le module ESP32-S3) doit avoir un **condensateur céramique CMS 100 nF (X7R)** placé au plus près de ses broches `VDD` et `VSS`.
