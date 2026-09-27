@@ -155,11 +155,27 @@ Le tableau ci-dessous détaille les outils gratuits nécessaires pour chaque bri
 
 ### 5.1. Organisation du Double Écran 3.5" (2x 480x320 = 960x320 px) & Ergonomie Séparée
 
+> [!NOTE]
+> **Validation Ergonomique Officielle : La gestion des écrans est parfaite.**  
+> L'architecture d'affichage à double écran IPS 3.5" (surface combinée de 960×320 px) est officiellement validée et gravée dans le cahier des charges :
+> 1. **Écran Gauche (Mix & Session)** :
+>    * **En-tête supérieur** : Numéro de Banque (`BANK 02`) et Tempo Ableton en direct (`126.0 BPM`).
+>    * **Bandeau Scène Pleine Largeur** : Fond reprenant la couleur exacte attribuée à la scène dans Ableton, avec texte en typographie condensée haute lisibilité (`▶ SCÈNE 03 : BREAKDOWN & DROP`).
+>    * **2 Larges Colonnes Verticales de 8 Pistes** :
+>      * **Colonne Gauche (Pistes 01 à 08)** : reliée 1:1 à la Rangée Haute des touches (Pads 1 à 8).
+>      * **Colonne Droite (Pistes 09 à 16)** : reliée 1:1 à la Rangée Basse des touches (Pads 9 à 16).
+>      * Largeur généreuse de 235 px par piste permettant d'afficher jusqu'à **20 à 22 caractères en toutes lettres** sans coupure ni abréviation.
+>      * Signalement immédiat des Groupes par l'icône dossier **`📁`** (ex: `01: 📁 DRUM BUS HEAVY`).
+>      * Surlignage étincelant blanc néon sur l'unique piste active (ex: `▶05: 📁 BASS SYNTH GRP`).
+> 2. **Écran Droit (Plugins & Sound Design)** :
+>    * **En-tête** : Nom du Plugin actif (`Glue Compressor`).
+>    * **Matrice stricte 2×8** : 16 potentiomètres virtuels circulaires alignés 1:1 au-dessus des 16 encodeurs rotatifs, avec affichage en direct des valeurs numériques et labels de paramètres.
+
 L'architecture à deux écrans couleur IPS séparés apporte la clarté visuelle ultime pour le live :
 * **ÉCRAN GAUCHE (480x320 - CS GPIO 10)** : Dédié au **Mix & Session** (aligné au-dessus des 16 touches de pistes).
 * **ÉCRAN DROIT (480x320 - CS GPIO 38)** : Dédié aux **Plugins & Sound Design** (aligné au-dessus des 16 encodeurs rotatifs).
 
-`	ext
+```text
 ┌──────────────────────────────────────────────────┐  ┌──────────────────────────────────────────────────┐
 │           ÉCRAN GAUCHE : MIX & SESSION           │  │        ÉCRAN DROIT : PLUGINS & PARAMS (2x8)      │
 ├──────────────────────────────────────────────────┤  ├──────────────────────────────────────────────────┤
@@ -179,7 +195,7 @@ L'architecture à deux écrans couleur IPS séparés apporte la clarté visuelle
 │ 07: CLAP ROOM REVERB   │ 15: BACKING VOX WIDE    │
 │ 08: OPEN HAT 909       │ 16: RISER & IMPACT FX   │
 └────────────────────────┴─────────────────────────┘
-`
+```
 
 #### Réponse au Défi Ergonomique : Comment identifier la piste DRUM (Piste 23) en 1 seconde ?
 1. **Correspondance spatiale 1:1 (Ruban Miroir 2x8 sur l'Écran Gauche)** :
