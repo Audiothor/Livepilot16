@@ -52,24 +52,29 @@ nav_btn_size    = 14.0;
 nav_col_1_x     = 324.0;
 nav_col_2_x     = 348.0;
 
+// 1) BLOC HAUT :
 // Rangée 1 (Haut) : Flèche Gauche ◄ et Flèche Droite ►
-nav_left_pos    = [nav_col_1_x, enc_origin_y + enc_spacing_y]; // y = 110.0
-nav_right_pos   = [nav_col_2_x, enc_origin_y + enc_spacing_y]; // y = 110.0
+nav_left_pos    = [nav_col_1_x, 125.0];
+nav_right_pos   = [nav_col_2_x, 125.0];
 
 // Rangée 2 (En dessous) : GROUP - et GROUP +
-group_prev_pos  = [nav_col_1_x, enc_origin_y];                 // y = 78.0
-group_next_pos  = [nav_col_2_x, enc_origin_y];                 // y = 78.0
+group_prev_pos  = [nav_col_1_x, 95.0];
+group_next_pos  = [nav_col_2_x, 95.0];
 
-// Rangée 3 (En dessous) : DEVICE - et DEVICE +
-dev_prev_pos    = [nav_col_1_x, btn_origin_y + btn_spacing_y]; // y = 46.0
-dev_next_pos    = [nav_col_2_x, btn_origin_y + btn_spacing_y]; // y = 46.0
+// ESPACEMENT DE SÉCURITÉ MAJEUR ENTRE GROUP ET DEVICE (45 mm d'entraxe, ~31 mm d'espace plein) :
+// Empêche strictement toute fausse manipulation ou ripage sur scène !
+
+// 2) BLOC BAS :
+// Rangée 3 : DEVICE - et DEVICE +
+dev_prev_pos    = [nav_col_1_x, 50.0];
+dev_next_pos    = [nav_col_2_x, 50.0];
 
 // Rangée 4 (Bas) : TRACK - et TRACK +
-track_prev_pos  = [nav_col_1_x, btn_origin_y];                 // y = 18.0
-track_next_pos  = [nav_col_2_x, btn_origin_y];                 // y = 18.0
+track_prev_pos  = [nav_col_1_x, 18.0];
+track_next_pos  = [nav_col_2_x, 18.0];
 
 module livepilot_base() {
-    echo("Génération du châssis LivePilot 16 (16 enc + Enc 17 Master + [VALID] + 16 pads + 4x2 Nav)...");
+    echo("Génération du châssis LivePilot 16 (1..8 / 9..16 gravés, grand espacement GROUP-DEVICE)...");
     difference() {
         // Coque extérieure inclinée
         cube([box_width, box_depth, height_front + box_depth * tan(tilt_angle)]);
@@ -110,32 +115,32 @@ module livepilot_base() {
             }
         }
 
-        // Rangée 1 : Découpes Flèches ◄ / ► (Haut)
+        // Rangée 1 : Découpes Flèches ◄ / ► (Haut : y = 125.0)
         translate([nav_left_pos[0] - nav_btn_size/2, nav_left_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([nav_right_pos[0] - nav_btn_size/2, nav_right_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
 
-        // Rangée 2 : Découpes GROUP - / GROUP +
+        // Rangée 2 : Découpes GROUP - / GROUP + (y = 95.0)
         translate([group_prev_pos[0] - nav_btn_size/2, group_prev_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([group_next_pos[0] - nav_btn_size/2, group_next_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
 
-        // Rangée 3 : Découpes DEVICE - / DEVICE +
+        // Rangée 3 : Découpes DEVICE - / DEVICE + (y = 50.0 - Large espace sécurisé avec GROUP)
         translate([dev_prev_pos[0] - nav_btn_size/2, dev_prev_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([dev_next_pos[0] - nav_btn_size/2, dev_next_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
 
-        // Rangée 4 : Découpes TRACK - / TRACK + (Bas)
+        // Rangée 4 : Découpes TRACK - / TRACK + (Bas : y = 18.0)
         translate([track_prev_pos[0] - nav_btn_size/2, track_prev_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([track_next_pos[0] - nav_btn_size/2, track_next_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
 
         // Gravure Laser en creux du Titre "LivePilot 16"
-        translate([285.0, 185.0, height_front + 185.0 * tan(tilt_angle) - 1.0])
+        translate([28.0, 205.0, height_front + 205.0 * tan(tilt_angle) - 1.0])
             linear_extrude(height = 2.0)
                 text("LivePilot 16", size = 8.5, font = "Liberation Sans:style=Bold");
     }

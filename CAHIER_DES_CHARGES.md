@@ -233,18 +233,24 @@ Le passage de banque s'opère selon 3 mécanismes complémentaires :
 ### 5.3. Agencement Strict & Ergonomie Aérée de l'Interface Physique
 L'interface de **LivePilot 16** a été calibrée pour offrir un confort maximal et éliminer toute fausse manipulation sur scène :
 1. **Double Écran IPS 3.5" (Surface combinée 960x320 px)** : Positionné au centre supérieur (Écran Gauche = Mix & Session 2x8 colonnes avec défilement fluide des libellés longs, Écran Droit = Plugins & Paramètres 2x8 potentiomètres virtuels sans mention redondante).
-2. **16 Encodeurs Rotatifs de Paramètres (2 rangées de 8)** : Entraxe généreux de **32 mm** (au lieu des 24-26 mm habituels) pour permettre une prise en main des boutons avec les doigts sans heurter les potentiomètres voisins.
+2. **16 Encodeurs Rotatifs de Paramètres (Numérotation 1 à 16 stricte)** : Entraxe généreux de **32 mm** :
+   * **Rangée Supérieure (Encodeurs 1 à 8)** : Numérotés de gauche à droite de `1` à `8` (le dernier de la ligne porte le 8).
+   * **Rangée Inférieure (Encodeurs 9 à 16)** : Numérotés de gauche à droite de `9` à `16` (le plus à gauche porte le 9, le dernier porte le 16).
 3. **17ᵉ Encodeur Master (Jog / BPM Live / Menu)** : Situé en 9ᵉ colonne sur la rangée haute des encodeurs :
    * Rotation : variation en temps réel du tempo BPM ou navigation dans les scènes / paramètres.
    * Clic poussoir intégré : bascule instantanée de mode (BPM $\leftrightarrow$ Navigation).
 4. **Bouton Dédié de Validation `[VALID]`** : Situé en 9ᵉ colonne directement sous le 17ᵉ encodeur (rangée basse) :
    * Lancement direct de la scène sélectionnée ou confirmation d'action.
 5. **16 Boutons de Pistes RGB (2 rangées de 8 — STRICTEMENT 16 TOUCHES)** : Alignés 1:1 sous les encodeurs avec le même pas aéré de **32 mm** (Pistes 1 à 8 en rangée 1, Pistes 9 à 16 en rangée 2).
-6. **8 Boutons de Navigation Dédiés (Colonne Droite 4×2 Limpide)** :
-   * **Rangée 1 (Haut)** : Flèches horizontales **`[ ◄ ]`** et **`[ ► ]`** (Navigation scènes & défilement).
-   * **Rangée 2 (En dessous)** : **`[ GROUP - ]`** et **`[ GROUP + ]`** (Saut direct de groupe en groupe).
-   * **Rangée 3 (En dessous)** : **`[ DEVICE - ]`** et **`[ DEVICE + ]`** (Navigation entre plugins assignés, condition $> 1$).
-   * **Rangée 4 (Bas)** : **`[ TRACK - ]`** et **`[ TRACK + ]`** (Défilement des banques de 16 pistes).
+6. **8 Boutons de Navigation Dédiés & Espacement de Sécurité Anti-Erreur (Colonne Droite)** :
+   * **Bloc Supérieur (Structure & Scènes)** :
+     * **Rangée 1 (Haut)** : Flèches horizontales **`[ ◄ ]`** et **`[ ► ]`** (Navigation scènes & défilement).
+     * **Rangée 2 (En dessous)** : **`[ GROUP - ]`** et **`[ GROUP + ]`** (Saut direct de groupe en groupe).
+   * **ESPACEMENT DE SÉCURITÉ MAJEUR (~30 mm de séparation nette)** :
+     * Une zone tampon métallique large et franche sépare les touches `GROUP` des touches `DEVICE`. L'artiste ressent immédiatement la rupture au toucher et ne peut jamais confondre un saut de groupe et un changement d'effet dans le feu de l'action !
+   * **Bloc Inférieur (Plugins & Pistes)** :
+     * **Rangée 3 (En dessous du gap)** : **`[ DEVICE - ]`** et **`[ DEVICE + ]`** (Navigation entre plugins assignés, condition $> 1$).
+     * **Rangée 4 (Bas)** : **`[ TRACK - ]`** et **`[ TRACK + ]`** (Défilement des banques de 16 pistes).
 7. **Identité Visuelle & Châssis** : Titre du produit **`LivePilot 16`** gravé au laser dans le coin supérieur gauche. Châssis monobloc incliné à 15°.
 
 ---

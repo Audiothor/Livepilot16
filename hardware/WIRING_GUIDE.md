@@ -212,12 +212,16 @@ Les 8 touches sont agencées en une colonne droite claire et intuitive de **4 ra
 | **`TRACK +`** | **GPIO 16** | `GND` | **Rangée 4 (Bas, droite)** : Banque suivante (+16) |
 
 > [!TIP]
-> **Ergonomie Réflexe Immédiate :**  
-> * **Rangée 1 (Haut)** : Flèches horizontales `◄` et `►` pour naviguer dans les scènes / pages d'écran.
-> * **Rangée 2** : `GROUP -` et `GROUP +` pour sauter directement d'un bus/groupe à l'autre.
-> * **Rangée 3** : `DEVICE -` et `DEVICE +` pour feuilleter les plugins de la piste active.
-> * **Rangée 4 (Bas)** : `TRACK -` et `TRACK +` pour faire défiler les banques de 16 pistes.
-> * **Colonne 9 (au niveau des encodeurs)** :
+> **Ergonomie Réflexe Immédiate & Espacement de Sécurité :**  
+> * **Bloc Haut (Navigation de Session & Structure) :**
+>   * **Rangée 1 (Haut)** : Flèches horizontales `◄` et `►` pour naviguer dans les scènes / pages d'écran.
+>   * **Rangée 2** : `GROUP -` et `GROUP +` pour sauter directement d'un bus/groupe à l'autre.
+> * **ESPACEMENT DE SÉCURITÉ MAJEUR (~30 mm de châssis plein séparateur) :**
+>   * Une zone tampon nette isole physiquement les fonctions de groupe des fonctions d'effets, évitant tout risque de ripage sur scène !
+> * **Bloc Bas (Plugins & Pistes) :**
+>   * **Rangée 3** : `DEVICE -` et `DEVICE +` pour feuilleter les plugins de la piste active.
+>   * **Rangée 4 (Bas)** : `TRACK -` et `TRACK +` pour faire défiler les banques de 16 pistes.
+> * **Colonne 9 (au niveau des encodeurs) :**
 >   * En haut : Le 17ᵉ Encodeur Master cranté pour ajuster le tempo BPM en direct.
 >   * En bas : Le bouton `[VALID]` pour déclencher la scène sélectionnée.
 
