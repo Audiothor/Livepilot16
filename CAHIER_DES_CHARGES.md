@@ -267,10 +267,14 @@ L'interface de **LivePilot 16** a été calibrée pour offrir un confort maximal
 ### 5.5. Traitement des Pistes de Groupe (Group Tracks & Traitements de Bus)
 Dans la production moderne et le live sous Ableton, les **Pistes de Groupe** jouent un rôle central pour sculpter des sous-mixages (ex: Bus Batterie, Bus Synthés, Bus Voix). **LivePilot 16** intègre un support de premier ordre pour ces pistes :
 
-1. **Intégration Naturelle dans la Grille des Pistes :**
+1. **Intégration Naturelle & Identification Immédiate dans la Grille 2×8 :**
    * Dans le Live Object Model (LOM), une piste de groupe est reconnue comme une piste à part entière (`is_foldable = True`).
    * Elle occupe sa touche physique dédiée parmi les 16 boutons de la banque, reprenant la couleur attribuée au groupe dans Ableton.
-   * Sur l'écran TFT 480x320, l'en-tête affiche automatiquement le badge distinctif **`[GRP]`** (ex: `T04: [GRP] DRUM BUS`), garantissant à l'artiste qu'il intervient sur un sous-mixage global et non sur une piste individuelle.
+   * **Signalement Visuel Instantané sur l'Écran Gauche :**
+     * Chaque case correspondant à un groupe arbore un **badge d'en-tête spécifique `[📁 GRP]`** avec une bordure supérieure épaissie façon "dossier suspendu".
+     * L'intitulé de la case affiche clairement `01: 📁 DRUMS`, permettant en une fraction de seconde de distinguer un groupe/bus d'une piste instrument simple.
+     * **Règle de Sélection Unique :** Une seule et unique piste/groupe à la fois est affichée en surbrillance active (cadre blanc néon étincelant avec flèche `▶`), supprimant toute ambiguïté sur la piste sous contrôle.
+   * Sur l'écran TFT 480x320, l'en-tête supérieur affiche également le badge distinctif **`[GRP]`** (ex: `T04: [GRP] DRUM BUS`), garantissant à l'artiste qu'il intervient sur un sous-mixage global.
 
 2. **Pilotage des Devices de Bus (Compresseurs, EQ, Racks de Groupe) :**
    * Lorsque le groupe est sélectionné, `LivePilot 16` observe directement la collection `track.devices` du groupe.

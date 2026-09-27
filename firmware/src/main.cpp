@@ -89,11 +89,13 @@ void TaskCore1_UI(void *pvParameters) {
         //    - CMD_PARAM_DATA : maj des 16 valeurs/noms de paramètres
         
         // 2. Rendu Écran Gauche (Vue Mix & Session - CS GPIO 10, 480x320) :
-        //    - Ligne 1 (Y: 0..30) : [BANK 02] à gauche, [GRP] Nom_Groupe au centre, 126.0 BPM en haut à droite !
-        //    - Ligne 2 (Y: 32..68) : BANDEAU SCÈNE PLEINE LARGEUR (Fond avec la COULEUR EXACTE Ableton de la scène, texte "▶ SCÈNE 03 : DROP")
-        //    - Ligne 3 (Y: 72..135) : Grand bandeau dédié pleine largeur de la piste sélectionnée (T05: Kick 808)
-        //    - Ligne 4 (Y: 140..315) : Ruban miroir 2x8 des 16 pistes (noms, numéros, couleurs Ableton, état actif)
-        //    - Mise à jour uniquement sur changement d'état !
+        //    - Ligne 1 (Y: 0..28) : [BANK 02] à gauche, [GRP] Nom_Groupe au centre, 126.0 BPM en haut à droite !
+        //    - Ligne 2 (Y: 30..62) : BANDEAU SCÈNE PLEINE LARGEUR (Fond avec la COULEUR EXACTE Ableton, texte condensé "▶ SCÈNE 03 : BREAKDOWN & DROP")
+        //    - Ligne 3 (Y: 66..115) : Grand bandeau dédié pleine largeur de la piste sélectionnée (T05: Kick 808)
+        //    - Ligne 4 (Y: 120..315) : MATRICE STRICTE 2x8 (16 pistes au total, 8 en haut, 8 en bas) :
+        //      * Une SEULE piste sélectionnée active : contour blanc néon + flèche ▶ (miroir du pad allumé)
+        //      * Identification instantanée des GROUPES : badge d'en-tête [GRP 📁] avec double bandeau dossier
+        //      * 15 autres pistes en affichage standard tamisé avec leurs couleurs respectives Ableton
         
         // 3. Rendu Écran Droit (Vue Plugins & 16 Paramètres - CS GPIO 38) :
         //    - Affichage du plugin actif et indicateur de pagination (> 1)
