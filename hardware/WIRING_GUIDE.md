@@ -175,15 +175,19 @@ Les 6 boutons de navigation sont câblés directement sur des broches GPIO indé
 
 | Touche de Navigation | Broche ESP32-S3 | Autre Côté du Switch | Emplacement Physique & Rôle |
 |---|---|---|---|
-| **`TRACK +`** | **GPIO 16** | `GND` | **À droite de la Rangée 1 des pads (Pistes 1-8)** : Saut banque suivante (+16) |
-| **`TRACK -`** | **GPIO 15** | `GND` | **À droite de la Rangée 2 des pads (Pistes 9-16)** : Saut banque précédente (-16) |
-| **`GROUP -`** | **GPIO 17** | `GND` | **Cluster Supérieur Droit** : Macro-saut vers le bus/groupe précédent |
-| **`GROUP +`** | **GPIO 18** | `GND` | **Cluster Supérieur Droit** : Macro-saut vers le bus/groupe suivant |
-| **`DEVICE -`** | **GPIO 1** | `GND` | **Cluster Supérieur Droit** : Plugin assigné précédent (si $> 1$) |
-| **`DEVICE +`** | **GPIO 2** | `GND` | **Cluster Supérieur Droit** : Plugin assigné suivant (si $> 1$) |
+| **`GROUP -`** | **GPIO 17** | `GND` | **Pavé Pistes (Rangée Haute, niveau Pistes 1-8, gauche)** : Groupe précédent |
+| **`GROUP +`** | **GPIO 18** | `GND` | **Pavé Pistes (Rangée Haute, niveau Pistes 1-8, droite)** : Groupe suivant |
+| **`TRACK -`** | **GPIO 15** | `GND` | **Pavé Pistes (Rangée Basse, niveau Pistes 9-16, gauche)** : Banque précédente (-16) |
+| **`TRACK +`** | **GPIO 16** | `GND` | **Pavé Pistes (Rangée Basse, niveau Pistes 9-16, droite)** : Banque suivante (+16) |
+| **`DEVICE -`** | **GPIO 1** | `GND` | **Haut Droit (Niveau Écran Plugins / Encodeurs)** : Plugin assigné précédent (si $> 1$) |
+| **`DEVICE +`** | **GPIO 2** | `GND` | **Haut Droit (Niveau Écran Plugins / Encodeurs)** : Plugin assigné suivant (si $> 1$) |
 
 > [!TIP]
-> **Ergonomie Réflexe Immédiate :** Placer `TRACK +` et `TRACK -` directement dans l'alignement horizontal des touches de pistes permet de changer de banque sans jamais déplacer la paume de la main vers le haut du contrôleur.
+> **Ergonomie Réflexe Immédiate :**  
+> Le pavé 2×2 situé à droite des 16 touches de pistes regroupe toute la navigation de session :
+> * En bas : `TRACK -` et `TRACK +` pour faire défiler les banques de 16 pistes.
+> * Juste au-dessus : `GROUP -` et `GROUP +` pour sauter directement d'un groupe/bus à l'autre.
+> * En haut, face à l'écran de droite : `DEVICE -` et `DEVICE +` pour feuilleter les plugins de la piste active.
 
 *Chaque entrée utilise la résistance de rappel au 3.3V interne de l'ESP32-S3 (`pinMode(pin, INPUT_PULLUP)`). Aucun composant externe n'est requis.*
 

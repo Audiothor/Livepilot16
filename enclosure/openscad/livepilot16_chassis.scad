@@ -41,19 +41,26 @@ btn_origin_x    = 32.0;
 btn_origin_y    = 18.0;
 
 // 6 BOUTONS DE NAVIGATION DÉDIÉS :
-// 1) Touches TRACK + et TRACK - : Placés STRICTEMENT à droite des 2 rangées de touches de pistes (au même niveau !)
 nav_btn_size    = 14.0;
-track_next_pos  = [enc_origin_x + 8 * enc_spacing_x + 8.0, btn_origin_y + btn_spacing_y]; // Même niveau que Pistes 1-8
-track_prev_pos  = [enc_origin_x + 8 * enc_spacing_x + 8.0, btn_origin_y];                 // Même niveau que Pistes 9-16
+nav_col_1_x     = 295.0;
+nav_col_2_x     = 317.0;
 
-// 2) Touches GROUP -/+ et DEVICE -/+ : Placés en cluster supérieur droit
-group_prev_pos  = [295.0, 95.0];
-group_next_pos  = [315.0, 95.0];
-dev_prev_pos    = [295.0, 75.0];
-dev_next_pos    = [315.0, 75.0];
+// 1) CLUSTER INFÉRIEUR (4 touches alignées avec les rangées de pistes) :
+// - Rangée Haute (même niveau que Pistes 1-8) : GROUP - et GROUP +
+group_prev_pos  = [nav_col_1_x, btn_origin_y + btn_spacing_y];
+group_next_pos  = [nav_col_2_x, btn_origin_y + btn_spacing_y];
+
+// - Rangée Basse (même niveau que Pistes 9-16) : TRACK - et TRACK +
+track_prev_pos  = [nav_col_1_x, btn_origin_y];
+track_next_pos  = [nav_col_2_x, btn_origin_y];
+
+// 2) CLUSTER SUPÉRIEUR (2 touches au niveau des plugins / encodeurs) :
+// - Navigation Device : DEVICE - et DEVICE +
+dev_prev_pos    = [nav_col_1_x, 80.0];
+dev_next_pos    = [nav_col_2_x, 80.0];
 
 module livepilot_base() {
-    echo("Génération du châssis LivePilot 16 (Ergonomie aérée, double écran, 16 encodeurs, 16 pads, 6 touches nav)...");
+    echo("Génération du châssis LivePilot 16 (Ergonomie révisée : GROUP -/+ au-dessus de TRACK -/+, DEVICE -/+ en haut)...");
     difference() {
         // Coque extérieure inclinée
         cube([box_width, box_depth, height_front + box_depth * tan(tilt_angle)]);
@@ -86,19 +93,19 @@ module livepilot_base() {
             }
         }
 
-        // Découpes Touches TRACK + et TRACK - (Alignées au même niveau que les touches de pistes)
-        translate([track_next_pos[0] - nav_btn_size/2, track_next_pos[1] - nav_btn_size/2, 0])
-            cube([nav_btn_size, nav_btn_size, 85]);
-        translate([track_prev_pos[0] - nav_btn_size/2, track_prev_pos[1] - nav_btn_size/2, 0])
-            cube([nav_btn_size, nav_btn_size, 85]);
-
-        // Découpes Touches GROUP - / GROUP +
+        // Découpes Touches GROUP - / GROUP + (Niveau Pistes 1-8)
         translate([group_prev_pos[0] - nav_btn_size/2, group_prev_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([group_next_pos[0] - nav_btn_size/2, group_next_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
 
-        // Découpes Touches DEVICE - / DEVICE +
+        // Découpes Touches TRACK - / TRACK + (Niveau Pistes 9-16)
+        translate([track_prev_pos[0] - nav_btn_size/2, track_prev_pos[1] - nav_btn_size/2, 0])
+            cube([nav_btn_size, nav_btn_size, 85]);
+        translate([track_next_pos[0] - nav_btn_size/2, track_next_pos[1] - nav_btn_size/2, 0])
+            cube([nav_btn_size, nav_btn_size, 85]);
+
+        // Découpes Touches DEVICE - / DEVICE + (Niveau Plugins / Encodeurs)
         translate([dev_prev_pos[0] - nav_btn_size/2, dev_prev_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([dev_next_pos[0] - nav_btn_size/2, dev_next_pos[1] - nav_btn_size/2, 0])
