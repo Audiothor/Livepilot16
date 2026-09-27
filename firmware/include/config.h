@@ -35,15 +35,26 @@
 #define RGB_LEDS_DATA_PIN       48       // Broche RMT pour LEDs RGB
 #define NUM_RGB_LEDS            16
 
-// --- 6 Boutons de Navigation (GPIO directs ESP32-S3 avec pull-up interne) ---
-#define PIN_NAV_TRACK_PREV      15       // Track - (Banque précédente)
-#define PIN_NAV_TRACK_NEXT      16       // Track + (Banque suivante)
-#define PIN_NAV_GROUP_PREV      17       // Group - (Groupe précédent)
-#define PIN_NAV_GROUP_NEXT      18       // Group + (Groupe suivant)
-#define PIN_NAV_DEV_PREV        1        // Device - (Device précédent)
-#define PIN_NAV_DEV_NEXT        2        // Device + (Device suivant)
+// --- Boutons de Navigation & Système (GPIO directs ESP32-S3 avec pull-up interne) ---
+#define PIN_NAV_DEV_PREV        1        // Device - (Device précédent, haut gauche)
+#define PIN_NAV_DEV_NEXT        2        // Device + (Device suivant, haut droite)
+#define PIN_NAV_LEFT            6        // Flèche Gauche ◄ (sous Device -)
+#define PIN_NAV_RIGHT           7        // Flèche Droite ► (sous Device +)
+#define PIN_NAV_GROUP_PREV      17       // Group - (Groupe précédent, pavé bas gauche)
+#define PIN_NAV_GROUP_NEXT      18       // Group + (Groupe suivant, pavé bas droite)
+#define PIN_NAV_TRACK_PREV      15       // Track - (Banque précédente, pavé bas gauche)
+#define PIN_NAV_TRACK_NEXT      16       // Track + (Banque suivante, pavé bas droite)
+
+// --- 17ᵉ Encodeur Rotatif Cranté (Master / Tempo BPM / Navigation Écran) ---
+#define PIN_ENC17_A             40       // Phase A Encodeur 17
+#define PIN_ENC17_B             41       // Phase B Encodeur 17
+#define PIN_ENC17_PUSH          39       // Clic poussoir Encodeur 17 (Changement mode / sélection)
+
+// --- Bouton de Validation Dédié ---
+#define PIN_BTN_VALID           42       // Bouton de validation [VALID] (sous le 17ᵉ encodeur)
 
 // Constantes d'interface
-#define NUM_ENCODERS            16
-#define NUM_TRACK_BUTTONS       16
-#define NUM_NAV_BUTTONS         6        // TRACK -/+, GROUP -/+, DEVICE -/+
+#define NUM_PARAM_ENCODERS      16       // 16 Encodeurs de paramètres de plugins (2x8)
+#define NUM_TOTAL_ENCODERS      17       // 16 Paramètres + 1 Master Jog/Tempo
+#define NUM_TRACK_BUTTONS       16       // 16 Touches RGB de sélection de piste (2x8)
+#define NUM_NAV_BUTTONS         9        // DEV-/+, ◄/►, GRP-/+, TRK-/+, VALID

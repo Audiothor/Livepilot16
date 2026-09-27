@@ -64,13 +64,16 @@ void TaskCore0_IO(void *pvParameters) {
     
     for (;;) {
         // 1. Scrutation / interruption des MCP23017
-        // 2. Détection de changement d'état encodeurs (Gray Code)
-        // 3. Détection d'appui sur les 16 touches de pistes (CC 64..79)
-        // 4. Détection des 6 boutons de navigation :
-        //    - TRACK - / TRACK + (CC 60 / 61) : pagination banques de 16 pistes
-        //    - GROUP - / GROUP + (CC 58 / 59) : saut direct de groupe en groupe
-        //    - DEVICE - / DEVICE + (CC 62 / 63, bloqué si !state.deviceNavEnabled)
-        // 5. Émission immédiate des messages MIDI CC vers Ableton
+        // 2. Détection de changement d'état des 16 encodeurs de paramètres (Gray Code)
+        // 3. Détection directe du 17ᵉ Encodeur Master (GPIO 40/41, Jog/Tempo) & clic poussoir (GPIO 39)
+        // 4. Détection d'appui sur le bouton de validation [VALID] (GPIO 42, CC 56)
+        // 5. Détection d'appui sur les 16 touches de pistes (CC 64..79)
+        // 6. Détection des 8 boutons de navigation :
+        //    - Flèches ◄ / ► (GPIO 6 / 7, CC 54 / 55) : navigation scènes / pages
+        //    - DEVICE - / DEVICE + (GPIO 1 / 2, CC 62 / 63, conditionné par state.deviceNavEnabled)
+        //    - GROUP - / GROUP + (GPIO 17 / 18, CC 58 / 59) : saut direct de groupe en groupe
+        //    - TRACK - / TRACK + (GPIO 15 / 16, CC 60 / 61) : pagination banques de 16 pistes
+        // 7. Émission immédiate des messages MIDI CC vers Ableton
         
         vTaskDelay(pdMS_TO_TICKS(1)); // Cycle 1ms pour latence imperceptible
     }

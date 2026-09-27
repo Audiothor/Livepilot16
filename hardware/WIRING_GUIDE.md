@@ -18,9 +18,10 @@ graph TD
     subgraph MCU ["ESP32-S3-DevKitC-1-N16R8"]
         I2C["Bus I2C : GPIO 8 (SDA) / GPIO 9 (SCL)"]
         INT["Lignes Interruption : GPIO 4 (INTA) / GPIO 5 (INTB)"]
-        SPI["Bus SPI : GPIO 10..14, 21 (Écran TFT)"]
+        SPI["Bus SPI : GPIO 10..14, 21, 38 (Double Écran TFT)"]
         RMT["Broche RMT : GPIO 48 (LEDs RGB)"]
-        NAV["6 GPIOs Directs : GPIO 1, 2, 15, 16, 17, 18"]
+        NAV["Touches Directes : GPIO 1, 2, 6, 7, 15..18, 42"]
+        ENC17["17ᵉ Encodeur Master : GPIO 39, 40, 41"]
         USB["USB Natif OTG : GPIO 19 (D-) / GPIO 20 (D+)"]
     end
 
@@ -32,11 +33,12 @@ graph TD
     end
 
     subgraph IO_CONTROLS ["Commandes Physiques"]
-        ENC["16x Encodeurs Bourns PEC11R"]
-        PADS["16x Touches Silicone 15x15 + Switches Omron"]
-        BTNS_NAV["6x Touches Navigation (TRACK, GROUP, DEVICE)"]
+        ENC["16x Encodeurs Paramètres + 1x Encodeur Master Jog (17ᵉ)"]
+        PADS["16x Touches Silicone 15x15 + Switches Omron (2 rangées de 8)"]
+        VALID["1x Bouton Poussoir [VALID] Dédié"]
+        BTNS_NAV["8x Touches Navigation (DEV -/+, ◄/►, GROUP -/+, TRACK -/+)"]
         LEDS["16x LEDs WS2812B-Mini (Daisy Chain)"]
-        TFT["Écran TFT 3.5 IPS ILI9488 (480x320)"]
+        TFT["Double Écran TFT 3.5 IPS ILI9488 (2x 480x320)"]
     end
 
     I2C --> MCP0 & MCP1 & MCP2 & MCP3
@@ -45,7 +47,8 @@ graph TD
     MCP1 --> ENC
     MCP2 --> PADS
     MCP3 --> ENC
-    NAV --> BTNS_NAV
+    ENC17 --> ENC
+    NAV --> BTNS_NAV & VALID
     RMT --> LEDS
     SPI --> TFT
 ```
@@ -56,25 +59,31 @@ graph TD
 
 | Broche ESP32-S3 | Signal / Rôle | Composant Relié | Type I/O | Remarques / Pull-up |
 |---|---|---|---|---|
-| **GPIO 1** | `PIN_NAV_DEV_PREV` | Bouton Navigation `DEVICE -` | Entrée | Pull-up interne activé (Actif au niveau bas / GND) |
-| **GPIO 2** | `PIN_NAV_DEV_NEXT` | Bouton Navigation `DEVICE +` | Entrée | Pull-up interne activé (Actif au niveau bas / GND) |
+| **GPIO 1** | `PIN_NAV_DEV_PREV` | Bouton Navigation `DEVICE -` | Entrée | Pull-up interne activé (Actif à GND) |
+| **GPIO 2** | `PIN_NAV_DEV_NEXT` | Bouton Navigation `DEVICE +` | Entrée | Pull-up interne activé (Actif à GND) |
 | **GPIO 4** | `MCP_INTA` | Broches `INTA` des 4x MCP23017 | Entrée IRQ | Interruption matérielle (changement d'état rapide) |
 | **GPIO 5** | `MCP_INTB` | Broches `INTB` des 4x MCP23017 | Entrée IRQ | Interruption matérielle (changement d'état rapide) |
-| **GPIO 8** | `I2C_SDA` | Broches `SDA` des 4x MCP23017 | Bidirectionnel | Bus I2C Fast Mode 400kHz (Résistance pull-up 2.2kΩ vers 3.3V) |
-| **GPIO 9** | `I2C_SCL` | Broches `SCL` des 4x MCP23017 | Sortie Horloge | Bus I2C Fast Mode 400kHz (Résistance pull-up 2.2kΩ vers 3.3V) |
+| **GPIO 6** | `PIN_NAV_LEFT` | Touche Flèche Gauche `◄` | Entrée | Pull-up interne activé (Navigation scène / page) |
+| **GPIO 7** | `PIN_NAV_RIGHT` | Touche Flèche Droite `►` | Entrée | Pull-up interne activé (Navigation scène / page) |
+| **GPIO 8** | `I2C_SDA` | Broches `SDA` des 4x MCP23017 | Bidirectionnel | Bus I2C Fast Mode 400kHz (Pull-up 2.2kΩ vers 3.3V) |
+| **GPIO 9** | `I2C_SCL` | Broches `SCL` des 4x MCP23017 | Sortie Horloge | Bus I2C Fast Mode 400kHz (Pull-up 2.2kΩ vers 3.3V) |
 | **GPIO 10** | `TFT_CS_LEFT` | Broche `CS` de l'Écran TFT Gauche | Sortie SPI | Chip Select Écran Gauche (Vue Mix & Session) |
 | **GPIO 11** | `TFT_MOSI` | Broches `SDI / MOSI` des 2 Écrans TFT | Sortie SPI | Données Master Out partagées (40 MHz) |
 | **GPIO 12** | `TFT_SCLK` | Broches `SCK / SCLK` des 2 Écrans TFT | Sortie SPI | Horloge SPI partagée (40 MHz) |
 | **GPIO 13** | `TFT_DC` | Broches `DC / RS` des 2 Écrans TFT | Sortie SPI | Data / Command partagée |
 | **GPIO 14** | `TFT_RST` | Broches `RESET` des 2 Écrans TFT | Sortie | Réinitialisation matérielle commune |
-| **GPIO 15** | `PIN_NAV_TRACK_PREV` | Bouton Navigation `TRACK -` | Entrée | Pull-up interne activé (Actif au niveau bas / GND) |
-| **GPIO 16** | `PIN_NAV_TRACK_NEXT` | Bouton Navigation `TRACK +` | Entrée | Pull-up interne activé (Actif au niveau bas / GND) |
-| **GPIO 17** | `PIN_NAV_GROUP_PREV` | Bouton Navigation `GROUP -` | Entrée | Pull-up interne activé (Actif au niveau bas / GND) |
-| **GPIO 18** | `PIN_NAV_GROUP_NEXT` | Bouton Navigation `GROUP +` | Entrée | Pull-up interne activé (Actif au niveau bas / GND) |
+| **GPIO 15** | `PIN_NAV_TRACK_PREV` | Bouton Navigation `TRACK -` | Entrée | Pull-up interne activé (Actif à GND) |
+| **GPIO 16** | `PIN_NAV_TRACK_NEXT` | Bouton Navigation `TRACK +` | Entrée | Pull-up interne activé (Actif à GND) |
+| **GPIO 17** | `PIN_NAV_GROUP_PREV` | Bouton Navigation `GROUP -` | Entrée | Pull-up interne activé (Actif à GND) |
+| **GPIO 18** | `PIN_NAV_GROUP_NEXT` | Bouton Navigation `GROUP +` | Entrée | Pull-up interne activé (Actif à GND) |
 | **GPIO 19** | `USB_D-` | Embase USB-C (D-) | USB Différentiel | Port USB OTG natif (USB-MIDI TinyUSB) |
 | **GPIO 20** | `USB_D+` | Embase USB-C (D+) | USB Différentiel | Port USB OTG natif (USB-MIDI TinyUSB) |
 | **GPIO 21** | `TFT_BL` | Broches `LED / BL` des 2 Écrans TFT | Sortie PWM | Contrôle de luminosité de l'écran par modulation |
 | **GPIO 38** | `TFT_CS_RIGHT` | Broche `CS` de l'Écran TFT Droit | Sortie SPI | Chip Select Écran Droit (Vue Plugins & Paramètres) |
+| **GPIO 39** | `PIN_ENC17_PUSH` | Poussoir Clic 17ᵉ Encodeur Master | Entrée | Pull-up interne activé (Bascule mode BPM / Jog) |
+| **GPIO 40** | `PIN_ENC17_A` | Phase A du 17ᵉ Encodeur Master | Entrée | Quadrature A (Directe MCU sans latence) |
+| **GPIO 41** | `PIN_ENC17_B` | Phase B du 17ᵉ Encodeur Master | Entrée | Quadrature B (Directe MCU sans latence) |
+| **GPIO 42** | `PIN_BTN_VALID` | Bouton Poussoir Dédié `[VALID]` | Entrée | Pull-up interne activé (Validation / Play Scène) |
 | **GPIO 48** | `RGB_DATA` | Broche `DIN` de la 1ère LED WS2812B | Sortie RMT | Signal 800 kHz matériel avec résistance série 330Ω |
 | **3V3** | Alimentation 3.3V | VDD des 4x MCP, VCC Écran, Pull-ups | Puissance | Régulateur intégré ESP32-S3 |
 | **5V (VBUS)** | Alimentation 5V | VDD des 16 LEDs WS2812B | Puissance | Directement depuis le câble USB-C de l'ordinateur |
@@ -169,25 +178,48 @@ Les broches de base communes à chaque boîtier MCP23017 sont :
 
 ---
 
-## 4. Câblage des 6 Boutons de Navigation Dédiés
+## 4. Câblage des Commandes Directes : 17ᵉ Encodeur Master, Touche [VALID] et 8 Boutons de Navigation
 
-Les 6 boutons de navigation sont câblés directement sur des broches GPIO indépendantes de l'ESP32-S3 pour une réactivité instantanée à zéro latence :
+Pour garantir une réactivité instantanée à zéro latence et un temps de réponse critique sur scène, le 17ᵉ encodeur master, le bouton de validation et les 8 touches de navigation sont câblés directement sur des broches GPIO dédiées de l'ESP32-S3 (sans passer par les expandeurs I2C) :
+
+### 4.1. 17ᵉ Encodeur Rotatif Master (BPM / Jog / Défilement) & Clic Poussoir
+
+| Commande | Broche ESP32-S3 | Autre Côté | Emplacement & Rôle |
+|---|---|---|---|
+| **Phase A** | **GPIO 40** | `GND` (C) | Quadrature A (Incrément / Décrément) |
+| **Phase B** | **GPIO 41** | `GND` (C) | Quadrature B (Sens de rotation) |
+| **Clic Poussoir (Push)** | **GPIO 39** | `GND` | Bascule de mode : Tempo BPM live $\leftrightarrow$ Défilement scènes/paramètres |
+
+### 4.2. Bouton Dédié de Validation [VALID]
+
+| Commande | Broche ESP32-S3 | Autre Côté | Emplacement & Rôle |
+|---|---|---|---|
+| **`[VALID]`** | **GPIO 42** | `GND` | Directement sous le 17ᵉ encodeur : Lancement de scène sélectionnée / Validation |
+
+### 4.3. Les 8 Boutons de Navigation Dédiés
 
 | Touche de Navigation | Broche ESP32-S3 | Autre Côté du Switch | Emplacement Physique & Rôle |
 |---|---|---|---|
-| **`GROUP -`** | **GPIO 17** | `GND` | **Pavé Pistes (Rangée Haute, niveau Pistes 1-8, gauche)** : Groupe précédent |
-| **`GROUP +`** | **GPIO 18** | `GND` | **Pavé Pistes (Rangée Haute, niveau Pistes 1-8, droite)** : Groupe suivant |
-| **`TRACK -`** | **GPIO 15** | `GND` | **Pavé Pistes (Rangée Basse, niveau Pistes 9-16, gauche)** : Banque précédente (-16) |
-| **`TRACK +`** | **GPIO 16** | `GND` | **Pavé Pistes (Rangée Basse, niveau Pistes 9-16, droite)** : Banque suivante (+16) |
-| **`DEVICE -`** | **GPIO 1** | `GND` | **Haut Droit (Niveau Écran Plugins / Encodeurs)** : Plugin assigné précédent (si $> 1$) |
-| **`DEVICE +`** | **GPIO 2** | `GND` | **Haut Droit (Niveau Écran Plugins / Encodeurs)** : Plugin assigné suivant (si $> 1$) |
+| **`DEVICE -`** | **GPIO 1** | `GND` | **Haut Droit (Rangée du haut, gauche)** : Plugin assigné précédent (si $> 1$) |
+| **`DEVICE +`** | **GPIO 2** | `GND` | **Haut Droit (Rangée du haut, droite)** : Plugin assigné suivant (si $> 1$) |
+| **`◄` (Flèche Gauche)** | **GPIO 6** | `GND` | **Haut Droit (Directement sous DEV-)** : Scène précédente / Page précédente |
+| **`►` (Flèche Droite)**| **GPIO 7** | `GND` | **Haut Droit (Directement sous DEV+)** : Scène suivante / Page suivante |
+| **`GROUP -`** | **GPIO 17** | `GND` | **Bas Droit (Niveau Pistes 1-8, gauche)** : Groupe précédent |
+| **`GROUP +`** | **GPIO 18** | `GND` | **Bas Droit (Niveau Pistes 1-8, droite)** : Groupe suivant |
+| **`TRACK -`** | **GPIO 15** | `GND` | **Bas Droit (Niveau Pistes 9-16, gauche)** : Banque précédente (-16) |
+| **`TRACK +`** | **GPIO 16** | `GND` | **Bas Droit (Niveau Pistes 9-16, droite)** : Banque suivante (+16) |
 
 > [!TIP]
 > **Ergonomie Réflexe Immédiate :**  
-> Le pavé 2×2 situé à droite des 16 touches de pistes regroupe toute la navigation de session :
-> * En bas : `TRACK -` et `TRACK +` pour faire défiler les banques de 16 pistes.
-> * Juste au-dessus : `GROUP -` et `GROUP +` pour sauter directement d'un groupe/bus à l'autre.
-> * En haut, face à l'écran de droite : `DEVICE -` et `DEVICE +` pour feuilleter les plugins de la piste active.
+> * **En haut à droite (Face à l'Écran Plugins & Paramètres) :**  
+>   * Rangée du haut : `DEVICE -` et `DEVICE +` pour feuilleter les plugins de la piste active.
+>   * Juste au-dessous : Flèches `◄` et `►` pour parcourir les scènes ou les pages d'écran.
+> * **Colonne 9 (À droite des encodeurs) :**  
+>   * En haut : Le 17ᵉ Encodeur Master cranté pour ajuster le tempo BPM en direct.
+>   * En bas : Le bouton `[VALID]` pour envoyer instantanément la scène sélectionnée.
+> * **En bas à droite (Face aux 16 Touches de Pistes) :**  
+>   * Rangée haute : `GROUP -` et `GROUP +` pour sauter instantanément d'un bus/groupe à l'autre.
+>   * Rangée basse : `TRACK -` et `TRACK +` pour faire défiler les banques de 16 pistes.
 
 *Chaque entrée utilise la résistance de rappel au 3.3V interne de l'ESP32-S3 (`pinMode(pin, INPUT_PULLUP)`). Aucun composant externe n'est requis.*
 

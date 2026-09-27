@@ -232,21 +232,26 @@ Le passage de banque s'opère selon 3 mécanismes complémentaires :
 
 ### 5.3. Agencement Strict & Ergonomie Aérée de l'Interface Physique
 L'interface de **LivePilot 16** a été calibrée pour offrir un confort maximal et éliminer toute fausse manipulation sur scène :
-1. **Double Écran IPS 3.5" (Surface 960x320 px)** : Positionné au centre supérieur (Écran Gauche = Mix & Session 2x8, Écran Droit = Plugins & Paramètres 2x8).
-2. **16 Encodeurs Rotatifs (2 rangées de 8)** : Entraxe généreux de **32 mm** (au lieu des 24-26 mm habituels) pour permettre une prise en main des boutons avec les doigts sans heurter les potentiomètres voisins.
-3. **16 Boutons de Pistes RGB (2 rangées de 8)** : Alignés 1:1 sous les encodeurs avec le même pas aéré de **32 mm** (Pistes 1 à 8 en rangée 1, Pistes 9 à 16 en rangée 2).
-4. **6 Boutons de Navigation Dédiés (Positionnement Scénique Réflexe)** :
-   * **Pavé Pistes 2×2 (à droite des 16 touches de pistes)** :
-     * **Rangée Basse (niveau Pistes 9 à 16)** : **`TRACK -`** (gauche) et **`TRACK +`** (droite) pour faire défiler les banques de 16 pistes.
-     * **Rangée Haute (niveau Pistes 1 à 8)** : **`GROUP -`** (gauche) et **`GROUP +`** (droite) pour sauter instantanément d'un bus/groupe à l'autre.
-   * **Touches Plugins Haut Droit (niveau Écran Droit & Encodeurs)** :
-     * **`DEVICE -`** et **`DEVICE +`** : Navigation intelligente entre plugins assignés sur la piste active (condition $> 1$).
-   * *Avantage ergonomique absolu :* Les 4 touches de gestion de pistes et groupes (`TRACK -/+` et `GROUP -/+`) sont directement sous la paume droite au niveau des pads, tandis que les 2 touches de plugins (`DEVICE -/+`) sont isolées en haut face à l'écran des plugins !
-5. **Identité Visuelle & Châssis** : Titre du produit **`LivePilot 16`** gravé au laser dans le coin supérieur droit. Châssis monobloc incliné à 15°.
+1. **Double Écran IPS 3.5" (Surface combinée 960x320 px)** : Positionné au centre supérieur (Écran Gauche = Mix & Session 2x8 colonnes, Écran Droit = Plugins & Paramètres 2x8 potentiomètres virtuels).
+2. **16 Encodeurs Rotatifs de Paramètres (2 rangées de 8)** : Entraxe généreux de **32 mm** (au lieu des 24-26 mm habituels) pour permettre une prise en main des boutons avec les doigts sans heurter les potentiomètres voisins.
+3. **17ᵉ Encodeur Master (Jog / BPM Live / Menu)** : Situé en 9ᵉ colonne sur la rangée haute des encodeurs :
+   * Rotation : variation en temps réel du tempo BPM ou navigation dans les scènes / paramètres.
+   * Clic poussoir intégré : bascule instantanée de mode (BPM $\leftrightarrow$ Navigation).
+4. **Bouton Dédié de Validation `[VALID]`** : Situé en 9ᵉ colonne directement sous le 17ᵉ encodeur (rangée basse) :
+   * Lancement direct de la scène sélectionnée ou confirmation d'action.
+5. **16 Boutons de Pistes RGB (2 rangées de 8 — STRICTEMENT 16 TOUCHES)** : Alignés 1:1 sous les encodeurs avec le même pas aéré de **32 mm** (Pistes 1 à 8 en rangée 1, Pistes 9 à 16 en rangée 2).
+6. **8 Boutons de Navigation Dédiés (Positionnement Scénique Réflexe)** :
+   * **Cluster Supérieur Haut Droit (Niveau Écran Plugins & Encodeurs)** :
+     * **Rangée Supérieure** : **`DEVICE -`** et **`DEVICE +`** pour la navigation intelligente entre plugins assignés sur la piste active (condition $> 1$).
+     * **Rangée Inférieure (directement sous DEV -/+)** : Flèches **`◄`** et **`►`** pour le défilement horizontal de pages ou sélection de scènes.
+   * **Cluster Inférieur Bas Droit (Niveau Pads de Pistes 2×2)** :
+     * **Rangée Haute (niveau Pistes 1 à 8)** : **`GROUP -`** et **`GROUP +`** pour sauter instantanément d'un bus/groupe à l'autre.
+     * **Rangée Basse (niveau Pistes 9 à 16)** : **`TRACK -`** et **`TRACK +`** pour faire défiler les banques de 16 pistes.
+7. **Identité Visuelle & Châssis** : Titre du produit **`LivePilot 16`** gravé au laser dans le coin supérieur droit. Châssis monobloc incliné à 15°.
 
 ---
 
-### 5.3. Règle Fondamentale : Détection & Signalement des Pistes Non Assignées
+### 5.4. Règle Fondamentale : Détection & Signalement des Pistes Non Assignées
 > [!IMPORTANT]
 > **RÈGLE SCÉNIQUE MAJEURE — TOUCHE BLANCHE SUR PISTE VIERGE :**
 > Quand l'utilisateur sélectionne une piste (ex: Piste 5) en appuyant sur son bouton physique :

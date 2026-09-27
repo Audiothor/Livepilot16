@@ -7,6 +7,7 @@ from _Framework.ControlSurface import ControlSurface
 from .consts import (
     SYSEX_HEADER, CMD_BANK_INFO, CMD_TRACK_ACTIVE, CMD_BANK_COLORS,
     CMD_DEVICE_ACTIVE, CMD_PARAM_DATA, CMD_SCENE_INFO, CC_BASE_ENCODERS,
+    CC_ENC17_JOG, CC_ENC17_PUSH, CC_NAV_LEFT, CC_NAV_RIGHT, CC_BTN_VALID,
     CC_NAV_TRACK_PREV, CC_NAV_TRACK_NEXT, CC_NAV_GROUP_PREV, CC_NAV_GROUP_NEXT,
     CC_NAV_DEV_PREV, CC_NAV_DEV_NEXT, CC_BASE_TRACK_SEL,
     NUM_TRACKS_PER_BANK, NUM_ENCODERS
@@ -403,6 +404,26 @@ class LivePilot16(ControlSurface):
                 self._adjust_parameter(cc_num - CC_BASE_ENCODERS, delta)
                 return
 
+            # 6. 17ᵉ Encodeur Master (CC 32) & Clic Poussoir (CC 33)
+            elif cc_num == CC_ENC17_JOG:
+                delta = cc_val if cc_val < 64 else (cc_val - 128)
+                self._adjust_master_jog(delta)
+                return
+            elif cc_num == CC_ENC17_PUSH and cc_val > 0:
+                self._toggle_master_mode()
+                return
+
+            # 7. Navigation Écran (Flèches ◄ / ►) & Bouton de Validation [VALID]
+            elif cc_num == CC_NAV_LEFT and cc_val > 0:
+                self._nav_screen_left()
+                return
+            elif cc_num == CC_NAV_RIGHT and cc_val > 0:
+                self._nav_screen_right()
+                return
+            elif cc_num == CC_BTN_VALID and cc_val > 0:
+                self._on_btn_valid_pressed()
+                return
+
         super(LivePilot16, self).receive_midi(midi_bytes)
 
     # =========================================================================
@@ -564,4 +585,61 @@ class LivePilot16(ControlSurface):
         # Payload SysEx : [CMD_SCENE_INFO, playing_idx, is_playing, bpm_high, bpm_low, bpm_dec, r, g, b, ...name..., 0x00, 0xF7]
         sysex_msg = list(SYSEX_HEADER) + [CMD_SCENE_INFO, playing_idx & 0x7F, is_playing, bpm_high, bpm_low, bpm_dec, r, g, b] + name_bytes + [0x00, 0xF7]
         self._send_midi(tuple(sysex_msg))
+
+    # =========================================================================
+    # 17ᵉ ENCODEUR MASTER & NAVIGATION ÉCRAN
+    # =========================================================================
+    def _adjust_master_jog(self, delta):
+        """Ajuste le BPM en live ou navigue dans les scènes / paramètres"""
+        if getattr(self, '_master_mode_bpm', True):
+            new_tempo = max(20.0, min(999.0, self.song().tempo + delta))
+            self.song().tempo = new_tempo
+            self._send_scene_info()
+        else:
+            scenes = list(self.song().scenes)
+            if scenes:
+                try:
+                    cur_idx = scenes.index(self.song().view.selected_scene)
+                except ValueError:
+                    cur_idx = 0
+                new_idx = max(0, min(len(scenes) - 1, cur_idx + delta))
+                self.song().view.selected_scene = scenes[new_idx]
+                self._send_scene_info()
+
+    def _toggle_master_mode(self):
+        """Bascule le mode du 17ᵉ encodeur (BPM live <-> Navigation scène/preset)"""
+        self._master_mode_bpm = not getattr(self, '_master_mode_bpm', True)
+        mode_str = "BPM" if self._master_mode_bpm else "SCENE"
+        self.show_message("LivePilot 16 : Master Encoder 17 -> Mode " + mode_str)
+
+    def _nav_screen_left(self):
+        """Flèche Gauche ◄ : Scène précédente"""
+        scenes = list(self.song().scenes)
+        if scenes:
+            try:
+                cur_idx = scenes.index(self.song().view.selected_scene)
+            except ValueError:
+                cur_idx = 0
+            if cur_idx > 0:
+                self.song().view.selected_scene = scenes[cur_idx - 1]
+                self._send_scene_info()
+
+    def _nav_screen_right(self):
+        """Flèche Droite ► : Scène suivante"""
+        scenes = list(self.song().scenes)
+        if scenes:
+            try:
+                cur_idx = scenes.index(self.song().view.selected_scene)
+            except ValueError:
+                cur_idx = 0
+            if cur_idx < len(scenes) - 1:
+                self.song().view.selected_scene = scenes[cur_idx + 1]
+                self._send_scene_info()
+
+    def _on_btn_valid_pressed(self):
+        """Bouton [VALID] : Déclenche la scène sélectionnée ou valide l'action"""
+        if self.song().view.selected_scene:
+            self.song().view.selected_scene.fire()
+            self._send_scene_info()
+
 

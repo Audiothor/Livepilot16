@@ -17,8 +17,13 @@ CMD_FULL_SYNC_REQ = 0x0F
 
 # Numéros de Control Change (CC)
 CC_BASE_ENCODERS   = 16  # CC 16 à 31 (16 encodeurs relatifs)
+CC_ENC17_JOG       = 32  # CC 32 (17ᵉ Encodeur Master : BPM Live / Paramètre / Jog)
+CC_ENC17_PUSH      = 33  # CC 33 (Clic poussoir 17ᵉ Encodeur : Bascule mode)
 
-# Boutons de Navigation (6 boutons : TRACK, GROUP, DEVICE)
+# Boutons de Navigation Système
+CC_NAV_LEFT        = 54  # CC 54 (Flèche Gauche ◄)
+CC_NAV_RIGHT       = 55  # CC 55 (Flèche Droite ►)
+CC_BTN_VALID       = 56  # CC 56 (Bouton de validation [VALID])
 CC_NAV_GROUP_PREV  = 58  # Group < (Groupe précédent)
 CC_NAV_GROUP_NEXT  = 59  # Group > (Groupe suivant)
 CC_NAV_TRACK_PREV  = 60  # Track < (Banque précédente)
@@ -30,5 +35,7 @@ CC_BASE_TRACK_SEL  = 64  # CC 64 à 79 (Boutons Piste 1 à 16)
 
 # Configuration de taille
 NUM_TRACKS_PER_BANK = 16
+NUM_PARAM_ENCODERS = 16
 NUM_ENCODERS = 16
-NUM_NAV_BUTTONS = 6
+NUM_NAV_BUTTONS = 9
+
