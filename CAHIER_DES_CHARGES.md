@@ -159,8 +159,8 @@ Le tableau ci-dessous détaille les outils gratuits nécessaires pour chaque bri
 > **Validation Ergonomique Officielle : La gestion des écrans est parfaite.**  
 > L'architecture d'affichage à double écran IPS 3.5" (surface combinée de 960×320 px) est officiellement validée et gravée dans le cahier des charges :
 > 1. **Écran Gauche (Mix & Session)** :
->    * **En-tête supérieur** : Numéro de Banque (`BANK 02`) et Tempo Ableton en direct (`126.0 BPM`).
->    * **Bandeau Scène Pleine Largeur** : Fond reprenant la couleur exacte attribuée à la scène dans Ableton, avec texte en typographie condensée haute lisibilité (`▶ SCÈNE 03 : BREAKDOWN & DROP`).
+>    * **En-tête supérieur épuré** : Numéro de Banque (`[BANK 02]`) à gauche et Tempo Ableton en direct (`126.0 BPM`) à droite (aucun mot superflu comme "SESSION").
+>    * **Bandeau Scène Pleine Largeur avec Défilement Fluide (Marquee Ticker)** : Fond reprenant la couleur exacte attribuée à la scène dans Ableton. Prise en charge des libellés longs et indications scéniques de sessions (jusqu'à 96-128 caractères) avec défilement horizontal automatique et fluide à 60 fps dès que le texte dépasse la largeur d'affichage (`▶ SCÈNE 03 : BREAKDOWN & DROP - Cut 808 & Filters to 500Hz`).
 >    * **2 Larges Colonnes Verticales de 8 Pistes** :
 >      * **Colonne Gauche (Pistes 01 à 08)** : reliée 1:1 à la Rangée Haute des touches (Pads 1 à 8).
 >      * **Colonne Droite (Pistes 09 à 16)** : reliée 1:1 à la Rangée Basse des touches (Pads 9 à 16).
@@ -168,7 +168,7 @@ Le tableau ci-dessous détaille les outils gratuits nécessaires pour chaque bri
 >      * Signalement immédiat des Groupes par l'icône dossier **`📁`** (ex: `01: 📁 DRUM BUS HEAVY`).
 >      * Surlignage étincelant blanc néon sur l'unique piste active (ex: `▶05: 📁 BASS SYNTH GRP`).
 > 2. **Écran Droit (Plugins & Sound Design)** :
->    * **En-tête** : Nom du Plugin actif (`Glue Compressor`).
+>    * **En-tête épuré** : Affichage direct du plugin actif `[D02/03] Glue Compressor` (le préfixe "ACTIVE DEVICE :" est retiré car il est sous-entendu, seuls les périphériques assignés étant affichés).
 >    * **Matrice stricte 2×8** : 16 potentiomètres virtuels circulaires alignés 1:1 au-dessus des 16 encodeurs rotatifs, avec affichage en direct des valeurs numériques et labels de paramètres.
 
 L'architecture à deux écrans couleur IPS séparés apporte la clarté visuelle ultime pour le live :
@@ -179,10 +179,10 @@ L'architecture à deux écrans couleur IPS séparés apporte la clarté visuelle
 ┌──────────────────────────────────────────────────┐  ┌──────────────────────────────────────────────────┐
 │           ÉCRAN GAUCHE : MIX & SESSION           │  │        ÉCRAN DROIT : PLUGINS & PARAMS (2x8)      │
 ├──────────────────────────────────────────────────┤  ├──────────────────────────────────────────────────┤
-│ [BANK 02]                   126.0 BPM            │  │ ACTIVE DEVICE : [D02/03] Glue Compressor         │
+│ [BANK 02]                            126.0 BPM   │  │ [D02/03] Glue Compressor                         │
 ├──────────────────────────────────────────────────┤  ├──────────────────────────────────────────────────┤
-│ ▶ SCÈNE 03 : BREAKDOWN & DROP                    │  │ RANGÉE HAUTE (Encodeurs 1 à 8) :                 │
-│ (Bandeau pleine largeur, COULEUR ABLETON)        │  │ [E01]  [E02]  [E03]  [E04]  [E05]  [E06]  [E07]  [E08] │
+│ ▶ SCÈNE 03 : BREAKDOWN & DROP - Cue Horns... ◄►  │  │ RANGÉE HAUTE (Encodeurs 1 à 8) :                 │
+│ (Bandeau couleur Ableton, Marquee Ticker fluide) │  │ [E01]  [E02]  [E03]  [E04]  [E05]  [E06]  [E07]  [E08] │
 ├────────────────────────┬─────────────────────────┤  │ Thres  Ratio  Attak  Relea  Makeu  Dry/W  Range  Sidec │
 │ COL. GAUCHE (Pads 1-8) │ COL. DROITE (Pads 9-16) │  │ -18dB   4:1    1ms   0.2s   +4dB   100%   -inf   On    │
 ├────────────────────────┼─────────────────────────┤  ├──────────────────────────────────────────────────┤
@@ -232,7 +232,7 @@ Le passage de banque s'opère selon 3 mécanismes complémentaires :
 
 ### 5.3. Agencement Strict & Ergonomie Aérée de l'Interface Physique
 L'interface de **LivePilot 16** a été calibrée pour offrir un confort maximal et éliminer toute fausse manipulation sur scène :
-1. **Double Écran IPS 3.5" (Surface combinée 960x320 px)** : Positionné au centre supérieur (Écran Gauche = Mix & Session 2x8 colonnes, Écran Droit = Plugins & Paramètres 2x8 potentiomètres virtuels).
+1. **Double Écran IPS 3.5" (Surface combinée 960x320 px)** : Positionné au centre supérieur (Écran Gauche = Mix & Session 2x8 colonnes avec défilement fluide des libellés longs, Écran Droit = Plugins & Paramètres 2x8 potentiomètres virtuels sans mention redondante).
 2. **16 Encodeurs Rotatifs de Paramètres (2 rangées de 8)** : Entraxe généreux de **32 mm** (au lieu des 24-26 mm habituels) pour permettre une prise en main des boutons avec les doigts sans heurter les potentiomètres voisins.
 3. **17ᵉ Encodeur Master (Jog / BPM Live / Menu)** : Situé en 9ᵉ colonne sur la rangée haute des encodeurs :
    * Rotation : variation en temps réel du tempo BPM ou navigation dans les scènes / paramètres.
@@ -240,14 +240,12 @@ L'interface de **LivePilot 16** a été calibrée pour offrir un confort maximal
 4. **Bouton Dédié de Validation `[VALID]`** : Situé en 9ᵉ colonne directement sous le 17ᵉ encodeur (rangée basse) :
    * Lancement direct de la scène sélectionnée ou confirmation d'action.
 5. **16 Boutons de Pistes RGB (2 rangées de 8 — STRICTEMENT 16 TOUCHES)** : Alignés 1:1 sous les encodeurs avec le même pas aéré de **32 mm** (Pistes 1 à 8 en rangée 1, Pistes 9 à 16 en rangée 2).
-6. **8 Boutons de Navigation Dédiés (Positionnement Scénique Réflexe)** :
-   * **Cluster Supérieur Haut Droit (Niveau Écran Plugins & Encodeurs)** :
-     * **Rangée Supérieure** : **`DEVICE -`** et **`DEVICE +`** pour la navigation intelligente entre plugins assignés sur la piste active (condition $> 1$).
-     * **Rangée Inférieure (directement sous DEV -/+)** : Flèches **`◄`** et **`►`** pour le défilement horizontal de pages ou sélection de scènes.
-   * **Cluster Inférieur Bas Droit (Niveau Pads de Pistes 2×2)** :
-     * **Rangée Haute (niveau Pistes 1 à 8)** : **`GROUP -`** et **`GROUP +`** pour sauter instantanément d'un bus/groupe à l'autre.
-     * **Rangée Basse (niveau Pistes 9 à 16)** : **`TRACK -`** et **`TRACK +`** pour faire défiler les banques de 16 pistes.
-7. **Identité Visuelle & Châssis** : Titre du produit **`LivePilot 16`** gravé au laser dans le coin supérieur droit. Châssis monobloc incliné à 15°.
+6. **8 Boutons de Navigation Dédiés (Colonne Droite 4×2 Limpide)** :
+   * **Rangée 1 (Haut)** : Flèches horizontales **`[ ◄ ]`** et **`[ ► ]`** (Navigation scènes & défilement).
+   * **Rangée 2 (En dessous)** : **`[ GROUP - ]`** et **`[ GROUP + ]`** (Saut direct de groupe en groupe).
+   * **Rangée 3 (En dessous)** : **`[ DEVICE - ]`** et **`[ DEVICE + ]`** (Navigation entre plugins assignés, condition $> 1$).
+   * **Rangée 4 (Bas)** : **`[ TRACK - ]`** et **`[ TRACK + ]`** (Défilement des banques de 16 pistes).
+7. **Identité Visuelle & Châssis** : Titre du produit **`LivePilot 16`** gravé au laser dans le coin supérieur gauche. Châssis monobloc incliné à 15°.
 
 ---
 

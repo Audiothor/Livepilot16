@@ -33,7 +33,8 @@ struct LivePilotState {
     uint8_t currentSceneIndex = 0;
     bool isScenePlaying = false;
     float currentTempo = 120.0f;
-    char currentSceneName[32] = "Scene 1";
+    char currentSceneName[128] = "Scene 1"; // Nom étendu à 128 chars pour longues indications scéniques
+    uint16_t sceneScrollOffset = 0;         // Offset pour défilement horizontal fluide (Marquee Ticker)
     uint8_t currentSceneColor[3] = {60, 160, 240}; // Couleur exacte de la scène dans Ableton
     
     // Device actif & règle de navigation
@@ -68,11 +69,11 @@ void TaskCore0_IO(void *pvParameters) {
         // 3. Détection directe du 17ᵉ Encodeur Master (GPIO 40/41, Jog/Tempo) & clic poussoir (GPIO 39)
         // 4. Détection d'appui sur le bouton de validation [VALID] (GPIO 42, CC 56)
         // 5. Détection d'appui sur les 16 touches de pistes (CC 64..79)
-        // 6. Détection des 8 boutons de navigation :
-        //    - Flèches ◄ / ► (GPIO 6 / 7, CC 54 / 55) : navigation scènes / pages
-        //    - DEVICE - / DEVICE + (GPIO 1 / 2, CC 62 / 63, conditionné par state.deviceNavEnabled)
-        //    - GROUP - / GROUP + (GPIO 17 / 18, CC 58 / 59) : saut direct de groupe en groupe
-        //    - TRACK - / TRACK + (GPIO 15 / 16, CC 60 / 61) : pagination banques de 16 pistes
+        // 6. Détection des 8 boutons de navigation (Colonne 4×2 à droite) :
+        //    - Rangée 1 : Flèches ◄ / ► (GPIO 6 / 7, CC 54 / 55) : navigation scènes / pages
+        //    - Rangée 2 : GROUP - / GROUP + (GPIO 17 / 18, CC 58 / 59) : saut direct de groupe en groupe
+        //    - Rangée 3 : DEVICE - / DEVICE + (GPIO 1 / 2, CC 62 / 63, conditionné par state.deviceNavEnabled)
+        //    - Rangée 4 : TRACK - / TRACK + (GPIO 15 / 16, CC 60 / 61) : pagination banques de 16 pistes
         // 7. Émission immédiate des messages MIDI CC vers Ableton
         
         vTaskDelay(pdMS_TO_TICKS(1)); // Cycle 1ms pour latence imperceptible
@@ -92,8 +93,10 @@ void TaskCore1_UI(void *pvParameters) {
         //    - CMD_PARAM_DATA : maj des 16 valeurs/noms de paramètres
         
         // 2. Rendu Écran Gauche (Vue Mix & Session - CS GPIO 10, 480x320) :
-        //    - Ligne 1 (Y: 0..26) : [BANK 02] à gauche, 126.0 BPM en haut à droite !
-        //    - Ligne 2 (Y: 28..58) : BANDEAU SCÈNE PLEINE LARGEUR (Fond couleur Ableton, texte condensé "▶ SCÈNE 03 : BREAKDOWN & DROP")
+        //    - Ligne 1 (Y: 0..26) : [BANK 02] à gauche, 126.0 BPM à droite (pas de label superflu "SESSION")
+        //    - Ligne 2 (Y: 28..58) : BANDEAU SCÈNE PLEINE LARGEUR (Fond couleur Ableton) :
+        //      * Support des textes longs : Défilement horizontal automatique fluide (Marquee text ticker)
+        //        si le libellé dépasse la largeur d'écran, permettant de lire l'intégralité des annotations scéniques !
         //    - Zone Pistes (Y: 62..318) : 2 GRANDES COLONNES VERTICALES DE 8 PISTES (Lisibilité maximale 16-20 caractères) :
         //      * Colonne Gauche (X: 2..238) : Pistes 01 à 08 (correspondant 1:1 à la Rangée Haute des pads 1-8)
         //      * Colonne Droite (X: 242..478) : Pistes 09 à 16 (correspondant 1:1 à la Rangée Basse des pads 9-16)
@@ -101,7 +104,7 @@ void TaskCore1_UI(void *pvParameters) {
         //      * Badge [📁] pour les GROUPES et surbrillance blanche néon unique pour la piste active (ex: ▶05: BASS SYNTH GRP)
         
         // 3. Rendu Écran Droit (Vue Plugins & 16 Paramètres - CS GPIO 38) :
-        //    - Affichage du plugin actif et indicateur de pagination (> 1)
+        //    - En-tête : Affichage direct et épuré "[D02/03] Glue Compressor" (sans le texte redondant "ACTIVE DEVICE :")
         //    - Matrice 2x8 des 16 paramètres des encodeurs (jauges rotatives, valeurs, labels)
         //    - Si !state.trackHasAssignments : affiche l'état "NO ASSIGNMENT" en plein écran
         //    - Mise à jour ultra-rapide et indépendante lors de la manipulation des encodeurs
@@ -111,7 +114,7 @@ void TaskCore1_UI(void *pvParameters) {
         //    - Piste sélectionnée avec assignation -> Couleur Ableton à 100% + breathing
         //    - Piste non sélectionnée -> Couleur Ableton tamisée (30%)
         
-        // 5. Actualisation des 6 boutons de navigation (LEDs dédiées) :
+        // 5. Actualisation des 8 boutons de navigation :
         //    - DEVICE - / DEVICE + allumés si state.deviceNavEnabled, sinon éteints
         //    - GROUP - / GROUP + allumés si des groupes existent dans le projet
         

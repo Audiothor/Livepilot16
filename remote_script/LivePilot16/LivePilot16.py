@@ -507,7 +507,7 @@ class LivePilot16(ControlSurface):
             dev_name = "No Assignment"
             dev_idx = 0
         else:
-            dev_name = self._current_device.name[:16]
+            dev_name = self._current_device.name[:28]
             dev_idx = self._current_device_idx
             
         name_bytes = [ord(c) & 0x7F for c in dev_name]
@@ -578,8 +578,9 @@ class LivePilot16(ControlSurface):
         bpm_low = bpm_int & 0x7F
         bpm_dec = int((tempo - bpm_int) * 10) & 0x7F
 
-        # Nom de la scène
-        sc_name = (playing_scene.name if playing_scene and playing_scene.name else "Scene %d" % (playing_idx + 1))[:24]
+        # Nom de la scène (support étendu jusqu'à 96 caractères pour annotations scéniques)
+        raw_name = playing_scene.name if (playing_scene and playing_scene.name) else ("Scene %d" % (playing_idx + 1))
+        sc_name = raw_name[:96]
         name_bytes = [ord(c) & 0x7F for c in sc_name]
 
         # Payload SysEx : [CMD_SCENE_INFO, playing_idx, is_playing, bpm_high, bpm_low, bpm_dec, r, g, b, ...name..., 0x00, 0xF7]

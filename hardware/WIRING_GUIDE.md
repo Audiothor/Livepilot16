@@ -196,30 +196,30 @@ Pour garantir une réactivité instantanée à zéro latence et un temps de rép
 |---|---|---|---|
 | **`[VALID]`** | **GPIO 42** | `GND` | Directement sous le 17ᵉ encodeur : Lancement de scène sélectionnée / Validation |
 
-### 4.3. Les 8 Boutons de Navigation Dédiés
+### 4.3. Les 8 Boutons de Navigation Dédiés (Colonne 4×2 à Droite)
+
+Les 8 touches sont agencées en une colonne droite claire et intuitive de **4 rangées de 2 boutons** :
 
 | Touche de Navigation | Broche ESP32-S3 | Autre Côté du Switch | Emplacement Physique & Rôle |
 |---|---|---|---|
-| **`DEVICE -`** | **GPIO 1** | `GND` | **Haut Droit (Rangée du haut, gauche)** : Plugin assigné précédent (si $> 1$) |
-| **`DEVICE +`** | **GPIO 2** | `GND` | **Haut Droit (Rangée du haut, droite)** : Plugin assigné suivant (si $> 1$) |
-| **`◄` (Flèche Gauche)** | **GPIO 6** | `GND` | **Haut Droit (Directement sous DEV-)** : Scène précédente / Page précédente |
-| **`►` (Flèche Droite)**| **GPIO 7** | `GND` | **Haut Droit (Directement sous DEV+)** : Scène suivante / Page suivante |
-| **`GROUP -`** | **GPIO 17** | `GND` | **Bas Droit (Niveau Pistes 1-8, gauche)** : Groupe précédent |
-| **`GROUP +`** | **GPIO 18** | `GND` | **Bas Droit (Niveau Pistes 1-8, droite)** : Groupe suivant |
-| **`TRACK -`** | **GPIO 15** | `GND` | **Bas Droit (Niveau Pistes 9-16, gauche)** : Banque précédente (-16) |
-| **`TRACK +`** | **GPIO 16** | `GND` | **Bas Droit (Niveau Pistes 9-16, droite)** : Banque suivante (+16) |
+| **`◄` (Flèche Gauche)** | **GPIO 6** | `GND` | **Rangée 1 (Haut, gauche)** : Scène précédente / Page précédente |
+| **`►` (Flèche Droite)**| **GPIO 7** | `GND` | **Rangée 1 (Haut, droite)** : Scène suivante / Page suivante |
+| **`GROUP -`** | **GPIO 17** | `GND` | **Rangée 2 (En dessous, gauche)** : Groupe précédent |
+| **`GROUP +`** | **GPIO 18** | `GND` | **Rangée 2 (En dessous, droite)** : Groupe suivant |
+| **`DEVICE -`** | **GPIO 1** | `GND` | **Rangée 3 (En dessous, gauche)** : Plugin assigné précédent (si $> 1$) |
+| **`DEVICE +`** | **GPIO 2** | `GND` | **Rangée 3 (En dessous, droite)** : Plugin assigné suivant (si $> 1$) |
+| **`TRACK -`** | **GPIO 15** | `GND` | **Rangée 4 (Bas, gauche)** : Banque précédente (-16) |
+| **`TRACK +`** | **GPIO 16** | `GND` | **Rangée 4 (Bas, droite)** : Banque suivante (+16) |
 
 > [!TIP]
 > **Ergonomie Réflexe Immédiate :**  
-> * **En haut à droite (Face à l'Écran Plugins & Paramètres) :**  
->   * Rangée du haut : `DEVICE -` et `DEVICE +` pour feuilleter les plugins de la piste active.
->   * Juste au-dessous : Flèches `◄` et `►` pour parcourir les scènes ou les pages d'écran.
-> * **Colonne 9 (À droite des encodeurs) :**  
+> * **Rangée 1 (Haut)** : Flèches horizontales `◄` et `►` pour naviguer dans les scènes / pages d'écran.
+> * **Rangée 2** : `GROUP -` et `GROUP +` pour sauter directement d'un bus/groupe à l'autre.
+> * **Rangée 3** : `DEVICE -` et `DEVICE +` pour feuilleter les plugins de la piste active.
+> * **Rangée 4 (Bas)** : `TRACK -` et `TRACK +` pour faire défiler les banques de 16 pistes.
+> * **Colonne 9 (au niveau des encodeurs)** :
 >   * En haut : Le 17ᵉ Encodeur Master cranté pour ajuster le tempo BPM en direct.
->   * En bas : Le bouton `[VALID]` pour envoyer instantanément la scène sélectionnée.
-> * **En bas à droite (Face aux 16 Touches de Pistes) :**  
->   * Rangée haute : `GROUP -` et `GROUP +` pour sauter instantanément d'un bus/groupe à l'autre.
->   * Rangée basse : `TRACK -` et `TRACK +` pour faire défiler les banques de 16 pistes.
+>   * En bas : Le bouton `[VALID]` pour déclencher la scène sélectionnée.
 
 *Chaque entrée utilise la résistance de rappel au 3.3V interne de l'ESP32-S3 (`pinMode(pin, INPUT_PULLUP)`). Aucun composant externe n'est requis.*
 

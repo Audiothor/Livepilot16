@@ -47,31 +47,29 @@ btn_spacing_y   = 28.0;
 btn_origin_x    = 32.0;
 btn_origin_y    = 18.0;
 
-// BOUTONS DE NAVIGATION DÉDIÉS :
+// BOUTONS DE NAVIGATION DÉDIÉS (4 rangées de 2 touches sur la colonne droite) :
 nav_btn_size    = 14.0;
 nav_col_1_x     = 324.0;
 nav_col_2_x     = 348.0;
 
-// 1) CLUSTER SUPÉRIEUR (Niveau Plugins / Encodeurs) :
-// - Rangée Supérieure : DEVICE - et DEVICE + (Navigation plugins assignés)
-dev_prev_pos    = [nav_col_1_x, enc_origin_y + enc_spacing_y]; // y = 110.0
-dev_next_pos    = [nav_col_2_x, enc_origin_y + enc_spacing_y]; // y = 110.0
+// Rangée 1 (Haut) : Flèche Gauche ◄ et Flèche Droite ►
+nav_left_pos    = [nav_col_1_x, enc_origin_y + enc_spacing_y]; // y = 110.0
+nav_right_pos   = [nav_col_2_x, enc_origin_y + enc_spacing_y]; // y = 110.0
 
-// - Rangée Inférieure (directement sous DEVICE -/+) : Flèches ◄ et ► (Navigation écran)
-nav_left_pos    = [nav_col_1_x, enc_origin_y];                 // y = 78.0
-nav_right_pos   = [nav_col_2_x, enc_origin_y];                 // y = 78.0
+// Rangée 2 (En dessous) : GROUP - et GROUP +
+group_prev_pos  = [nav_col_1_x, enc_origin_y];                 // y = 78.0
+group_next_pos  = [nav_col_2_x, enc_origin_y];                 // y = 78.0
 
-// 2) CLUSTER INFÉRIEUR (Niveau Pads de Pistes) :
-// - Rangée Haute (même niveau que Pistes 1-8) : GROUP - et GROUP +
-group_prev_pos  = [nav_col_1_x, btn_origin_y + btn_spacing_y]; // y = 46.0
-group_next_pos  = [nav_col_2_x, btn_origin_y + btn_spacing_y]; // y = 46.0
+// Rangée 3 (En dessous) : DEVICE - et DEVICE +
+dev_prev_pos    = [nav_col_1_x, btn_origin_y + btn_spacing_y]; // y = 46.0
+dev_next_pos    = [nav_col_2_x, btn_origin_y + btn_spacing_y]; // y = 46.0
 
-// - Rangée Basse (même niveau que Pistes 9-16) : TRACK - et TRACK +
+// Rangée 4 (Bas) : TRACK - et TRACK +
 track_prev_pos  = [nav_col_1_x, btn_origin_y];                 // y = 18.0
 track_next_pos  = [nav_col_2_x, btn_origin_y];                 // y = 18.0
 
 module livepilot_base() {
-    echo("Génération du châssis LivePilot 16 (16 encodeurs + Enc 17 Master + [VALID] + 16 pads + Nav)...");
+    echo("Génération du châssis LivePilot 16 (16 enc + Enc 17 Master + [VALID] + 16 pads + 4x2 Nav)...");
     difference() {
         // Coque extérieure inclinée
         cube([box_width, box_depth, height_front + box_depth * tan(tilt_angle)]);
@@ -112,25 +110,25 @@ module livepilot_base() {
             }
         }
 
-        // Découpes Touches Haut Droit : DEVICE - / DEVICE + (Rangée du haut)
-        translate([dev_prev_pos[0] - nav_btn_size/2, dev_prev_pos[1] - nav_btn_size/2, 0])
-            cube([nav_btn_size, nav_btn_size, 85]);
-        translate([dev_next_pos[0] - nav_btn_size/2, dev_next_pos[1] - nav_btn_size/2, 0])
-            cube([nav_btn_size, nav_btn_size, 85]);
-
-        // Découpes Touches Haut Droit : Flèches ◄ / ► (Rangée du dessous)
+        // Rangée 1 : Découpes Flèches ◄ / ► (Haut)
         translate([nav_left_pos[0] - nav_btn_size/2, nav_left_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([nav_right_pos[0] - nav_btn_size/2, nav_right_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
 
-        // Découpes Touches Bas Droit : GROUP - / GROUP + (Niveau Pistes 1-8)
+        // Rangée 2 : Découpes GROUP - / GROUP +
         translate([group_prev_pos[0] - nav_btn_size/2, group_prev_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([group_next_pos[0] - nav_btn_size/2, group_next_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
 
-        // Découpes Touches Bas Droit : TRACK - / TRACK + (Niveau Pistes 9-16)
+        // Rangée 3 : Découpes DEVICE - / DEVICE +
+        translate([dev_prev_pos[0] - nav_btn_size/2, dev_prev_pos[1] - nav_btn_size/2, 0])
+            cube([nav_btn_size, nav_btn_size, 85]);
+        translate([dev_next_pos[0] - nav_btn_size/2, dev_next_pos[1] - nav_btn_size/2, 0])
+            cube([nav_btn_size, nav_btn_size, 85]);
+
+        // Rangée 4 : Découpes TRACK - / TRACK + (Bas)
         translate([track_prev_pos[0] - nav_btn_size/2, track_prev_pos[1] - nav_btn_size/2, 0])
             cube([nav_btn_size, nav_btn_size, 85]);
         translate([track_next_pos[0] - nav_btn_size/2, track_next_pos[1] - nav_btn_size/2, 0])
