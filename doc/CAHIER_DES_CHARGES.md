@@ -161,20 +161,24 @@ L'architecture à deux écrans couleur IPS séparés apporte la clarté visuelle
 
 `	ext
 ┌──────────────────────────────────────────────────┐  ┌──────────────────────────────────────────────────┐
-│           ÉCRAN GAUCHE : MIX & SESSION (2x8)     │  │        ÉCRAN DROIT : PLUGINS & PARAMS (2x8)      │
+│           ÉCRAN GAUCHE : MIX & SESSION           │  │        ÉCRAN DROIT : PLUGINS & PARAMS (2x8)      │
 ├──────────────────────────────────────────────────┤  ├──────────────────────────────────────────────────┤
-│ [BANK 02]       [GRP] DRUMS            126.0 BPM │  │ ACTIVE DEVICE : [D02/03] Glue Compressor         │
+│ [BANK 02]                   126.0 BPM            │  │ ACTIVE DEVICE : [D02/03] Glue Compressor         │
 ├──────────────────────────────────────────────────┤  ├──────────────────────────────────────────────────┤
-│ ▶ SCÈNE 03 : BREAKDOWN & LONG DROP (REFRAIN)     │  │ RANGÉE HAUTE (Encodeurs 1 à 8) :                 │
-│ (Police condensée pour texte long, FOND ABLETON) │  │ [E01]  [E02]  [E03]  [E04]  [E05]  [E06]  [E07]  [E08] │
-├──────────────────────────────────────────────────┤  │ Thres  Ratio  Attak  Relea  Makeu  Dry/W  Range  Sidec │
-│ >>> T23 : [GRP] DRUM BUS <<<                     │  │ -18dB   4:1    1ms   0.2s   +4dB   100%   -inf   On    │
-│ (Bandeau Piste Active / Blanc si non assigné)    │  ├──────────────────────────────────────────────────┤
-├──────────────────────────────────────────────────┤  │ RANGÉE BASSE (Encodeurs 9 à 16) :                │
-│ RUBAN MIROIR 2x8 (Numéros & Noms ultra-lisibles) │  │ [E09]  [E10]  [E11]  [E12]  [E13]  [E14]  [E15]  [E16] │
-│ R1: [17:Kick] [18:Snar] [19:HiHt] [20:Clap]...   │  │ HPFrq  Clip   Macr1  Macr2  Macr3  Macr4  Macr5  Macr6 │
-│ R2: [25:Bass] [26:Synt] [>23:Drum<] [28:Vox]...  │  │ 120Hz   On    50%    25%    75%    0%     100%   ---   │
-└──────────────────────────────────────────────────┘  └──────────────────────────────────────────────────┘
+│ ▶ SCÈNE 03 : BREAKDOWN & DROP                    │  │ RANGÉE HAUTE (Encodeurs 1 à 8) :                 │
+│ (Bandeau pleine largeur, COULEUR ABLETON)        │  │ [E01]  [E02]  [E03]  [E04]  [E05]  [E06]  [E07]  [E08] │
+├────────────────────────┬─────────────────────────┤  │ Thres  Ratio  Attak  Relea  Makeu  Dry/W  Range  Sidec │
+│ COL. GAUCHE (Pads 1-8) │ COL. DROITE (Pads 9-16) │  │ -18dB   4:1    1ms   0.2s   +4dB   100%   -inf   On    │
+├────────────────────────┼─────────────────────────┤  ├──────────────────────────────────────────────────┤
+│ 01: 📁 DRUM BUS HEAVY  │ 09: SUB BASS MONO       │  │ RANGÉE BASSE (Encodeurs 9 à 16) :                │
+│ 02: KICK 808 PUNCH     │ 10: ACID LEAD 303       │  │ [E09]  [E10]  [E11]  [E12]  [E13]  [E14]  [E15]  [E16] │
+│ 03: SNARE TOP LAYER    │ 11: PLUCK ARP STEREO    │  │ HPFrq  Clip   Macr1  Macr2  Macr3  Macr4  Macr5  Macr6 │
+│ 04: CLOSED HI-HAT      │ 12: CHORD PAD WARM      │  │ 120Hz   On    50%    25%    75%    0%     100%   ---   │
+│>05: 📁 BASS SYNTH GRP< │ 13: 📁 VOX BUS MAIN     │  └──────────────────────────────────────────────────┘
+│ 06: PERCUSSION LOOP    │ 14: LEAD VOCAL DRY      │
+│ 07: CLAP ROOM REVERB   │ 15: BACKING VOX WIDE    │
+│ 08: OPEN HAT 909       │ 16: RISER & IMPACT FX   │
+└────────────────────────┴─────────────────────────┘
 `
 
 #### Réponse au Défi Ergonomique : Comment identifier la piste DRUM (Piste 23) en 1 seconde ?
