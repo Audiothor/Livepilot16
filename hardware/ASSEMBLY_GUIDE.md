@@ -43,15 +43,62 @@ En 2026, faire fabriquer un circuit imprimé ne signifie plus souder des dizaine
 
 Si vous souhaitez souder vous-même votre contrôleur, sachez que **l'architecture du LivePilot 16 a été spécialement conçue pour éviter tout composant difficile** :
 
-### Pourquoi c'est très facile même pour un débutant :
-1. **Zéro composant microscopique CMS (Surface Mount)** :
-   * Tous les composants manuels sont au format **Traversant (THT / Through-Hole)**. Leurs broches traversent de larges trous métallisés espacés de **2,54 mm**.
-2. **Supports tulipes pour les circuits intégrés** :
-   * Vous ne soudez jamais directement les 4 puces MCP23017 ! Vous soudez uniquement des supports en plastique vides. Une fois les soudures refroidies, vous insérez délicatement les puces dedans. Zéro risque de griller un composant par surchauffe.
-3. **Le cœur ESP32-S3 est déjà pré-assemblé** :
-   * Le microcontrôleur n'est pas une puce nue : c'est un module officiel `ESP32-S3-DevKitC-1` qui intègre déjà le port USB-C, le régulateur de tension et les mémoires Flash/PSRAM. Vous ne faites que l'enficher.
-4. **Sérigraphie ultra-pédagogique sur le circuit imprimé** :
-   * Tout est écrit en clair sur la carte en blanc : les numéros d'encodeurs (`ENC01` à `ENC16`), la polarité des condensateurs, les numéros de GPIO (`GPIO 10`, `SDA`, `SCL`...). Impossible de se tromper d'emplacement.
+### Explication Détaillée des Concepts Électroniques :
+
+#### 1. Qu'est-ce qu'un composant "Traversant" (Through-Hole / THT) ?
+* **Dans les téléphones modernes (CMS / Surface Mount)** : Les composants mesurent 1 millimètre. Ils n'ont pas de pattes et sont posés à plat sur la carte. C'est quasi impossible à souder pour un débutant sans microscope.
+* **Dans le LivePilot 16 (Traversant / THT)** : C'est la méthode traditionnelle et robuste des amplificateurs et pédales de guitare. Chaque composant possède de **vraies pattes métalliques solides** d'environ 1 cm de long :
+  ```text
+  Composant (au-dessus)
+      │     │  (Pattes métalliques solides)
+  ════╪═════╪════  ◄── Circuit Imprimé (PCB) avec de gros trous
+      │     │
+     (▲)   (▲) ◄── Une simple goutte d'étain déposée au dos avec le fer !
+  ```
+  * L'écartement entre les pattes est de **2,54 mm** (le standard international "Breadboard"), ce qui laisse un espace énorme pour poser le fer sans trembler ni toucher la patte voisine.
+
+---
+
+#### 2. Qu'est-ce qu'un "Support Tulipe" (DIP Socket) et pourquoi cela protège vos puces ?
+Une puce électronique (comme le processeur ou l'expandeur MCP23017) craint les coups de chaud prolongés. Si un débutant laisse son fer à souder 15 secondes sur une patte par hésitation, il pourrait surchauffer la puce.
+Pour éliminer ce risque à 100%, on utilise un **support de circuit intégré** (appelé *support tulipe* ou *DIP socket*) :
+
+```text
+ÉTAPE 1 : On soude le SUPPORT EN PLASTIQUE VIDE sur le circuit
+          (Aucun composant électronique dedans, 0% risque de surchauffe !)
+          ┌───────────────────────────┐
+          │  Support Tulipe (Plastique)│
+          └──┬──┬──┬──┬──┬──┬──┬──┬──┬┘
+             │  │  │  │  │  │  │  │  │ ◄── Broches à souder tranquillement
+             
+ÉTAPE 2 : Une fois la plaque froide, on CLIPSE la puce dedans avec les doigts !
+          ┌───────────────────────────┐
+          │  Puce MCP23017 (Délicate) │
+          └──┬──┬──┬──┬──┬──┬──┬──┬──┬┘
+             ▼  ▼  ▼  ▼  ▼  ▼  ▼  ▼  ▼  (Enfichage doux sans fer à souder !)
+          ┌───────────────────────────┐
+          │     Support Tulipe        │
+          └───────────────────────────┘
+```
+* **Résultat** : La puce ne touche **JAMAIS** le fer à souder !
+* **Bonus maintenance** : Si un jour une puce est défectueuse, vous la déclipsez avec un petit tournevis plat et vous en remettez une neuve en 5 secondes, sans jamais dessouder !
+
+---
+
+### Liens Commerciaux des Pièces pour l'Option B :
+
+1. **La Plaque Électronique Dédiée (PCB)** :
+   * Une plaque sur-mesure coûte **environ 2 $ à 5 $ pour 5 exemplaires** sur [JLCPCB.com](https://jlcpcb.com) ou [PCBWay.com](https://www.pcbway.com). On y dépose simplement le dossier zippé `hardware/gerber/` généré par le projet. La plaque arrive pré-percée, avec les pistes de cuivre prêtes et le nom de chaque composant imprimé en blanc.
+2. **Les Supports Tulipes DIP-28 (Lot pour les 4 MCP23017)** :
+   * [Amazon France — Lot de supports CI DIP-28](https://www.amazon.fr/s?k=support+dip+28+broches) (~5 € le lot de 10)
+   * [Gotronic France — Support lyre / tulipe DIP28](https://www.gotronic.fr/art-support-tulipe-28-broches-sup28t-4261.htm) (~0,60 € pièce)
+3. **Les Puces I2C en boîtier traversant (DIP-28)** :
+   * Référence exacte : **MCP23017-E/SP** (le suffixe `-SP` signifie boîtier DIP à longues pattes traversantes)
+   * [Gotronic France — Circuit MCP23017-E/SP](https://www.gotronic.fr/art-circuit-mcp23017-sp-17482.htm) (~1,90 € pièce)
+   * [Mouser France — MCP23017-E/SP DIP-28](https://www.mouser.fr/ProductDetail/Microchip-Technology/MCP23017-E-SP)
+4. **Le Fer à Souder Débutant & Étain** :
+   * Un kit fer à souder à température réglable (avec pompe à dessouder et fil d'étain) :
+   * [Amazon France — Kit Fer à Souder 60W avec accessoires](https://www.amazon.fr/s?k=kit+fer+a+souder+electronique) (~18 € à 22 € le kit complet).
 
 ---
 
