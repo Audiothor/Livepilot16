@@ -7,6 +7,7 @@ Ce dossier rassemble tous les fichiers de conception électronique du contrôleu
 * `gerber/` : Fichiers de fabrication Gerber 274X et perçage Drill prêts à être zippés pour commande (JLCPCB / PCBWay).
 * `bom/` : Fichiers de nomenclature au format CSV avec références Mouser / LCSC.
 * [`WIRING_GUIDE.md`](WIRING_GUIDE.md) : **Guide de câblage complet broche par broche** de tous les composants du contrôleur.
+* [`ASSEMBLY_GUIDE.md`](ASSEMBLY_GUIDE.md) : **Guide d'assemblage pas-à-pas pour débutants** (Options Clé en main SMT sans soudure vs DIY).
 
 ## 2. Architecture Électronique & Schémas Visuels
 * Consultez le [**Guide Complet de Câblage Électronique (WIRING_GUIDE.md)**](WIRING_GUIDE.md) pour les schémas complets :
