@@ -92,7 +92,9 @@ Pour éliminer ce risque à 100%, on utilise un **support de circuit intégré**
 > Consultez le document dédié [**hardware/BOM_ALIEXPRESS.md**](BOM_ALIEXPRESS.md) qui contient les liens directs, les prix et les options exactes à cocher sur AliExpress pour **chacun des 14 composants** nécessaires au projet (coût total : ~63 €).
 
 1. **La Plaque Électronique Dédiée (PCB)** :
-   * Une plaque sur-mesure coûte **environ 2 $ à 5 $ pour 5 exemplaires** sur [JLCPCB.com](https://jlcpcb.com) ou [PCBWay.com](https://www.pcbway.com). On y dépose simplement le dossier zippé `hardware/gerber/` généré par le projet. La plaque arrive pré-percée, avec les pistes de cuivre prêtes et le nom de chaque composant imprimé en blanc.
+   * Une plaque sur-mesure coûte **environ 2 $ à 5 $ pour 5 exemplaires** sur [JLCPCB.com](https://jlcpcb.com) ou [PCBWay.com](https://www.pcbway.com).
+   * 👉 **Le fichier zippé prêt à être téléversé** se trouve ici : [**`hardware/gerber/LivePilot16_Gerber_JLCPCB.zip`**](gerber/LivePilot16_Gerber_JLCPCB.zip) (voir le [Guide pas-à-pas de commande JLCPCB](gerber/README.md)).
+   * Il suffit de glisser-déposer cette archive `.zip` sur la page d'accueil de JLCPCB. La plaque arrive sous 4 à 6 jours pré-percée, avec toutes les pistes de cuivre et les noms des composants imprimés en blanc.
 2. **Tous les Composants Électroniques sur AliExpress** :
    * Voir la liste complète dans [`BOM_ALIEXPRESS.md`](BOM_ALIEXPRESS.md).
 3. **Fournisseurs Rapides Alternatifs (France / Europe)** :
