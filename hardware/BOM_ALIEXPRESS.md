@@ -58,10 +58,29 @@ Ce document répertorie **chaque composant électronique exact** à commander su
 * **Type d'axe** : Choisissez **D-Shaft** (axe avec un méplat plat sur un côté) ou axe cranté 6mm. Le **D-Shaft** est recommandé car les boutons en aluminium se bloquent parfaitement dessus avec une petite vis sans tête ou par emmanchement sans jamais glisser.
 * **Longueur d'axe** : **20 mm** (recommandé avec le filetage et l'écrou de fixation pour serrer directement l'encodeur sur la plaque supérieure en aluminium ou le boîtier imprimé en 3D).
 
-### Composant #6 : Écrans LCD 3.5" IPS ILI9488
-* **Interface** : Vérifiez bien qu'il s'agit d'un module **SPI 8 à 14 broches** (avec broches VCC, GND, CS, RESET, DC, MOSI, SCK, LED).
-* **Ne pas acheter les "Shields Arduino Uno"** : Certains écrans ILI9488 sont vendus sous forme de gros boucliers bleus avec 28 broches mâles destinés à s'emboîter sur une carte Arduino Uno (interface parallèle 8 bits). Ces écrans shields ne sont **pas** compatibles avec notre câblage SPI haute vitesse ! Prenez uniquement les modules SPI autonomes.
-* **Option tactile** : Vous pouvez cocher indifféremment *Without Touch* (sans tactile) ou *With Touch* (avec tactile). Nous n'utilisons pas la fonction tactile car toutes les manipulations se font aux encodeurs et boutons physiques, mais la version avec tactile fonctionne tout aussi bien en ignorant simplement les broches tactiles `T_CS`, `T_CLK`, `T_DIN`, `T_DO`.
+### Composant #6 : Écrans LCD 3.5" IPS ILI9488 & Lisibilité en Live
+
+#### A. Dimensions Physiques Réelles des 2 Écrans 3.5"
+* **Ce n'est PAS un carré de 5x5 cm** : C'est un format rectangulaire panoramique 3:2.
+  * Zone d'affichage active : **7,34 cm de large x 4,89 cm de haut** par écran.
+  * Surface totale avec les deux écrans côte à côte : **~15 cm de large sur 5 cm de haut**.
+* **Comparatif avec les machines professionnelles de scène** :
+  * **Ableton Push 2 & Push 3** : L'écran bandeau officiel fait **4,0 cm de haut** (sur 23 cm de large). Les écrans du LivePilot 16 (5 cm) sont donc **plus hauts de 25% que l'écran d'un Push 3** !
+  * **Native Instruments Maschine MK3** : Deux écrans 4.3" de 5,4 cm de haut.
+  * **Elektron Digitakt / Syntakt** : Écran miniature de 2,8 cm de haut !
+* **Pourquoi la lisibilité est garantie en Live sur 3.5"** :
+  * Grâce à la résolution 480x320, l'affichage n'utilise pas de petits textes de bureautique : les chiffres de BPM et de valeurs mesurent **12 à 15 mm de haut** (police bold 36-48 px), et les jauges de niveau font **8 mm d'épaisseur** avec des couleurs néon contrastées sur fond noir pur.
+
+#### B. Option Alternative : Le Grand Écran Géant Unique 7.0" (800x480 IPS)
+Si vous souhaitez un confort visuel monumental "scène de festival" (visible même à 1,50 m de distance) :
+* **Module Monobloc ESP32-S3 7.0" (Modèle ESP32-8048S070)** :
+  * Écran géant IPS de **15,4 cm de large x 8,6 cm de haut** (diagonale 18 cm !).
+  * Résolution **800x480 pixels** ultra-détaillée.
+  * **Énorme avantage** : L'ESP32-S3 N16R8 est **directement intégré au dos de l'écran**.
+  * Économie de câblage : Il remplace à la fois l'ESP32 DevKit séparé et les deux écrans 3.5", et supprime toutes les soudures du bus écran (déjà routé en usine sur bus parallèle 16 bits ultra-rapide).
+  * [👉 Voir l'ESP32-S3 7.0" 800x480 sur AliExpress](https://fr.aliexpress.com/w/wholesale-esp32-s3-7-inch-display-8048s070.html) (~28 € à 32 € tout compris).
+
+---
 
 ### Composant #8 : LEDs WS2812B sur mini PCB 5050
 * Ne commandez pas des puces LED 5050 nues à souder en CMS.
