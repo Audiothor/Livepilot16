@@ -85,20 +85,22 @@ Pour éliminer ce risque à 100%, on utilise un **support de circuit intégré**
 
 ---
 
-### Liens Commerciaux des Pièces pour l'Option B :
+### Liens Commerciaux & Liste d'Achat des Pièces pour l'Option B :
+
+> [!TIP]
+> **Liste d'achat AliExpress complète et exhaustive :**
+> Consultez le document dédié [**hardware/BOM_ALIEXPRESS.md**](BOM_ALIEXPRESS.md) qui contient les liens directs, les prix et les options exactes à cocher sur AliExpress pour **chacun des 14 composants** nécessaires au projet (coût total : ~63 €).
 
 1. **La Plaque Électronique Dédiée (PCB)** :
    * Une plaque sur-mesure coûte **environ 2 $ à 5 $ pour 5 exemplaires** sur [JLCPCB.com](https://jlcpcb.com) ou [PCBWay.com](https://www.pcbway.com). On y dépose simplement le dossier zippé `hardware/gerber/` généré par le projet. La plaque arrive pré-percée, avec les pistes de cuivre prêtes et le nom de chaque composant imprimé en blanc.
-2. **Les Supports Tulipes DIP-28 (Lot pour les 4 MCP23017)** :
-   * [Amazon France — Lot de supports CI DIP-28](https://www.amazon.fr/s?k=support+dip+28+broches) (~5 € le lot de 10)
-   * [Gotronic France — Support lyre / tulipe DIP28](https://www.gotronic.fr/art-support-tulipe-28-broches-sup28t-4261.htm) (~0,60 € pièce)
-3. **Les Puces I2C en boîtier traversant (DIP-28)** :
-   * Référence exacte : **MCP23017-E/SP** (le suffixe `-SP` signifie boîtier DIP à longues pattes traversantes)
-   * [Gotronic France — Circuit MCP23017-E/SP](https://www.gotronic.fr/art-circuit-mcp23017-sp-17482.htm) (~1,90 € pièce)
-   * [Mouser France — MCP23017-E/SP DIP-28](https://www.mouser.fr/ProductDetail/Microchip-Technology/MCP23017-E-SP)
+2. **Tous les Composants Électroniques sur AliExpress** :
+   * Voir la liste complète dans [`BOM_ALIEXPRESS.md`](BOM_ALIEXPRESS.md).
+3. **Fournisseurs Rapides Alternatifs (France / Europe)** :
+   * **Supports Tulipes DIP-28 Étroits** : [Amazon France](https://www.amazon.fr/s?k=support+tulipe+dip+28+300mil) ou [Gotronic](https://www.gotronic.fr/art-support-tulipe-28-broches-sup28t-4261.htm)
+   * **Puces MCP23017-E/SP** : [Gotronic France](https://www.gotronic.fr/art-circuit-mcp23017-sp-17482.htm) (~1,90 €) ou [Mouser France](https://www.mouser.fr/ProductDetail/Microchip-Technology/MCP23017-E-SP)
 4. **Le Fer à Souder Débutant & Étain** :
    * Un kit fer à souder à température réglable (avec pompe à dessouder et fil d'étain) :
-   * [Amazon France — Kit Fer à Souder 60W avec accessoires](https://www.amazon.fr/s?k=kit+fer+a+souder+electronique) (~18 € à 22 € le kit complet).
+   * [Amazon France — Kit Fer à Souder 60W avec accessoires](https://www.amazon.fr/s?k=kit+fer+a+souder+electronique) (~18 € à 22 € le kit complet) ou sur [AliExpress](https://fr.aliexpress.com/w/wholesale-soldering-iron-kit-60w.html).
 
 ---
 

@@ -8,6 +8,7 @@ Ce dossier rassemble tous les fichiers de conception électronique du contrôleu
 * `bom/` : Fichiers de nomenclature au format CSV avec références Mouser / LCSC.
 * [`WIRING_GUIDE.md`](WIRING_GUIDE.md) : **Guide de câblage complet broche par broche** de tous les composants du contrôleur.
 * [`ASSEMBLY_GUIDE.md`](ASSEMBLY_GUIDE.md) : **Guide d'assemblage pas-à-pas pour débutants** (Options Clé en main SMT sans soudure vs DIY).
+* [`BOM_ALIEXPRESS.md`](BOM_ALIEXPRESS.md) : **Guide d'achat AliExpress pièce par pièce** avec liens directs, variantes exactes et prix.
 
 ## 2. Architecture Électronique & Schémas Visuels
 * Consultez le [**Guide Complet de Câblage Électronique (WIRING_GUIDE.md)**](WIRING_GUIDE.md) pour les schémas complets :
