@@ -184,10 +184,10 @@
     meters.forEach((m, idx) => {
       const strip = document.getElementById(`track-strip-${idx}`);
       if (!strip) return;
-      const fillL = strip.querySelector('.meter-l .meter-fill');
-      const fillR = strip.querySelector('.meter-r .meter-fill');
-      if (fillL && m.left !== undefined) fillL.style.height = `${Math.min(100, m.left * 100)}%`;
-      if (fillR && m.right !== undefined) fillR.style.height = `${Math.min(100, m.right * 100)}%`;
+      const fillL = strip.querySelector('.meter-l');
+      const fillR = strip.querySelector('.meter-r');
+      if (fillL && m.left !== undefined) fillL.style.width = `${Math.min(100, m.left * 100)}%`;
+      if (fillR && m.right !== undefined) fillR.style.width = `${Math.min(100, m.right * 100)}%`;
     });
   }
 
@@ -239,7 +239,6 @@
     tempoDisplayEl.textContent = state.tempo.toFixed(1);
     positionCounterEl.textContent = state.position;
 
-    // Statut PLAY / PAUSE / STOP
     const status = state.playStatus || (state.isPlaying ? 'PLAY' : 'STOP');
     playStatusText.textContent = status;
     if (status === 'PLAY') {
@@ -276,14 +275,18 @@
     }
   }
 
-  // --- RENDU UI : LES 16 TRANCHES DE MIX (16 BOUTONS LAUNCH CONTROL XL) ---
+  // --- RENDU UI : LES 16 PISTES EN 2 RANGÉES DE 8 (DISPOSITION LAUNCH CONTROL XL) ---
   function renderTracks() {
     const startCh = (state.bankIndex * 16) + 1;
     const endCh = startCh + 15;
     bankIndicator.textContent = `BANQUE ${state.bankIndex + 1}/${state.totalBanks} (PISTES ${startCh}-${endCh})`;
-    tracksContainer.innerHTML = '';
 
-    // Trouver la piste sélectionnée et mettre à jour le bandeau central
+    const tracksRow1 = document.getElementById('tracks-row-1');
+    const tracksRow2 = document.getElementById('tracks-row-2');
+    if (tracksRow1) tracksRow1.innerHTML = '';
+    if (tracksRow2) tracksRow2.innerHTML = '';
+
+    // Piste sélectionnée au centre
     const selTrack = state.tracks.find(t => t && t.index === state.selectedTrackIndex);
     if (selTrack) {
       const btnNum = (selTrack.index % 16) + 1;
@@ -306,7 +309,7 @@
       focusedTrackVol.textContent = '0 dB';
     }
 
-    // Rendu des 16 tranches de pistes
+    // Répartition 2x8 : Pistes 0-7 (Boutons 1-8) & Pistes 8-15 (Boutons 9-16)
     for (let i = 0; i < 16; i++) {
       const track = state.tracks[i] || {
         index: (state.bankIndex * 16) + i,
@@ -328,49 +331,60 @@
 
       const strip = document.createElement('div');
       strip.id = `track-strip-${i}`;
-      strip.className = `track-strip ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-bus' : ''} ${isGrouped ? 'is-grouped-child' : ''}`;
+      strip.className = `track-strip ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-bus' : ''}`;
 
       strip.innerHTML = `
-        <div class="track-color-indicator" style="background-color: ${track.color || '#555'}"></div>
-        <div class="track-header-box">
-          <span class="track-btn-num" style="font-size:7px;color:${isGroup ? '#ffcc00' : '#8892b0'};font-weight:bold;letter-spacing:0.5px;">BTN ${i + 1}</span>
-          <span class="track-num">CH ${track.index + 1} ${isSelected ? '★' : ''}</span>
-          <span class="track-name" title="${track.name}">
-            ${isGrouped ? '<span class="grouped-icon">↳</span>' : ''}
-            ${track.name}
-            ${isGroup ? `<span class="group-badge">${track.fold_state ? '📁 PLIÉ' : '📂 GRP'}</span>` : ''}
-          </span>
+        <!-- Bouton physique avec barre LED horizontale (Miroir de la Photo 2) -->
+        <div class="xl-button-housing">
+          <div class="xl-led-bar" style="background-color:${track.color || '#555'}; color:${track.color || '#555'}"></div>
+          <span class="xl-btn-num">${i + 1}</span>
         </div>
-        <div class="track-body">
-          <div class="meter-wrapper">
-            <div class="meter-bar meter-l"><div class="meter-fill"></div></div>
-            <div class="meter-bar meter-r"><div class="meter-fill"></div></div>
+
+        <!-- Informations de la piste -->
+        <div class="track-main-info">
+          <div class="track-top-row">
+            <span class="track-ch-badge">CH ${track.index + 1}${isSelected ? '★' : ''}</span>
+            <span class="track-name-text" title="${track.name}">
+              ${isGrouped ? '<span class="grouped-icon">↳</span>' : ''}
+              ${track.name}
+            </span>
+            ${isGroup ? `<span class="group-pill">${track.fold_state ? '📁' : '📂'}</span>` : ''}
           </div>
-          <span class="fader-val" style="${isGroup ? 'color:#ffd84d;font-weight:900;' : ''}">${track.vol_str || '0 dB'}</span>
+          <div class="track-bottom-row">
+            <span class="track-vol-db">${track.vol_str || '0 dB'}</span>
+            <div class="meter-wrapper-inline">
+              <div class="meter-bar-inline"><div class="meter-fill-inline meter-l"></div></div>
+              <div class="meter-bar-inline"><div class="meter-fill-inline meter-r"></div></div>
+            </div>
+          </div>
         </div>
-        <div class="track-buttons">
-          <button class="track-btn mute ${track.mute ? 'active' : ''}" data-track="${track.index}">M</button>
-          <button class="track-btn solo ${track.solo ? 'active' : ''}" data-track="${track.index}">S</button>
-          <button class="track-btn arm ${track.arm ? 'active' : ''}" data-track="${track.index}">A</button>
+
+        <!-- Boutons d'action M/S/A -->
+        <div class="track-actions-mini">
+          <button class="btn-mini-act mute ${track.mute ? 'active' : ''}" data-track="${track.index}">M</button>
+          <button class="btn-mini-act solo ${track.solo ? 'active' : ''}" data-track="${track.index}">S</button>
+          <button class="btn-mini-act arm ${track.arm ? 'active' : ''}" data-track="${track.index}">A</button>
         </div>
       `;
 
-      // Clic pour sélectionner la piste (idem que bouton physique sur Launch Control XL)
       strip.addEventListener('click', (e) => {
-        if (e.target.classList.contains('track-btn')) return;
+        if (e.target.classList.contains('btn-mini-act')) return;
         sendAction('select_track', { track_index: track.index });
       });
 
-      // Boutons Mute, Solo, Arm
-      const btnMute = strip.querySelector('.track-btn.mute');
-      const btnSolo = strip.querySelector('.track-btn.solo');
-      const btnArm = strip.querySelector('.track-btn.arm');
+      const btnMute = strip.querySelector('.btn-mini-act.mute');
+      const btnSolo = strip.querySelector('.btn-mini-act.solo');
+      const btnArm = strip.querySelector('.btn-mini-act.arm');
 
       btnMute.addEventListener('click', () => sendAction('toggle_mute', { track_index: track.index }));
       btnSolo.addEventListener('click', () => sendAction('toggle_solo', { track_index: track.index }));
       btnArm.addEventListener('click', () => sendAction('toggle_arm', { track_index: track.index }));
 
-      tracksContainer.appendChild(strip);
+      if (i < 8) {
+        if (tracksRow1) tracksRow1.appendChild(strip);
+      } else {
+        if (tracksRow2) tracksRow2.appendChild(strip);
+      }
     }
   }
 

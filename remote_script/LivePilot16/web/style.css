@@ -1,8 +1,8 @@
-/* LivePilot Cockpit — Stage HUD Theme v2.0 (16 Pistes + 24 Knobs) */
+/* LivePilot Cockpit — Stage HUD Theme v2.5 (Layout 2x8 Matériel + 3x8 Knobs Épuré) */
 :root {
   --bg-main: #0a0b0e;
   --bg-panel: #11141c;
-  --bg-strip: #161a25;
+  --bg-strip: #151823;
   --bg-strip-active: #1d263b;
   --border-color: #242a3c;
   --border-active: #00f0ff;
@@ -59,8 +59,8 @@ html, body {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 6px 12px;
-  min-height: 56px;
+  padding: 5px 12px;
+  min-height: 52px;
   gap: 12px;
 }
 
@@ -122,7 +122,7 @@ html, body {
   background: #1c202d;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
-  padding: 4px 14px;
+  padding: 3px 14px;
   transition: all 0.3s ease;
   box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
 }
@@ -141,7 +141,7 @@ html, body {
   font-weight: 900;
   background: rgba(0, 0, 0, 0.35);
   color: #fff;
-  padding: 2px 7px;
+  padding: 1px 7px;
   border-radius: 4px;
   letter-spacing: 0.5px;
 }
@@ -188,12 +188,12 @@ html, body {
 }
 .metric-value {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   color: var(--accent-cyan);
 }
 .metric-unit {
-  font-size: 9px;
+  font-size: 8px;
   color: var(--text-dim);
   margin-left: 2px;
 }
@@ -232,7 +232,7 @@ html, body {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 900;
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.5px;
 }
@@ -257,14 +257,13 @@ html, body {
   background: #202433;
   border: 1px solid var(--border-color);
   color: #fff;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 .btn-transport.play.active {
   background: var(--accent-green);
@@ -277,8 +276,8 @@ html, body {
   background: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-muted);
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -287,7 +286,7 @@ html, body {
 }
 
 /* ==========================================================================
-   MIXER SECTION (16 TRANCHES DE MIX ALIGNÉES SUR LES 16 BOUTONS DU CONTROLEUR)
+   MIXER SECTION (DISPOSITION 2 RANGÉES DE 8 PISTES — LAUNCH CONTROL XL)
    ========================================================================== */
 #mixer-section {
   display: flex;
@@ -296,6 +295,7 @@ html, body {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 6px 8px;
+  gap: 4px;
   flex: 0 0 auto;
 }
 
@@ -303,7 +303,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .section-title {
   font-size: 11px;
@@ -319,7 +319,7 @@ html, body {
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: bold;
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 3px;
 }
 
@@ -368,202 +368,199 @@ html, body {
   border-radius: 4px;
   cursor: pointer;
 }
-.btn-action:active {
-  background: var(--accent-cyan);
-  color: #000;
-}
 .btn-scenes-toggle {
   background: #26203a;
   border-color: var(--accent-purple);
   color: #d1b3ff;
 }
 
-/* GRILLE 16 PISTES */
-.tracks-grid-16 {
-  display: grid;
-  grid-template-columns: repeat(16, 1fr);
+/* CONTENEUR 2x8 DU LAUNCH CONTROL XL */
+.tracks-2x8-deck {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
+}
+
+.tracks-row-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
 }
 
 .track-strip {
   background: var(--bg-strip);
   border: 1px solid var(--border-color);
-  border-radius: 5px;
+  border-radius: 6px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 4px 2px;
+  justify-content: space-between;
+  padding: 4px 6px;
   position: relative;
   cursor: pointer;
   transition: all 0.15s ease;
-  min-height: 120px;
+  min-height: 54px;
 }
 .track-strip.selected {
   border-color: var(--accent-cyan);
   background: var(--bg-strip-active);
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.35);
-  transform: translateY(-1px);
 }
 
-/* STYLE SPÉCIFIQUE DES PISTES DE GROUPE (BUS) */
+/* STYLE PISTE DE GROUPE (BUS) */
 .track-strip.is-group-bus {
-  background: linear-gradient(180deg, #251c35 0%, #151824 100%);
-  border: 1.5px solid #856417;
+  background: linear-gradient(135deg, #251c35 0%, #151824 100%);
+  border: 1.5px solid #a87e22;
 }
 .track-strip.is-group-bus.selected {
   border-color: #ffcc00 !important;
   box-shadow: 0 0 14px rgba(255, 204, 0, 0.5) !important;
 }
 
-.track-strip.is-grouped-child {
-  border-left: 2px dashed #3a4463;
+/* BOUTON PHYSIQUE DU LAUNCH CONTROL XL (MIROIR DE LA PHOTO 2) */
+.xl-button-housing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #11131a;
+  border: 1px solid #232736;
+  border-radius: 4px;
+  padding: 3px 5px;
+  min-width: 32px;
 }
-
-.track-color-indicator {
-  width: 100%;
+.xl-led-bar {
+  width: 20px;
   height: 3px;
   border-radius: 2px;
-  margin-bottom: 3px;
-  background: #555;
+  background: #444;
+  margin-bottom: 2px;
+  box-shadow: 0 0 5px currentColor;
 }
-
-.track-strip.is-group-bus .track-color-indicator {
-  height: 5px;
-  box-shadow: 0 0 6px rgba(255, 183, 3, 0.5);
-}
-
-.track-header-box {
-  width: 100%;
-  text-align: center;
-  margin-bottom: 4px;
-}
-.track-num {
+.xl-btn-num {
   font-family: var(--font-mono);
   font-size: 8px;
+  font-weight: 900;
   color: var(--text-muted);
-  display: block;
 }
-.track-strip.selected .track-num {
+.track-strip.selected .xl-btn-num {
   color: var(--accent-cyan);
+}
+.track-strip.is-group-bus .xl-btn-num {
+  color: #ffcc00;
+}
+
+/* INFOS DE PISTE */
+.track-main-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  margin-left: 6px;
+  overflow: hidden;
+}
+.track-top-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.track-ch-badge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-dim);
   font-weight: bold;
 }
-.track-strip.is-group-bus .track-num {
-  color: #ffcc00;
-  font-weight: 800;
+.track-strip.selected .track-ch-badge {
+  color: var(--accent-cyan);
 }
-.track-name {
-  font-size: 9px;
+.track-name-text {
+  font-size: 10px;
   font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: block;
-  max-width: 100%;
 }
-.track-strip.is-group-bus .track-name {
+.track-strip.is-group-bus .track-name-text {
   color: #ffd84d;
   font-weight: 900;
-  letter-spacing: 0.3px;
 }
-.group-badge {
-  display: inline-block;
-  font-size: 7.5px;
+.group-pill {
+  font-size: 7px;
   background: #ffb703;
   color: #000;
   font-weight: 900;
   padding: 0.5px 3px;
   border-radius: 2px;
-  letter-spacing: 0.3px;
-  box-shadow: 0 0 4px rgba(255, 183, 3, 0.4);
-}
-.grouped-icon {
-  font-size: 8px;
-  color: #7b88ab;
-  margin-right: 1px;
 }
 
-.track-body {
+.track-bottom-row {
   display: flex;
-  width: 100%;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
-  flex: 1;
+  gap: 6px;
+  margin-top: 2px;
+}
+.track-vol-db {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: bold;
+  color: var(--text-main);
+}
+.track-strip.is-group-bus .track-vol-db {
+  color: #ffd84d;
 }
 
-/* STÉRÉO VU METER */
-.meter-wrapper {
+/* VU-MÈTRES HORIZONTAUX COMPACTS */
+.meter-wrapper-inline {
   display: flex;
-  gap: 1px;
-  height: 52px;
-  width: 12px;
+  flex-direction: column;
+  gap: 1.5px;
+  width: 42px;
+  height: 12px;
   background: #0d0f15;
-  padding: 1px;
+  padding: 1.5px;
   border-radius: 2px;
   border: 1px solid #1a1e2b;
 }
-.meter-bar {
+.meter-bar-inline {
   flex: 1;
   background: #1a1d26;
   border-radius: 1px;
   position: relative;
-  display: flex;
-  flex-direction: column-reverse;
   overflow: hidden;
 }
-.meter-fill {
-  width: 100%;
-  height: 0%;
-  background: linear-gradient(to top, #00ff88 0%, #00ff88 65%, #ffcc00 85%, #ff0055 100%);
-  transition: height 0.05s linear;
+.meter-fill-inline {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, #00ff88 0%, #00ff88 65%, #ffcc00 85%, #ff0055 100%);
+  transition: width 0.05s linear;
 }
 
-.fader-val {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: bold;
-  color: var(--text-main);
-  margin-top: 1px;
-}
-
-/* BUTTONS */
-.track-buttons {
+/* BOUTONS M/S/A MINIS */
+.track-actions-mini {
   display: flex;
-  width: 100%;
-  gap: 1px;
-  margin-top: 3px;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 4px;
 }
-.track-btn {
-  flex: 1;
+.btn-mini-act {
   font-family: var(--font-mono);
   font-size: 7px;
   font-weight: bold;
-  padding: 2px 0;
-  border: 1px solid var(--border-color);
+  width: 14px;
+  height: 11px;
+  line-height: 11px;
+  text-align: center;
   background: #1c202d;
   color: var(--text-dim);
+  border: 1px solid #282f44;
   border-radius: 2px;
   cursor: pointer;
-  text-align: center;
 }
-.track-btn.mute.active {
-  background: var(--accent-yellow);
-  color: #000;
-  border-color: var(--accent-yellow);
-}
-.track-btn.solo.active {
-  background: var(--accent-blue);
-  color: #fff;
-  border-color: var(--accent-blue);
-}
-.track-btn.arm.active {
-  background: var(--accent-red);
-  color: #fff;
-  border-color: var(--accent-red);
-}
+.btn-mini-act.mute.active { background: var(--accent-yellow); color: #000; border-color: var(--accent-yellow); }
+.btn-mini-act.solo.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+.btn-mini-act.arm.active  { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
 
 /* ==========================================================================
-   DEVICE SECTION (Chaîne de plugins [2/3] & 24 Knobs)
+   DEVICE SECTION (3 RANGÉES DE 8 SANS BANDEAUX SUPERFLUS)
    ========================================================================== */
 #device-section {
   display: flex;
@@ -597,14 +594,13 @@ html, body {
   color: var(--text-muted);
 }
 .active-device-badge {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   color: #fff;
   background: #1c2538;
   border: 1px solid var(--accent-cyan);
   padding: 2px 8px;
   border-radius: 6px;
-  letter-spacing: 0.5px;
 }
 
 .device-chain-scroll {
@@ -616,13 +612,8 @@ html, body {
   flex: 1;
   padding: 2px 4px;
 }
-.device-chain-scroll::-webkit-scrollbar {
-  height: 3px;
-}
-.device-chain-scroll::-webkit-scrollbar-thumb {
-  background: #2a2e40;
-  border-radius: 2px;
-}
+.device-chain-scroll::-webkit-scrollbar { height: 3px; }
+.device-chain-scroll::-webkit-scrollbar-thumb { background: #2a2e40; border-radius: 2px; }
 
 .device-pill {
   background: #181d2a;
@@ -630,8 +621,8 @@ html, body {
   color: var(--text-muted);
   font-size: 10px;
   font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 10px;
+  padding: 2px 7px;
+  border-radius: 8px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -649,37 +640,21 @@ html, body {
   gap: 4px;
 }
 
-/* MATRICE DES 24 KNOBS (3 RANGÉES DE 8) */
-.knobs-wrapper {
+/* MATRICE DES 24 KNOBS ÉPURÉE SANS PERTE DE PLACE */
+.knobs-wrapper-compact {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 2px;
+  gap: 4px;
   min-height: 0;
   overflow-y: auto;
-}
-
-.knobs-row-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: bold;
-  color: var(--text-dim);
-  letter-spacing: 1px;
-  margin-top: 1px;
-}
-.row-sub {
-  color: #66728f;
-  font-size: 8px;
 }
 
 .knobs-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: 4px;
+  gap: 5px;
   align-items: center;
 }
 
@@ -690,7 +665,7 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3px 2px;
+  padding: 4px 2px;
   position: relative;
   transition: border-color 0.15s ease;
 }
@@ -706,13 +681,13 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 90%;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
   text-align: center;
 }
 
 .knob-svg-wrapper {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   position: relative;
 }
 
@@ -725,7 +700,7 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 95%;
-  margin-top: 1px;
+  margin-top: 2px;
   text-align: center;
 }
 
@@ -743,10 +718,7 @@ html, body {
   align-items: center;
   z-index: 1000;
 }
-.modal-overlay.hidden {
-  display: none;
-}
-
+.modal-overlay.hidden { display: none; }
 .modal-content {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
@@ -757,21 +729,13 @@ html, body {
   display: flex;
   flex-direction: column;
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
 }
-.btn-close {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-}
-
+.btn-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
 .scenes-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -779,7 +743,6 @@ html, body {
   overflow-y: auto;
   padding-right: 4px;
 }
-
 .scene-item-card {
   background: #181d2a;
   border: 1px solid var(--border-color);
@@ -790,12 +753,5 @@ html, body {
   align-items: center;
   gap: 8px;
 }
-.scene-item-card.playing {
-  border-color: var(--accent-green);
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-}
-.scene-color-box {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-}
+.scene-item-card.playing { border-color: var(--accent-green); box-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
+.scene-color-box { width: 12px; height: 12px; border-radius: 3px; }
