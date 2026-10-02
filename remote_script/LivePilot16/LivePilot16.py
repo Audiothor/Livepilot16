@@ -95,10 +95,18 @@ class LivePilot16(ControlSurface):
             song.add_scenes_listener(self._on_scenes_list_changed)
         if not song.view.selected_scene_has_listener(self._on_scene_selection_changed):
             song.view.add_selected_scene_listener(self._on_scene_selection_changed)
+        if hasattr(song, 'master_track') and song.master_track and hasattr(song.master_track, 'mixer_device'):
+            vol = song.master_track.mixer_device.volume
+            if not vol.value_has_listener(self._on_master_volume_changed):
+                vol.add_value_listener(self._on_master_volume_changed)
         self._attach_scene_listeners()
 
     def _cleanup_listeners(self):
         song = self.song()
+        if hasattr(song, 'master_track') and song.master_track and hasattr(song.master_track, 'mixer_device'):
+            vol = song.master_track.mixer_device.volume
+            if vol.value_has_listener(self._on_master_volume_changed):
+                vol.remove_value_listener(self._on_master_volume_changed)
         if song.view.selected_track_has_listener(self._on_selected_track_changed):
             song.view.remove_selected_track_listener(self._on_selected_track_changed)
         if song.tracks_has_listener(self._on_tracks_changed):
@@ -142,6 +150,18 @@ class LivePilot16(ControlSurface):
     def _on_tempo_changed(self):
         self._send_scene_info()
         self._broadcast_transport()
+
+    def _on_master_volume_changed(self):
+        if not self._web_server:
+            return
+        m_vol = self.song().master_track.mixer_device.volume
+        self._web_server.broadcast({
+            'type': 'master_volume',
+            'data': {
+                'value': round(float(m_vol.value), 3),
+                'str': str(m_vol)
+            }
+        })
 
     def _on_play_state_changed(self):
         self._send_scene_info()
@@ -500,11 +520,16 @@ class LivePilot16(ControlSurface):
         except ValueError:
             sel_track_idx = 0
 
+        m_vol = song.master_track.mixer_device.volume if (hasattr(song, 'master_track') and song.master_track) else None
+        m_vol_val = round(float(m_vol.value), 3) if m_vol else 0.85
+        m_vol_str = str(m_vol) if m_vol else '0.0 dB'
+
         payload = {
             'tempo': round(float(song.tempo), 1),
             'is_playing': bool(song.is_playing),
             'play_status': self._get_play_status_string(),
             'position': cur_time,
+            'master_volume': {'value': m_vol_val, 'str': m_vol_str},
             'active_scene': active_scene_data,
             'scenes': scenes_list,
             'bank_index': self._current_bank_index,
@@ -699,6 +724,20 @@ class LivePilot16(ControlSurface):
             delta = msg.get('delta', 0.0)
             new_tempo = max(20.0, min(999.0, self.song().tempo + delta))
             self.song().tempo = new_tempo
+
+        elif action == 'set_master_volume':
+            v = float(msg.get('value', 0.85))
+            if hasattr(self.song(), 'master_track') and self.song().master_track:
+                self.song().master_track.mixer_device.volume.value = max(0.0, min(1.0, v))
+
+        elif action == 'select_bank':
+            b_idx = int(msg.get('bank_index', 0))
+            tracks = self.song().tracks
+            total_banks = max(1, (len(tracks) + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
+            self._current_bank_index = max(0, min(total_banks - 1, b_idx))
+            self._send_bank_info()
+            self._send_bank_colors()
+            self._broadcast_full_sync()
 
         elif action == 'nav_bank_prev':
             self._nav_bank_prev()
