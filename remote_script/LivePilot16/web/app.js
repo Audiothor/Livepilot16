@@ -1,6 +1,7 @@
 /**
- * LivePilot Cockpit — Stage HUD Client Application
- * WebSocket real-time bridge with Ableton Live Object Model (LOM)
+ * LivePilot Cockpit — Stage HUD Client Application v2.0
+ * 16 Pistes (Miroir des 16 boutons Launch Control XL) + 24 Knobs (3x8)
+ * Suivi précis de Scène sur 2 lignes et Focus Central de la piste active.
  */
 
 (function () {
@@ -11,8 +12,16 @@
     connected: false,
     tempo: 120.0,
     isPlaying: false,
+    playStatus: 'STOP',
     position: '1.1.1',
-    activeScene: { name: 'NO SCENE', color: '#1e2230' },
+    activeScene: {
+      num: 1,
+      total: 1,
+      name: 'AUCUNE SCÈNE',
+      desc: 'En attente de connexion Ableton Live...',
+      color: '#1e2230',
+      is_playing: false
+    },
     scenes: [],
     bankIndex: 0,
     totalBanks: 1,
@@ -20,7 +29,7 @@
     tracks: [],
     devices: [],
     activeDeviceIndex: 0,
-    activeDeviceName: 'No Assignment',
+    activeDeviceName: '[1/1] No Assignment',
     parameters: Array.from({ length: 24 }, (_, i) => ({
       index: i,
       name: `-`,
@@ -37,17 +46,24 @@
   // --- SÉLECTEURS DU DOM ---
   const statusBadge = document.getElementById('connection-status');
   const statusText = document.getElementById('status-text');
+  const sceneNumBadge = document.getElementById('scene-num-badge');
   const sceneNameEl = document.getElementById('scene-name');
+  const sceneDescEl = document.getElementById('scene-desc');
   const sceneBannerEl = document.getElementById('active-scene-banner');
   const positionCounterEl = document.getElementById('position-counter');
   const tempoDisplayEl = document.getElementById('tempo-display');
+  const playStatusBadge = document.getElementById('play-status-badge');
+  const playStatusIcon = document.getElementById('play-status-icon');
+  const playStatusText = document.getElementById('play-status-text');
   const btnPlay = document.getElementById('btn-play');
   const btnFullscreen = document.getElementById('btn-fullscreen');
   const btnBankPrev = document.getElementById('btn-bank-prev');
   const btnBankNext = document.getElementById('btn-bank-next');
   const bankIndicator = document.getElementById('bank-indicator');
   const tracksContainer = document.getElementById('tracks-strip-container');
-  const activeTrackNameEl = document.getElementById('active-track-name');
+  const focusedTrackChip = document.getElementById('focused-track-chip');
+  const focusedTrackVol = document.getElementById('focused-track-vol');
+  const activeDeviceTitle = document.getElementById('active-device-title');
   const deviceChainBar = document.getElementById('device-chain-bar');
   const btnDevicePrev = document.getElementById('btn-device-prev');
   const btnDeviceNext = document.getElementById('btn-device-next');
@@ -142,6 +158,7 @@
   function updateFullSync(data) {
     if (data.tempo !== undefined) state.tempo = data.tempo;
     if (data.is_playing !== undefined) state.isPlaying = data.is_playing;
+    if (data.play_status !== undefined) state.playStatus = data.play_status;
     if (data.position !== undefined) state.position = data.position;
     if (data.active_scene) state.activeScene = data.active_scene;
     if (data.scenes) state.scenes = data.scenes;
@@ -177,6 +194,7 @@
   function updateTransport(data) {
     if (data.tempo !== undefined) state.tempo = data.tempo;
     if (data.is_playing !== undefined) state.isPlaying = data.is_playing;
+    if (data.play_status !== undefined) state.playStatus = data.play_status;
     if (data.position !== undefined) state.position = data.position;
     renderTransport();
   }
@@ -216,45 +234,72 @@
     }
   }
 
-  // --- RENDU UI : TRANSPORT & SCÈNE ---
+  // --- RENDU UI : TRANSPORT & SCÈNE SUR 2 LIGNES ---
   function renderTransport() {
     tempoDisplayEl.textContent = state.tempo.toFixed(1);
     positionCounterEl.textContent = state.position;
-    if (state.isPlaying) {
+
+    // Statut PLAY / PAUSE / STOP
+    const status = state.playStatus || (state.isPlaying ? 'PLAY' : 'STOP');
+    playStatusText.textContent = status;
+    if (status === 'PLAY') {
+      playStatusBadge.className = 'status-state-badge play';
+      playStatusIcon.textContent = '▶';
       btnPlay.classList.add('active');
+    } else if (status === 'PAUSE') {
+      playStatusBadge.className = 'status-state-badge pause';
+      playStatusIcon.textContent = '⏸';
+      btnPlay.classList.remove('active');
     } else {
+      playStatusBadge.className = 'status-state-badge stop';
+      playStatusIcon.textContent = '⏹';
       btnPlay.classList.remove('active');
     }
   }
 
   function renderActiveScene() {
-    sceneNameEl.textContent = state.activeScene.name || 'NO SCENE';
-    if (state.activeScene.color) {
-      sceneBannerEl.style.backgroundColor = state.activeScene.color;
+    const sc = state.activeScene || {};
+    const num = sc.num || 1;
+    const total = sc.total || 1;
+    sceneNumBadge.textContent = `SCÈNE #${num}/${total}`;
+    sceneNameEl.textContent = sc.name || 'AUCUNE SCÈNE';
+    sceneDescEl.textContent = sc.desc || `Scène ${num} • Session Live`;
+
+    if (sc.color && sc.color !== '#000000') {
+      sceneBannerEl.style.backgroundColor = sc.color;
       sceneBannerEl.style.borderColor = '#ffffff';
+      sceneBannerEl.style.color = '#ffffff';
     } else {
-      sceneBannerEl.style.backgroundColor = '#1e2230';
-      sceneBannerEl.style.borderColor = 'rgba(255,255,255,0.1)';
+      sceneBannerEl.style.backgroundColor = '#1c202d';
+      sceneBannerEl.style.borderColor = 'rgba(255,255,255,0.15)';
+      sceneBannerEl.style.color = '#ffffff';
     }
   }
 
-  // --- RENDU UI : TRANCHES DE MIX (8 PISTES) ---
+  // --- RENDU UI : LES 16 TRANCHES DE MIX (16 BOUTONS LAUNCH CONTROL XL) ---
   function renderTracks() {
     bankIndicator.textContent = `BANK ${state.bankIndex + 1} / ${state.totalBanks}`;
     tracksContainer.innerHTML = '';
 
-    const selTrack = state.tracks.find(t => t.index === state.selectedTrackIndex);
+    // Trouver la piste sélectionnée et mettre à jour le bandeau central
+    const selTrack = state.tracks.find(t => t && t.index === state.selectedTrackIndex);
     if (selTrack) {
-      activeTrackNameEl.textContent = selTrack.name;
+      focusedTrackChip.textContent = `CH ${selTrack.index + 1} : ${selTrack.name}`;
+      focusedTrackVol.textContent = selTrack.vol_str || '0 dB';
+      if (selTrack.color) {
+        focusedTrackChip.style.color = selTrack.color;
+      }
     } else {
-      activeTrackNameEl.textContent = '-';
+      focusedTrackChip.textContent = `CH ${state.selectedTrackIndex + 1} : -`;
+      focusedTrackVol.textContent = '0 dB';
     }
 
-    for (let i = 0; i < 8; i++) {
+    // Rendu des 16 tranches de pistes
+    for (let i = 0; i < 16; i++) {
       const track = state.tracks[i] || {
-        index: -1,
+        index: (state.bankIndex * 16) + i,
         name: `TRK ${i + 1}`,
-        color: '#333',
+        color: '#444b60',
         is_group: false,
         mute: false,
         solo: false,
@@ -263,7 +308,7 @@
         pan_str: 'C'
       };
 
-      const isSelected = (track.index === state.selectedTrackIndex && track.index !== -1);
+      const isSelected = (track.index === state.selectedTrackIndex);
       const strip = document.createElement('div');
       strip.id = `track-strip-${i}`;
       strip.className = `track-strip ${isSelected ? 'selected' : ''}`;
@@ -271,18 +316,15 @@
       strip.innerHTML = `
         <div class="track-color-indicator" style="background-color: ${track.color || '#555'}"></div>
         <div class="track-header-box">
-          <span class="track-num">CH ${track.index >= 0 ? track.index + 1 : i + 1}</span>
-          <span class="track-name" title="${track.name}">${track.name} ${track.is_group ? '<span class="group-badge">GRP</span>' : ''}</span>
+          <span class="track-num">CH ${track.index + 1} ${isSelected ? '★' : ''}</span>
+          <span class="track-name" title="${track.name}">${track.name} ${track.is_group ? '<span class="group-badge">G</span>' : ''}</span>
         </div>
         <div class="track-body">
           <div class="meter-wrapper">
             <div class="meter-bar meter-l"><div class="meter-fill"></div></div>
             <div class="meter-bar meter-r"><div class="meter-fill"></div></div>
           </div>
-          <div class="fader-readout-box">
-            <span class="fader-val">${track.vol_str || '-inf'}</span>
-            <span class="pan-val">${track.pan_str || 'C'}</span>
-          </div>
+          <span class="fader-val">${track.vol_str || '0 dB'}</span>
         </div>
         <div class="track-buttons">
           <button class="track-btn mute ${track.mute ? 'active' : ''}" data-track="${track.index}">M</button>
@@ -291,11 +333,10 @@
         </div>
       `;
 
+      // Clic pour sélectionner la piste (idem que bouton physique sur Launch Control XL)
       strip.addEventListener('click', (e) => {
         if (e.target.classList.contains('track-btn')) return;
-        if (track.index >= 0) {
-          sendAction('select_track', { track_index: track.index });
-        }
+        sendAction('select_track', { track_index: track.index });
       });
 
       // Boutons Mute, Solo, Arm
@@ -311,11 +352,13 @@
     }
   }
 
-  // --- RENDU UI : CHAÎNE DE PLUGINS / DEVICES ---
+  // --- RENDU UI : CHAÎNE DE PLUGINS & NUMÉROTATION [2/3] ---
   function renderDeviceChain() {
+    activeDeviceTitle.textContent = state.activeDeviceName || '[1/1] No Assignment';
     deviceChainBar.innerHTML = '';
+
     if (!state.devices || state.devices.length === 0) {
-      deviceChainBar.innerHTML = '<span style="font-size:11px;color:#666;">No devices on track</span>';
+      deviceChainBar.innerHTML = '<span style="font-size:10px;color:#666;">Aucun plugin assigné</span>';
       return;
     }
 
@@ -323,7 +366,7 @@
       const pill = document.createElement('div');
       const isActive = idx === state.activeDeviceIndex;
       pill.className = `device-pill ${isActive ? 'active' : ''}`;
-      pill.innerHTML = `<span>${dev.name}</span>`;
+      pill.innerHTML = `<span>${dev.label || `[${idx + 1}/${state.devices.length}] ${dev.name}`}</span>`;
       pill.addEventListener('click', () => {
         sendAction('select_device', { device_index: idx });
       });
@@ -351,7 +394,6 @@
         <div class="knob-val-str">${param.str || '-'}</div>
       `;
 
-      // Interaction tactile ou glisser pour ajuster le paramètre
       attachKnobInteraction(card, idx);
       knobRows[rowIndex].appendChild(card);
     });
@@ -380,9 +422,9 @@
     const sweep = 270;
     const currentAngle = startAngle + val * sweep;
 
-    const r = 18;
-    const cx = 22;
-    const cy = 22;
+    const r = 15;
+    const cx = 19;
+    const cy = 19;
 
     const rad = (deg) => (deg * Math.PI) / 180;
     const x1 = cx + r * Math.cos(rad(startAngle));
@@ -392,15 +434,13 @@
 
     const largeArc = val * sweep > 180 ? 1 : 0;
 
-    // Track de fond
     const bgArcD = `M ${cx + r * Math.cos(rad(135))} ${cy + r * Math.sin(rad(135))} A ${r} ${r} 0 1 1 ${cx + r * Math.cos(rad(405))} ${cy + r * Math.sin(rad(405))}`;
-    // Arc actif
     const activeArcD = val > 0.01 ? `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}` : '';
 
     return `
-      <svg viewBox="0 0 44 44" width="44" height="44">
-        <path d="${bgArcD}" fill="none" stroke="#252a3b" stroke-width="4" stroke-linecap="round"/>
-        ${activeArcD ? `<path d="${activeArcD}" fill="none" stroke="#00f0ff" stroke-width="4" stroke-linecap="round"/>` : ''}
+      <svg viewBox="0 0 38 38" width="38" height="38">
+        <path d="${bgArcD}" fill="none" stroke="#252a3b" stroke-width="3" stroke-linecap="round"/>
+        ${activeArcD ? `<path d="${activeArcD}" fill="none" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>` : ''}
         <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
       </svg>
     `;
@@ -459,7 +499,7 @@
       card.className = `scene-item-card ${sc.is_playing ? 'playing' : ''}`;
       card.innerHTML = `
         <div class="scene-color-box" style="background-color: ${sc.color || '#555'}"></div>
-        <span style="font-size:12px;font-weight:bold;">${sc.index + 1}. ${sc.name}</span>
+        <span style="font-size:11px;font-weight:bold;">${sc.index + 1}. ${sc.name}</span>
       `;
       card.addEventListener('click', () => {
         sendAction('trigger_scene', { scene_index: sc.index });
@@ -469,7 +509,7 @@
     });
   }
 
-  // --- WAKE LOCK API (EMPECHE LA TABLETTE DE SE METTRE EN VEILLE SUR SCÈNE) ---
+  // --- SCREEN WAKE LOCK API ---
   async function requestWakeLock() {
     try {
       if ('wakeLock' in navigator) {
@@ -486,7 +526,7 @@
     }
   });
 
-  // --- LISTENERS DES BOUTONS DE NAVIGATION & TRANSPORT ---
+  // --- LISTENERS ---
   btnPlay.addEventListener('click', () => sendAction('toggle_play'));
   document.getElementById('btn-tempo-down').addEventListener('click', () => sendAction('adjust_tempo', { delta: -1.0 }));
   document.getElementById('btn-tempo-up').addEventListener('click', () => sendAction('adjust_tempo', { delta: +1.0 }));
@@ -506,6 +546,5 @@
     }
   });
 
-  // Démarrage initial
   connectWebSocket();
 })();

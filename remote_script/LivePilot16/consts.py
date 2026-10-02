@@ -16,9 +16,9 @@ CMD_SCENE_INFO    = 0x06
 CMD_FULL_SYNC_REQ = 0x0F
 
 # Numéros de Control Change (CC)
-CC_BASE_ENCODERS   = 16  # CC 16 à 39 (jusqu'à 24 encodeurs)
-CC_ENC17_JOG       = 32  # CC 32 (Encodeur Master : BPM Live / Paramètre / Jog)
-CC_ENC17_PUSH      = 33  # CC 33 (Clic poussoir Master)
+CC_BASE_ENCODERS   = 16  # CC 16 à 39 (24 encodeurs : 3 rangées de 8 knobs)
+CC_ENC17_JOG       = 40  # CC 40 (Master Jog / BPM)
+CC_ENC17_PUSH      = 41  # CC 41 (Clic poussoir Master)
 
 # Boutons de Navigation Système
 CC_NAV_LEFT        = 54  # Flèche Gauche ◄
@@ -31,9 +31,10 @@ CC_NAV_TRACK_NEXT  = 61  # Track > (Banque suivante)
 CC_NAV_DEV_PREV    = 62  # Device < (Device précédent)
 CC_NAV_DEV_NEXT    = 63  # Device > (Device suivant)
 
-CC_BASE_TRACK_SEL  = 64  # CC 64 à 71 (Boutons Piste 1 à 8)
+# 16 Boutons de Sélection de Piste du Launch Control XL (2 rangées de 8 boutons sous les faders)
+CC_BASE_TRACK_SEL  = 64  # CC 64 à 79 (Boutons 1 à 16 -> Sélection directe des Pistes 1 à 16)
 
 # Configuration de taille adaptée au Setup Live (Launch Control XL + Launchpad Pro MK3 + Tablette)
-NUM_TRACKS_PER_BANK = 8   # 8 pistes par tranche (miroir 1:1 du Launch Control XL et Launchpad)
-NUM_ENCODERS = 24         # 24 encodeurs (3 rangées de 8 knobs du Launch Control XL)
+NUM_TRACKS_PER_BANK = 16  # 16 pistes (correspondant aux 16 boutons du Launch Control XL)
+NUM_ENCODERS = 24         # 24 potentiomètres (3 rangées de 8 knobs du Launch Control XL)
 DEFAULT_HTTP_PORT = 8080  # Port HTTP / WebSocket pour la tablette Android

@@ -394,6 +394,51 @@ class LivePilot16(ControlSurface):
                 params_out.append({'index': i, 'name': '-', 'value': 0.0, 'str': '-'})
         return params_out
 
+    def _get_active_scene_info(self):
+        song = self.song()
+        active_sc = None
+        scene_idx = 0
+        for idx, sc in enumerate(song.scenes):
+            if getattr(sc, 'is_playing', False):
+                active_sc = sc
+                scene_idx = idx
+                break
+        if not active_sc:
+            active_sc = song.view.selected_scene
+            try:
+                scene_idx = list(song.scenes).index(active_sc)
+            except Exception:
+                scene_idx = 0
+
+        total_sc = len(song.scenes)
+        sc_name = active_sc.name if (active_sc and active_sc.name) else ("Scene %d" % (scene_idx + 1))
+        sig_num = getattr(song, 'signature_numerator', 4)
+        sig_den = getattr(song, 'signature_denominator', 4)
+        tempo = round(float(song.tempo), 1)
+        
+        # Ligne 2 : Descriptif / annotations scéniques complètes
+        desc_line = "Scène %d / %d  •  Tempo: %.1f BPM  •  Signature: %d/%d  •  Session Live" % (
+            scene_idx + 1, total_sc, tempo, sig_num, sig_den
+        )
+
+        return {
+            'num': scene_idx + 1,
+            'total': total_sc,
+            'name': sc_name,
+            'desc': desc_line,
+            'color': int_to_hex_color(getattr(active_sc, 'color', None)) if active_sc else '#1e2230',
+            'is_playing': bool(song.is_playing)
+        }
+
+    def _get_play_status_string(self):
+        song = self.song()
+        if song.is_playing:
+            return 'PLAY'
+        cur_time = float(getattr(song, 'current_song_time', 0.0))
+        if cur_time > 0.05:
+            return 'PAUSE'
+        return 'STOP'
+
     def _broadcast_full_sync(self):
         if not self._web_server:
             return
@@ -402,7 +447,7 @@ class LivePilot16(ControlSurface):
         total_tracks = len(tracks)
         total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
 
-        # 8 pistes de la banque courante
+        # 16 pistes de la banque courante (miroir des 16 boutons du Launch Control XL)
         bank_tracks = []
         start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
         for i in range(NUM_TRACKS_PER_BANK):
@@ -422,27 +467,24 @@ class LivePilot16(ControlSurface):
                 'is_playing': bool(getattr(sc, 'is_playing', False))
             })
 
-        # Scène active
-        active_sc = None
-        for sc in song.scenes:
-            if getattr(sc, 'is_playing', False):
-                active_sc = sc
-                break
-        if not active_sc:
-            active_sc = song.view.selected_scene
+        # Données de scène active sur 2 lignes
+        active_scene_data = self._get_active_scene_info()
 
-        active_scene_data = {
-            'name': active_sc.name if active_sc else 'NO SCENE',
-            'color': int_to_hex_color(getattr(active_sc, 'color', None)) if active_sc else '#1e2230'
-        }
-
-        # Devices sur la piste courante
+        # Chaîne des devices avec numérotation [1/3], [2/3]...
         devs_data = []
+        total_devs = len(self._assigned_devices)
         if self._current_track:
-            for dev in self._assigned_devices:
-                devs_data.append({'name': dev.name})
+            for idx, dev in enumerate(self._assigned_devices):
+                devs_data.append({
+                    'index': idx,
+                    'num': idx + 1,
+                    'total': total_devs,
+                    'name': dev.name,
+                    'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
+                })
 
-        # Position temporelle
+        active_dev_label = "[%d/%d] %s" % (self._current_device_idx + 1, total_devs, self._current_device.name) if self._current_device else "No Assignment"
+
         cur_time = str(song.current_song_time) if hasattr(song, 'current_song_time') else '1.1.1'
 
         try:
@@ -453,6 +495,7 @@ class LivePilot16(ControlSurface):
         payload = {
             'tempo': round(float(song.tempo), 1),
             'is_playing': bool(song.is_playing),
+            'play_status': self._get_play_status_string(),
             'position': cur_time,
             'active_scene': active_scene_data,
             'scenes': scenes_list,
@@ -462,7 +505,7 @@ class LivePilot16(ControlSurface):
             'tracks': bank_tracks,
             'devices': devs_data,
             'active_device_index': self._current_device_idx,
-            'active_device_name': self._current_device.name if self._current_device else 'No Assignment',
+            'active_device_name': active_dev_label,
             'parameters': self._build_params_list()
         }
         self._web_server.broadcast({'type': 'full_sync', 'data': payload})
@@ -476,6 +519,7 @@ class LivePilot16(ControlSurface):
             'data': {
                 'tempo': round(float(song.tempo), 1),
                 'is_playing': bool(song.is_playing),
+                'play_status': self._get_play_status_string(),
                 'position': str(song.current_song_time) if hasattr(song, 'current_song_time') else '1.1.1'
             }
         })
@@ -483,20 +527,9 @@ class LivePilot16(ControlSurface):
     def _broadcast_active_scene(self):
         if not self._web_server:
             return
-        active_sc = None
-        for sc in self.song().scenes:
-            if getattr(sc, 'is_playing', False):
-                active_sc = sc
-                break
-        if not active_sc:
-            active_sc = self.song().view.selected_scene
-
         self._web_server.broadcast({
             'type': 'scene',
-            'data': {
-                'name': active_sc.name if active_sc else 'NO SCENE',
-                'color': int_to_hex_color(getattr(active_sc, 'color', None)) if active_sc else '#1e2230'
-            }
+            'data': self._get_active_scene_info()
         })
 
     def _broadcast_selected_track(self):
@@ -517,14 +550,26 @@ class LivePilot16(ControlSurface):
             else:
                 bank_tracks.append(None)
 
-        devs_data = [{'name': dev.name} for dev in self._assigned_devices]
+        total_devs = len(self._assigned_devices)
+        devs_data = []
+        for idx, dev in enumerate(self._assigned_devices):
+            devs_data.append({
+                'index': idx,
+                'num': idx + 1,
+                'total': total_devs,
+                'name': dev.name,
+                'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
+            })
+
+        active_dev_label = "[%d/%d] %s" % (self._current_device_idx + 1, total_devs, self._current_device.name) if self._current_device else "No Assignment"
+
         self._web_server.broadcast({
             'type': 'track_selected',
             'data': {
                 'track_index': sel_idx,
                 'tracks': bank_tracks,
                 'devices': devs_data,
-                'active_device_name': self._current_device.name if self._current_device else 'No Assignment',
+                'active_device_name': active_dev_label,
                 'active_device_index': self._current_device_idx,
                 'parameters': self._build_params_list()
             }
@@ -533,11 +578,13 @@ class LivePilot16(ControlSurface):
     def _broadcast_selected_device(self):
         if not self._web_server:
             return
+        total_devs = len(self._assigned_devices)
+        active_dev_label = "[%d/%d] %s" % (self._current_device_idx + 1, total_devs, self._current_device.name) if self._current_device else "No Assignment"
         self._web_server.broadcast({
             'type': 'device_selected',
             'data': {
                 'device_index': self._current_device_idx,
-                'device_name': self._current_device.name if self._current_device else 'No Assignment',
+                'device_name': active_dev_label,
                 'parameters': self._build_params_list()
             }
         })

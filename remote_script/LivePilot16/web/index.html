@@ -25,20 +25,25 @@
         </div>
       </div>
 
-      <!-- BANDEAU SCÈNE EN COURS (Haute visibilité pour le Live) -->
+      <!-- BANDEAU SCÈNE EN COURS SUR 2 LIGNES EN LONGUEUR -->
       <div id="active-scene-banner" class="scene-banner">
-        <div class="scene-label">ACTIVE SCENE</div>
-        <div id="scene-name" class="scene-title">NO SCENE</div>
+        <div class="scene-line-1">
+          <span id="scene-num-badge" class="scene-num-tag">SCÈNE #--</span>
+          <span id="scene-name" class="scene-title">AUCUNE SCÈNE</span>
+        </div>
+        <div id="scene-desc" class="scene-line-2">
+          Chargement du projet Ableton Live...
+        </div>
       </div>
 
       <div class="top-right">
-        <!-- BAR / BEAT COUNTER -->
+        <!-- POSITION / MESURE -->
         <div class="metric-box">
-          <div class="metric-label">POSITION</div>
+          <div class="metric-label">MESURE</div>
           <div id="position-counter" class="metric-value">1.1.1</div>
         </div>
 
-        <!-- TEMPO & TRANSPORT -->
+        <!-- TEMPO -->
         <div class="metric-box tempo-box">
           <div class="metric-label">TEMPO</div>
           <div class="tempo-control">
@@ -49,15 +54,20 @@
           </div>
         </div>
 
-        <div class="transport-buttons">
-          <button id="btn-play" class="btn-transport play" title="Play / Stop">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <polygon points="6,4 20,12 6,20" fill="currentColor"/>
+        <!-- PLAY / STOP / PAUSE STATUS BADGE -->
+        <div class="transport-group">
+          <div id="play-status-badge" class="status-state-badge stop">
+            <span id="play-status-icon">⏹</span>
+            <span id="play-status-text">STOP</span>
+          </div>
+          <button id="btn-play" class="btn-transport play" title="Play / Pause / Stop">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <polygon points="6,4 20,12 6,20"/>
             </svg>
           </button>
         </div>
 
-        <!-- FULLSCREEN & SCREEN WAKE LOCK -->
+        <!-- FULLSCREEN -->
         <button id="btn-fullscreen" class="btn-icon" title="Plein écran">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
@@ -66,36 +76,46 @@
       </div>
     </header>
 
-    <!-- SECTION MIXER (8 PISTES ALIGNÉES SUR LAUNCH CONTROL XL & LAUNCHPAD) -->
+    <!-- SECTION MIXER (16 PISTES ALIGNÉES SUR LES 16 BOUTONS DU LAUNCH CONTROL XL) -->
     <section id="mixer-section">
       <div class="section-header">
         <div class="section-title">
-          <span>8-TRACK MIXER</span>
-          <span id="bank-indicator" class="bank-tag">BANK 1 / 1</span>
+          <span>16-TRACK MIXER</span>
+          <span id="bank-indicator" class="bank-tag">BANK 1</span>
         </div>
+
+        <!-- BANDEAU CENTRAL DE LA PISTE ACTUELLEMENT SÉLECTIONNÉE -->
+        <div id="focused-track-banner" class="focused-track-center">
+          <span class="focused-label">PISTE SÉLECTIONNÉE :</span>
+          <span id="focused-track-chip" class="focused-chip">CH 1 : -</span>
+          <span id="focused-track-vol" class="focused-vol">-inf dB</span>
+        </div>
+
         <div class="bank-controls">
           <button id="btn-bank-prev" class="btn-action">◄ BANK</button>
           <button id="btn-bank-next" class="btn-action">BANK ►</button>
-          <button id="btn-toggle-scenes" class="btn-action btn-scenes-toggle">SCENES LIST</button>
+          <button id="btn-toggle-scenes" class="btn-action btn-scenes-toggle">SCÈNES</button>
         </div>
       </div>
 
-      <div id="tracks-strip-container" class="tracks-grid">
-        <!-- Généré dynamiquement en JS (8 pistes) -->
+      <!-- GRILLE DES 16 PISTES / 16 VU-MÈTRES -->
+      <div id="tracks-strip-container" class="tracks-grid-16">
+        <!-- Généré dynamiquement en JS (16 pistes) -->
       </div>
     </section>
 
-    <!-- SECTION DEVICE & 24 ENCODEURS (ALIGNÉS SUR LES 24 KNOBS LAUNCH CONTROL XL) -->
+    <!-- SECTION DEVICE & 24 POTENTIOMÈTRES (3 RANGÉES DE 8 ALIGNÉES LAUNCH CONTROL XL) -->
     <section id="device-section">
       <div class="device-header">
+        <!-- INDICATEUR DE PLUGIN AVEC RATIO [2/3] -->
         <div class="device-track-info">
-          <span class="device-sublabel">SELECTED TRACK :</span>
-          <span id="active-track-name" class="active-track-title">-</span>
+          <span class="device-sublabel">PLUGIN ACTIF :</span>
+          <span id="active-device-title" class="active-device-badge">[1/1] No Assignment</span>
         </div>
 
-        <!-- Chaîne des plugins sur la piste -->
+        <!-- Chaîne complète des plugins sur la piste -->
         <div id="device-chain-bar" class="device-chain-scroll">
-          <!-- Injecté dynamiquement (ex: [Operator] [AutoFilter]* [Echo]) -->
+          <!-- Injecté dynamiquement (ex: [1/3 Wavetable] [2/3 AutoFilter]* [3/3 Echo]) -->
         </div>
 
         <div class="device-nav-buttons">
@@ -104,15 +124,24 @@
         </div>
       </div>
 
-      <!-- MATRICE DES 24 PARAMÈTRES (3 RANGÉES DE 8 KNOBS) -->
+      <!-- MATRICE DES 24 PARAMÈTRES (3 RANGÉES DE 8 KNOBS NOVATION LAUNCH CONTROL XL) -->
       <div class="knobs-wrapper">
-        <div class="knobs-row-label">ROW 1 (KNOBS 1-8)</div>
+        <div class="knobs-row-label">
+          <span>RANGÉE 1 (KNOBS 1 À 8)</span>
+          <span class="row-sub">Sends A / Macro 1 à 8</span>
+        </div>
         <div id="knobs-row-1" class="knobs-grid row-1"></div>
 
-        <div class="knobs-row-label">ROW 2 (KNOBS 9-16)</div>
+        <div class="knobs-row-label">
+          <span>RANGÉE 2 (KNOBS 9 À 16)</span>
+          <span class="row-sub">Sends B / Macro 9 à 16</span>
+        </div>
         <div id="knobs-row-2" class="knobs-grid row-2"></div>
 
-        <div class="knobs-row-label">ROW 3 (KNOBS 17-24)</div>
+        <div class="knobs-row-label">
+          <span>RANGÉE 3 (KNOBS 17 À 24)</span>
+          <span class="row-sub">Pan / Macro 17 à 24</span>
+        </div>
         <div id="knobs-row-3" class="knobs-grid row-3"></div>
       </div>
     </section>
@@ -121,7 +150,7 @@
     <div id="scenes-modal" class="modal-overlay hidden">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>ABLETON LIVE SCENES</h3>
+          <h3>ABLETON LIVE — LISTE DES SCÈNES</h3>
           <button id="btn-close-scenes" class="btn-close">&times;</button>
         </div>
         <div id="scenes-list" class="scenes-grid">
