@@ -278,19 +278,25 @@
 
   // --- RENDU UI : LES 16 TRANCHES DE MIX (16 BOUTONS LAUNCH CONTROL XL) ---
   function renderTracks() {
-    bankIndicator.textContent = `BANK ${state.bankIndex + 1} / ${state.totalBanks}`;
+    const startCh = (state.bankIndex * 16) + 1;
+    const endCh = startCh + 15;
+    bankIndicator.textContent = `BANQUE ${state.bankIndex + 1}/${state.totalBanks} (PISTES ${startCh}-${endCh})`;
     tracksContainer.innerHTML = '';
 
     // Trouver la piste sélectionnée et mettre à jour le bandeau central
     const selTrack = state.tracks.find(t => t && t.index === state.selectedTrackIndex);
     if (selTrack) {
-      focusedTrackChip.textContent = `CH ${selTrack.index + 1} : ${selTrack.name}`;
+      const btnNum = (selTrack.index % 16) + 1;
+      const bankNum = Math.floor(selTrack.index / 16) + 1;
+      focusedTrackChip.textContent = `CH ${selTrack.index + 1} ★ ${selTrack.name} (Bouton XL ${btnNum} • Banque ${bankNum})`;
       focusedTrackVol.textContent = selTrack.vol_str || '0 dB';
       if (selTrack.color) {
         focusedTrackChip.style.color = selTrack.color;
       }
     } else {
-      focusedTrackChip.textContent = `CH ${state.selectedTrackIndex + 1} : -`;
+      const btnNum = (state.selectedTrackIndex % 16) + 1;
+      const bankNum = Math.floor(state.selectedTrackIndex / 16) + 1;
+      focusedTrackChip.textContent = `CH ${state.selectedTrackIndex + 1} (Bouton XL ${btnNum} • Banque ${bankNum})`;
       focusedTrackVol.textContent = '0 dB';
     }
 
@@ -298,7 +304,7 @@
     for (let i = 0; i < 16; i++) {
       const track = state.tracks[i] || {
         index: (state.bankIndex * 16) + i,
-        name: `TRK ${i + 1}`,
+        name: `TRK ${(state.bankIndex * 16) + i + 1}`,
         color: '#444b60',
         is_group: false,
         mute: false,
@@ -316,6 +322,7 @@
       strip.innerHTML = `
         <div class="track-color-indicator" style="background-color: ${track.color || '#555'}"></div>
         <div class="track-header-box">
+          <span class="track-btn-num" style="font-size:7px;color:#8892b0;font-weight:bold;letter-spacing:0.5px;">BTN ${i + 1}</span>
           <span class="track-num">CH ${track.index + 1} ${isSelected ? '★' : ''}</span>
           <span class="track-name" title="${track.name}">${track.name} ${track.is_group ? '<span class="group-badge">G</span>' : ''}</span>
         </div>
