@@ -359,11 +359,19 @@ class LivePilot16(ControlSurface):
             return None
         vol_str = str(track.mixer_device.volume) if hasattr(track, 'mixer_device') else '0 dB'
         pan_str = str(track.mixer_device.panning) if hasattr(track, 'mixer_device') else 'C'
+        is_group = bool(getattr(track, 'is_foldable', False))
+        fold_state = bool(getattr(track, 'fold_state', False)) if is_group else False
+        is_grouped = bool(getattr(track, 'is_grouped', False))
+        group_name = track.group_track.name if (is_grouped and getattr(track, 'group_track', None)) else ""
+
         return {
             'index': global_index,
             'name': track.name,
             'color': int_to_hex_color(getattr(track, 'color', None)),
-            'is_group': bool(getattr(track, 'is_foldable', False)),
+            'is_group': is_group,
+            'fold_state': fold_state,
+            'is_grouped': is_grouped,
+            'group_name': group_name,
             'mute': bool(getattr(track, 'mute', False)),
             'solo': bool(getattr(track, 'solo', False)),
             'arm': bool(getattr(track, 'arm', False)),

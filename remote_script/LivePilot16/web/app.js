@@ -288,11 +288,17 @@
     if (selTrack) {
       const btnNum = (selTrack.index % 16) + 1;
       const bankNum = Math.floor(selTrack.index / 16) + 1;
-      focusedTrackChip.textContent = `CH ${selTrack.index + 1} ★ ${selTrack.name} (Bouton XL ${btnNum} • Banque ${bankNum})`;
-      focusedTrackVol.textContent = selTrack.vol_str || '0 dB';
-      if (selTrack.color) {
-        focusedTrackChip.style.color = selTrack.color;
+      if (selTrack.is_group) {
+        focusedTrackChip.textContent = `📁 GROUPE (BUS) : CH ${selTrack.index + 1} ★ ${selTrack.name.toUpperCase()} [${selTrack.fold_state ? 'PLIÉ 📁' : 'DÉPLIÉ 📂'}] (Bouton XL ${btnNum} • Banque ${bankNum})`;
+        focusedTrackChip.style.color = '#ffcc00';
+      } else if (selTrack.is_grouped) {
+        focusedTrackChip.textContent = `CH ${selTrack.index + 1} ★ ${selTrack.name} (↳ ${selTrack.group_name || 'Groupe'}) (Bouton XL ${btnNum} • Banque ${bankNum})`;
+        focusedTrackChip.style.color = selTrack.color || '#00f0ff';
+      } else {
+        focusedTrackChip.textContent = `CH ${selTrack.index + 1} ★ ${selTrack.name} (Bouton XL ${btnNum} • Banque ${bankNum})`;
+        focusedTrackChip.style.color = selTrack.color || '#00f0ff';
       }
+      focusedTrackVol.textContent = selTrack.vol_str || '0 dB';
     } else {
       const btnNum = (state.selectedTrackIndex % 16) + 1;
       const bankNum = Math.floor(state.selectedTrackIndex / 16) + 1;
@@ -307,6 +313,8 @@
         name: `TRK ${(state.bankIndex * 16) + i + 1}`,
         color: '#444b60',
         is_group: false,
+        fold_state: false,
+        is_grouped: false,
         mute: false,
         solo: false,
         arm: false,
@@ -315,23 +323,30 @@
       };
 
       const isSelected = (track.index === state.selectedTrackIndex);
+      const isGroup = Boolean(track.is_group);
+      const isGrouped = Boolean(track.is_grouped);
+
       const strip = document.createElement('div');
       strip.id = `track-strip-${i}`;
-      strip.className = `track-strip ${isSelected ? 'selected' : ''}`;
+      strip.className = `track-strip ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-bus' : ''} ${isGrouped ? 'is-grouped-child' : ''}`;
 
       strip.innerHTML = `
         <div class="track-color-indicator" style="background-color: ${track.color || '#555'}"></div>
         <div class="track-header-box">
-          <span class="track-btn-num" style="font-size:7px;color:#8892b0;font-weight:bold;letter-spacing:0.5px;">BTN ${i + 1}</span>
+          <span class="track-btn-num" style="font-size:7px;color:${isGroup ? '#ffcc00' : '#8892b0'};font-weight:bold;letter-spacing:0.5px;">BTN ${i + 1}</span>
           <span class="track-num">CH ${track.index + 1} ${isSelected ? '★' : ''}</span>
-          <span class="track-name" title="${track.name}">${track.name} ${track.is_group ? '<span class="group-badge">G</span>' : ''}</span>
+          <span class="track-name" title="${track.name}">
+            ${isGrouped ? '<span class="grouped-icon">↳</span>' : ''}
+            ${track.name}
+            ${isGroup ? `<span class="group-badge">${track.fold_state ? '📁 PLIÉ' : '📂 GRP'}</span>` : ''}
+          </span>
         </div>
         <div class="track-body">
           <div class="meter-wrapper">
             <div class="meter-bar meter-l"><div class="meter-fill"></div></div>
             <div class="meter-bar meter-r"><div class="meter-fill"></div></div>
           </div>
-          <span class="fader-val">${track.vol_str || '0 dB'}</span>
+          <span class="fader-val" style="${isGroup ? 'color:#ffd84d;font-weight:900;' : ''}">${track.vol_str || '0 dB'}</span>
         </div>
         <div class="track-buttons">
           <button class="track-btn mute ${track.mute ? 'active' : ''}" data-track="${track.index}">M</button>
