@@ -1,0 +1,17 @@
+{
+  "name": "LivePilot Cockpit",
+  "short_name": "LivePilot",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0a0b0e",
+  "theme_color": "#0a0b0e",
+  "description": "Headless Ableton Live Stage HUD Display for Android Tablet",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,681 @@
+/* LivePilot Cockpit — Stage HUD Theme */
+:root {
+  --bg-main: #0a0b0e;
+  --bg-panel: #12141c;
+  --bg-strip: #181b26;
+  --bg-card: #202433;
+  --border-color: #2b3044;
+  --border-active: #00f0ff;
+  
+  --accent-cyan: #00f0ff;
+  --accent-green: #00ff88;
+  --accent-yellow: #ffb703;
+  --accent-red: #ff0055;
+  --accent-blue: #3a86ff;
+  --accent-purple: #8338ec;
+
+  --text-main: #ffffff;
+  --text-muted: #8d95af;
+  --text-dim: #545b73;
+
+  --font-mono: "SF Mono", "Roboto Mono", "Consolas", monospace;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+}
+
+#cockpit-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   TOP BAR (Transport & Master Info)
+   ========================================================================== */
+#top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px 14px;
+  min-height: 52px;
+  gap: 12px;
+}
+
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+.brand-accent {
+  color: var(--accent-cyan);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #1e1e24;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+}
+.status-badge.connected .status-dot {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+}
+.status-badge.connected {
+  color: var(--accent-green);
+  background: rgba(0, 255, 136, 0.1);
+}
+.status-badge.disconnected .status-dot {
+  background: var(--accent-red);
+}
+.status-badge.disconnected {
+  color: var(--accent-red);
+}
+
+/* BANDEAU SCÈNE EN COURS */
+.scene-banner {
+  flex: 1;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1e2230;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 4px 12px;
+  text-align: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.scene-label {
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+.scene-title {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-strip);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.metric-label {
+  font-size: 8px;
+  font-weight: bold;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--accent-cyan);
+}
+.metric-unit {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-left: 2px;
+}
+
+.tempo-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-micro {
+  background: #2a2f42;
+  border: none;
+  color: #fff;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-micro:active {
+  background: var(--accent-cyan);
+  color: #000;
+}
+
+.transport-buttons {
+  display: flex;
+  gap: 6px;
+}
+.btn-transport {
+  background: #202433;
+  border: 1px solid var(--border-color);
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-transport.play.active {
+  background: var(--accent-green);
+  color: #0a0b0e;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+}
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.btn-icon:hover {
+  color: #fff;
+  border-color: #666;
+}
+
+/* ==========================================================================
+   MIXER SECTION (8 Tranches de mix alignées sur Launch Control XL)
+   ========================================================================== */
+#mixer-section {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  flex: 0 0 auto;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.section-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bank-tag {
+  background: #2a2e40;
+  color: var(--accent-yellow);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.bank-controls {
+  display: flex;
+  gap: 6px;
+}
+.btn-action {
+  background: #202433;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-action:active {
+  background: var(--accent-cyan);
+  color: #000;
+}
+.btn-scenes-toggle {
+  background: #2b2542;
+  border-color: var(--accent-purple);
+  color: #d1b3ff;
+}
+
+.tracks-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.track-strip {
+  background: var(--bg-strip);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  min-height: 140px;
+}
+.track-strip.selected {
+  border-color: var(--accent-cyan);
+  background: #1b2436;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+.track-color-indicator {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+  background: #555;
+}
+
+.track-header-box {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.track-num {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.track-name {
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.group-badge {
+  display: inline-block;
+  font-size: 8px;
+  background: #ffaa00;
+  color: #000;
+  font-weight: bold;
+  padding: 0 3px;
+  border-radius: 2px;
+  margin-left: 2px;
+}
+
+.track-body {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+/* STÉRÉO VU METER */
+.meter-wrapper {
+  display: flex;
+  gap: 2px;
+  height: 64px;
+  width: 14px;
+  background: #0d0f15;
+  padding: 2px;
+  border-radius: 3px;
+  border: 1px solid #1a1e2b;
+}
+.meter-bar {
+  flex: 1;
+  background: #1a1d26;
+  border-radius: 1px;
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  overflow: hidden;
+}
+.meter-fill {
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(to top, #00ff88 0%, #00ff88 65%, #ffcc00 85%, #ff0055 100%);
+  transition: height 0.05s linear;
+}
+
+/* FADER & PAN READOUT */
+.fader-readout-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  height: 64px;
+}
+.fader-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--text-main);
+}
+.pan-val {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* TRACK BUTTONS (Mute, Solo, Arm) */
+.track-buttons {
+  display: flex;
+  width: 100%;
+  gap: 2px;
+  margin-top: 6px;
+}
+.track-btn {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: bold;
+  padding: 3px 0;
+  border: 1px solid var(--border-color);
+  background: #1c202d;
+  color: var(--text-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+}
+.track-btn.mute.active {
+  background: var(--accent-yellow);
+  color: #000;
+  border-color: var(--accent-yellow);
+}
+.track-btn.solo.active {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
+}
+.track-btn.arm.active {
+  background: var(--accent-red);
+  color: #fff;
+  border-color: var(--accent-red);
+}
+
+/* ==========================================================================
+   DEVICE SECTION (Chaîne de plugins & 24 Knobs)
+   ========================================================================== */
+#device-section {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.device-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 10px;
+}
+
+.device-track-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.device-sublabel {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--text-muted);
+}
+.active-track-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+}
+
+/* Chaîne des devices */
+.device-chain-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex: 1;
+  padding: 2px 4px;
+}
+.device-chain-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.device-chain-scroll::-webkit-scrollbar-thumb {
+  background: #2a2e40;
+  border-radius: 2px;
+}
+
+.device-pill {
+  background: #1c202d;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.device-pill.active {
+  background: #2a344d;
+  border-color: var(--accent-cyan);
+  color: var(--text-main);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.device-nav-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+/* MATRICE DES 24 KNOBS */
+.knobs-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.knobs-row-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: bold;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.knobs-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.knob-card {
+  background: var(--bg-strip);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 2px;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+.knob-card.tweaked {
+  border-color: var(--accent-green);
+}
+
+.knob-name {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.knob-svg-wrapper {
+  width: 44px;
+  height: 44px;
+  position: relative;
+}
+
+.knob-val-str {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--accent-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95%;
+  margin-top: 2px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   SCENES MODAL / DRAWER
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  width: 80%;
+  max-height: 80%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.btn-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.scenes-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.scene-item-card {
+  background: #1e2230;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scene-item-card.playing {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+.scene-color-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
