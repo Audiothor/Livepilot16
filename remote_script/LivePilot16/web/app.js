@@ -87,6 +87,9 @@
   const deviceChainBar = document.getElementById('device-chain-bar');
   const btnDevicePrev = document.getElementById('btn-device-prev');
   const btnDeviceNext = document.getElementById('btn-device-next');
+  const btnDeviceSidePrev = document.getElementById('btn-device-side-prev');
+  const btnDeviceSideNext = document.getElementById('btn-device-side-next');
+  const devCounterNum = document.getElementById('dev-counter-num');
 
   const knobRows = [
     document.getElementById('knobs-row-1'),
@@ -504,6 +507,11 @@
   // --- RENDU UI : CHAÎNE DE PLUGINS ---
   function renderDeviceChain() {
     if (activeDeviceTitle) activeDeviceTitle.textContent = state.activeDeviceName || '[1/1] No Assignment';
+    
+    const totalDevs = (state.devices && state.devices.length) || 1;
+    const currentDevNum = Math.min(totalDevs, Math.max(1, (state.activeDeviceIndex !== undefined ? state.activeDeviceIndex + 1 : 1)));
+    if (devCounterNum) devCounterNum.textContent = `${currentDevNum} / ${totalDevs}`;
+
     if (!deviceChainBar) return;
     deviceChainBar.innerHTML = '';
 
@@ -724,9 +732,11 @@
     });
   });
 
-  // Navigation Device
+  // Navigation Device (Header + Sidebar)
   if (btnDevicePrev) btnDevicePrev.addEventListener('click', () => sendAction('nav_device_prev'));
   if (btnDeviceNext) btnDeviceNext.addEventListener('click', () => sendAction('nav_device_next'));
+  if (btnDeviceSidePrev) btnDeviceSidePrev.addEventListener('click', () => sendAction('nav_device_prev'));
+  if (btnDeviceSideNext) btnDeviceSideNext.addEventListener('click', () => sendAction('nav_device_next'));
 
   // Modale de scènes
   if (sceneFullBanner && scenesModal) {

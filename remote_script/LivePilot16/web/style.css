@@ -762,8 +762,84 @@ html, body {
   border-color: var(--accent-cyan);
 }
 
+/* CONTENEUR PRINCIPAL DU BAS : SIDEBAR GAUCHE + GRILLE DES 24 KNOBS */
+.device-body-container {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+/* 2 BOUTONS GAUCHE / DROITE DE NAVIGATION PLUGIN (ALIGNÉS AVEC LA COLONNE DES BANQUES : 82px) */
+.device-side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 82px;
+  justify-content: space-between;
+}
+
+.device-side-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #161b28;
+  border: 1px solid #283147;
+  border-radius: 5px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 4px 2px;
+}
+.device-side-btn:hover {
+  border-color: var(--accent-cyan);
+  background: #1c253b;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+.device-side-btn:active {
+  transform: scale(0.97);
+}
+.dev-nav-arrow {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--accent-cyan);
+}
+.dev-nav-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 900;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.device-counter-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #11141e;
+  border: 1px solid #1f2738;
+  border-radius: 4px;
+  padding: 3px 2px;
+}
+.dev-counter-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  color: #fff;
+}
+.dev-counter-sub {
+  font-size: 7px;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
 /* MATRICE DES 24 KNOBS : ESPACEMENT STRICTEMENT CONTRÔLÉ SANS GRAND VIDE VERTICAL */
 .knobs-wrapper-compact {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 5px;

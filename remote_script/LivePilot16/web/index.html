@@ -137,14 +137,34 @@
         </div>
       </div>
 
-      <!-- MATRICE DES 24 PARAMÈTRES (3 RANGÉES DE 8 SANS ESPACE VIDE EXCÉDENTAIRE) -->
-      <div class="knobs-wrapper-compact">
-        <!-- Rangée 1 : Knobs 1 à 8 -->
-        <div id="knobs-row-1" class="knobs-grid row-1"></div>
-        <!-- Rangée 2 : Knobs 9 à 16 -->
-        <div id="knobs-row-2" class="knobs-grid row-2"></div>
-        <!-- Rangée 3 : Knobs 17 à 24 -->
-        <div id="knobs-row-3" class="knobs-grid row-3"></div>
+      <!-- MATRICE DES 24 PARAMÈTRES AVEC BARRE LATÉRALE DE NAVIGATION GAUCHE/DROITE -->
+      <div class="device-body-container">
+        <!-- 2 BOUTONS GAUCHE / DROITE DE NAVIGATION PLUGIN (ALIGNÉS AVEC LES BOUTONS DE BANQUE) -->
+        <div class="device-side-nav">
+          <button id="btn-device-side-prev" class="device-side-btn" title="Plugin précédent">
+            <span class="dev-nav-arrow">◄</span>
+            <span class="dev-nav-label">PRÉC</span>
+          </button>
+          
+          <div class="device-counter-badge">
+            <span id="dev-counter-num" class="dev-counter-val">1 / 2</span>
+            <span class="dev-counter-sub">PLUGIN</span>
+          </div>
+
+          <button id="btn-device-side-next" class="device-side-btn" title="Plugin suivant">
+            <span class="dev-nav-arrow">►</span>
+            <span class="dev-nav-label">SUIV</span>
+          </button>
+        </div>
+
+        <div class="knobs-wrapper-compact">
+          <!-- Rangée 1 : Knobs 1 à 8 -->
+          <div id="knobs-row-1" class="knobs-grid row-1"></div>
+          <!-- Rangée 2 : Knobs 9 à 16 -->
+          <div id="knobs-row-2" class="knobs-grid row-2"></div>
+          <!-- Rangée 3 : Knobs 17 à 24 -->
+          <div id="knobs-row-3" class="knobs-grid row-3"></div>
+        </div>
       </div>
     </section>
 
