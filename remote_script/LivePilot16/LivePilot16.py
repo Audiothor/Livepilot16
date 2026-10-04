@@ -379,6 +379,7 @@ class LivePilot16(ControlSurface):
             return None
         vol_str = str(track.mixer_device.volume) if hasattr(track, 'mixer_device') else '0 dB'
         pan_str = str(track.mixer_device.panning) if hasattr(track, 'mixer_device') else 'C'
+        pan_val = round(float(track.mixer_device.panning.value), 2) if (hasattr(track, 'mixer_device') and hasattr(track.mixer_device, 'panning')) else 0.0
         is_group = bool(getattr(track, 'is_foldable', False))
         fold_state = bool(getattr(track, 'fold_state', False)) if is_group else False
         is_grouped = bool(getattr(track, 'is_grouped', False))
@@ -396,7 +397,8 @@ class LivePilot16(ControlSurface):
             'solo': bool(getattr(track, 'solo', False)),
             'arm': bool(getattr(track, 'arm', False)),
             'vol_str': vol_str,
-            'pan_str': pan_str
+            'pan_str': pan_str,
+            'pan_val': pan_val
         }
 
     def _build_params_list(self):
@@ -743,6 +745,14 @@ class LivePilot16(ControlSurface):
             v = float(msg.get('value', 0.85))
             if hasattr(self.song(), 'master_track') and self.song().master_track:
                 self.song().master_track.mixer_device.volume.value = max(0.0, min(1.0, v))
+
+        elif action == 'set_track_pan':
+            t_idx = msg.get('track_index', 0)
+            p_val = float(msg.get('value', 0.0))
+            tracks = list(self.song().tracks)
+            if 0 <= t_idx < len(tracks) and hasattr(tracks[t_idx], 'mixer_device'):
+                tracks[t_idx].mixer_device.panning.value = max(-1.0, min(1.0, p_val))
+                self._broadcast_selected_track()
 
         elif action == 'select_bank':
             b_idx = int(msg.get('bank_index', 0))

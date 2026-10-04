@@ -74,7 +74,7 @@
 
   // Volume Général Ableton
   const masterVolText = document.getElementById('master-vol-text');
-  const masterVolFill = document.getElementById('master-vol-fill');
+  const masterLedLadder = document.getElementById('master-led-ladder');
   const masterVolSlider = document.getElementById('master-vol-slider');
 
   // Banques & Grille 2x8
@@ -357,11 +357,31 @@
     }
   }
 
-  // --- RENDU UI : VOLUME GÉNÉRAL ABLETON (MASTER VOLUME) ---
+  // --- RENDU UI : VOLUME GÉNÉRAL ABLETON (MASTER VOLUME AVEC VU-MÈTRE SEGMENTÉ) ---
   function renderMasterVolume() {
     const vol = state.masterVolume || { value: 0.85, str: '0.0 dB' };
     if (masterVolText) masterVolText.textContent = vol.str || '0.0 dB';
-    if (masterVolFill) masterVolFill.style.width = `${Math.min(100, Math.max(0, vol.value * 100))}%`;
+    
+    if (masterLedLadder) {
+      if (masterLedLadder.children.length === 0) {
+        for (let s = 0; s < 16; s++) {
+          const step = document.createElement('div');
+          const colorClass = s < 11 ? 'green' : (s < 14 ? 'yellow' : 'red');
+          step.className = `led-step ${colorClass}`;
+          masterLedLadder.appendChild(step);
+        }
+      }
+      const steps = masterLedLadder.children;
+      const litCount = Math.round(Math.max(0, Math.min(1, vol.value)) * steps.length);
+      for (let s = 0; s < steps.length; s++) {
+        if (s < litCount) {
+          steps[s].classList.add('active');
+        } else {
+          steps[s].classList.remove('active');
+        }
+      }
+    }
+
     if (masterVolSlider && document.activeElement !== masterVolSlider) {
       masterVolSlider.value = vol.value;
     }
@@ -396,12 +416,17 @@
         solo: false,
         arm: false,
         vol_str: '-inf dB',
-        pan_str: 'C'
+        pan_str: 'C',
+        pan_val: 0.0
       };
 
       const isSelected = (track.index === state.selectedTrackIndex);
       const isGroup = Boolean(track.is_group);
       const isGrouped = Boolean(track.is_grouped);
+      const panVal = track.pan_val !== undefined ? track.pan_val : 0.0;
+      const panStr = track.pan_str || 'C';
+      const panPercent = Math.min(50, Math.round(Math.abs(panVal) * 50));
+      const panDir = panVal < -0.01 ? 'left' : (panVal > 0.01 ? 'right' : 'center');
 
       const strip = document.createElement('div');
       strip.id = `track-strip-${i}`;
@@ -424,6 +449,19 @@
             </span>
             ${isGroup ? `<span class="group-pill">${track.fold_state ? '📁' : '📂'}</span>` : ''}
           </div>
+
+          <!-- Panning de chaque piste (Bipolaire centre 0) -->
+          <div class="track-pan-row" title="Panoramique: ${panStr}">
+            <div class="track-pan-wrapper">
+              <span class="track-pan-label">PAN</span>
+              <div class="pan-bipolar-track">
+                <div class="pan-center-tick"></div>
+                ${panDir !== 'center' ? `<div class="pan-fill-bar ${panDir}" style="width: ${panPercent}%;"></div>` : ''}
+              </div>
+              <span class="track-pan-val">${panStr}</span>
+            </div>
+          </div>
+
           <div class="track-bottom-row">
             <span class="track-vol-db">${track.vol_str || '0 dB'}</span>
             <!-- VU-mètre horizontal stéréo compact -->
@@ -672,7 +710,8 @@
   if (masterVolSlider) {
     masterVolSlider.addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
-      if (masterVolFill) masterVolFill.style.width = `${val * 100}%`;
+      state.masterVolume.value = val;
+      renderMasterVolume();
       sendAction('set_master_volume', { value: val });
     });
   }
