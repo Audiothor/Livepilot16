@@ -444,7 +444,18 @@ class LivePilot16(ControlSurface):
         sig_den = getattr(song, 'signature_denominator', 4)
         tempo = round(float(song.tempo), 1)
         
-        # Ligne 2 : Descriptif / annotations scéniques complètes
+        # Ligne 2 : Scène suivante (repère live de transition)
+        next_sc_idx = scene_idx + 1
+        if next_sc_idx < total_sc:
+            next_sc = song.scenes[next_sc_idx]
+            next_sc_name = next_sc.name if (next_sc and next_sc.name) else ("Scene %d" % (next_sc_idx + 1))
+            next_sc_color = int_to_hex_color(getattr(next_sc, 'color', None))
+            next_sc_num = next_sc_idx + 1
+        else:
+            next_sc_name = "--- (FIN DU LIVE / DERNIÈRE SCÈNE) ---"
+            next_sc_color = "#333b4f"
+            next_sc_num = 0
+
         desc_line = "Scène %d / %d  •  Tempo: %.1f BPM  •  Signature: %d/%d  •  Session Live" % (
             scene_idx + 1, total_sc, tempo, sig_num, sig_den
         )
@@ -455,7 +466,10 @@ class LivePilot16(ControlSurface):
             'name': sc_name,
             'desc': desc_line,
             'color': int_to_hex_color(getattr(active_sc, 'color', None)) if active_sc else '#1e2230',
-            'is_playing': bool(song.is_playing)
+            'is_playing': bool(song.is_playing),
+            'next_num': next_sc_num,
+            'next_name': next_sc_name,
+            'next_color': next_sc_color
         }
 
     def _get_play_status_string(self):

@@ -65,10 +65,12 @@
   const focusedTrackNum = document.getElementById('focused-track-num');
   const tempoDisplayEl = document.getElementById('tempo-display');
 
-  // Scène 2 lignes
-  const sceneNameEl = document.getElementById('scene-name');
-  const sceneDescEl = document.getElementById('scene-desc');
-  const sceneBannerEl = document.getElementById('active-scene-banner');
+  // Scène Pleine Largeur (En cours & Suivante)
+  const sceneActiveNum = document.getElementById('scene-active-num');
+  const sceneActiveTitle = document.getElementById('scene-active-title');
+  const sceneNextNum = document.getElementById('scene-next-num');
+  const sceneNextTitle = document.getElementById('scene-next-title');
+  const sceneFullBanner = document.getElementById('scene-full-banner');
 
   // Volume Général Ableton
   const masterVolText = document.getElementById('master-vol-text');
@@ -326,17 +328,32 @@
     if (tempoDisplayEl) tempoDisplayEl.textContent = state.tempo.toFixed(1);
   }
 
-  // --- RENDU UI : SCÈNE 2 LIGNES EN HAUTEUR AGRANDIE ---
+  // --- RENDU UI : BANDEAU DE SCÈNE PLEINE LARGEUR (EN COURS & SUIVANTE) ---
   function renderActiveScene() {
     const sc = state.activeScene || {};
-    if (sceneNameEl) sceneNameEl.textContent = sc.name || '01 - INTRO AMBIENT';
-    if (sceneDescEl) {
-      sceneDescEl.textContent = sc.desc || `Tempo: ${state.tempo.toFixed(1)} BPM • Scène ${sc.num || 1} • Live Session`;
+    const curNum = sc.num || 1;
+    const total = sc.total || 1;
+
+    if (sceneActiveNum) {
+      sceneActiveNum.textContent = `SCÈNE #${curNum < 10 ? '0' + curNum : curNum} / ${total}`;
+    }
+    if (sceneActiveTitle) {
+      sceneActiveTitle.textContent = sc.name || '01 - INTRO AMBIENT';
     }
 
-    if (sceneBannerEl && sc.color && sc.color !== '#000000') {
-      sceneBannerEl.style.backgroundColor = sc.color;
-      sceneBannerEl.style.color = '#000000';
+    // Scène suivante
+    const nextNum = sc.next_num !== undefined ? sc.next_num : (curNum < total ? curNum + 1 : 0);
+    const nextName = sc.next_name || (state.scenes && state.scenes[curNum] ? state.scenes[curNum].name : '--- (FIN DU LIVE / DERNIÈRE SCÈNE) ---');
+
+    if (sceneNextNum) {
+      if (nextNum > 0) {
+        sceneNextNum.textContent = `SCÈNE #${nextNum < 10 ? '0' + nextNum : nextNum} / ${total}`;
+      } else {
+        sceneNextNum.textContent = `FIN DU SET`;
+      }
+    }
+    if (sceneNextTitle) {
+      sceneNextTitle.textContent = nextName;
     }
   }
 
@@ -673,8 +690,8 @@
   if (btnDeviceNext) btnDeviceNext.addEventListener('click', () => sendAction('nav_device_next'));
 
   // Modale de scènes
-  if (sceneBannerEl && scenesModal) {
-    sceneBannerEl.addEventListener('click', () => scenesModal.classList.remove('hidden'));
+  if (sceneFullBanner && scenesModal) {
+    sceneFullBanner.addEventListener('click', () => scenesModal.classList.remove('hidden'));
   }
   if (btnCloseScenes && scenesModal) {
     btnCloseScenes.addEventListener('click', () => scenesModal.classList.add('hidden'));
