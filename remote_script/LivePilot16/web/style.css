@@ -418,13 +418,6 @@ html, body {
   transition: all 0.15s ease;
   min-height: 56px;
 }
-  justify-content: space-between;
-  padding: 3px 5px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  min-height: 52px;
-}
 .track-strip.selected {
   border-color: var(--accent-cyan);
   background: var(--bg-strip-active);
