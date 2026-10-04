@@ -300,35 +300,24 @@
       }
     }
 
-    // 2. SCÈNE NUMBER
-    const sc = state.activeScene || {};
-    const scNum = sc.num || 1;
-    const scTotal = sc.total || 1;
-    if (sceneNumBadge) {
-      sceneNumBadge.textContent = `#${scNum < 10 ? '0' + scNum : scNum} / ${scTotal}`;
-    }
-
-    // 3. TRACK SÉLECTIONNÉ
+    // 2. TRACK SÉLECTIONNÉ
     const selTrack = state.tracks.find(t => t && t.index === state.selectedTrackIndex);
-    if (focusedTrackNum) {
-      if (selTrack) {
-        const numFormatted = (selTrack.index + 1) < 10 ? `0${selTrack.index + 1}` : selTrack.index + 1;
-        focusedTrackNum.textContent = `#${numFormatted} ${selTrack.name.substring(0, 10).toUpperCase()}`;
-        if (trackFocusPill) {
-          if (selTrack.is_group) {
-            trackFocusPill.className = 'status-pill track-pill is-group';
-          } else {
-            trackFocusPill.className = 'status-pill track-pill';
-          }
-        }
+    const numFormatted = (state.selectedTrackIndex + 1) < 10 ? `0${state.selectedTrackIndex + 1}` : state.selectedTrackIndex + 1;
+    if (trackFocusPill) {
+      const lbl = trackFocusPill.querySelector('.pill-label');
+      if (lbl) lbl.textContent = `TRACK #${numFormatted}`;
+      if (focusedTrackNum) {
+        focusedTrackNum.textContent = selTrack ? selTrack.name.toUpperCase() : `TRACK #${numFormatted}`;
+      }
+      if (selTrack && selTrack.is_group) {
+        trackFocusPill.className = 'status-pill track-pill is-group';
       } else {
-        const numFormatted = (state.selectedTrackIndex + 1) < 10 ? `0${state.selectedTrackIndex + 1}` : state.selectedTrackIndex + 1;
-        focusedTrackNum.textContent = `#${numFormatted}`;
+        trackFocusPill.className = 'status-pill track-pill';
       }
     }
 
-    // 4. BPM
-    if (tempoDisplayEl) tempoDisplayEl.textContent = state.tempo.toFixed(1);
+    // 3. BPM
+    if (tempoDisplayEl) tempoDisplayEl.textContent = `${state.tempo.toFixed(1)} BPM`;
   }
 
   // --- RENDU UI : BANDEAU DE SCÈNE PLEINE LARGEUR (EN COURS & SUIVANTE) ---
@@ -336,25 +325,20 @@
     const sc = state.activeScene || {};
     const curNum = sc.num || 1;
     const total = sc.total || 1;
+    const curPrefix = curNum < 10 ? '0' + curNum : curNum;
+    const rawCurName = sc.name || 'VERSE A (SYNTH & BASSLINE)';
+    const curName = rawCurName.match(/^\d+/) ? rawCurName : `${curPrefix} - ${rawCurName} [${state.tempo.toFixed(0)} BPM]`;
 
-    if (sceneActiveNum) {
-      sceneActiveNum.textContent = `SCÈNE #${curNum < 10 ? '0' + curNum : curNum} / ${total}`;
-    }
     if (sceneActiveTitle) {
-      sceneActiveTitle.textContent = sc.name || '01 - INTRO AMBIENT';
+      sceneActiveTitle.textContent = curName;
     }
 
     // Scène suivante
     const nextNum = sc.next_num !== undefined ? sc.next_num : (curNum < total ? curNum + 1 : 0);
-    const nextName = sc.next_name || (state.scenes && state.scenes[curNum] ? state.scenes[curNum].name : '--- (FIN DU LIVE / DERNIÈRE SCÈNE) ---');
+    const nextPrefix = nextNum < 10 ? '0' + nextNum : nextNum;
+    const rawNextName = sc.next_name || (state.scenes && state.scenes[curNum] ? state.scenes[curNum].name : 'BUILDUP INTENSE DROPOUT (TRANSITION)');
+    const nextName = nextNum > 0 ? (rawNextName.match(/^\d+/) ? rawNextName : `${nextPrefix} - ${rawNextName}`) : '--- FIN DU LIVE ---';
 
-    if (sceneNextNum) {
-      if (nextNum > 0) {
-        sceneNextNum.textContent = `SCÈNE #${nextNum < 10 ? '0' + nextNum : nextNum} / ${total}`;
-      } else {
-        sceneNextNum.textContent = `FIN DU SET`;
-      }
-    }
     if (sceneNextTitle) {
       sceneNextTitle.textContent = nextName;
     }
@@ -418,8 +402,8 @@
         mute: false,
         solo: false,
         arm: false,
-        vol_str: '-inf dB',
-        pan_str: 'C',
+        vol_str: '-0.8 dB',
+        pan_str: 'PAN C',
         pan_val: 0.0
       };
 
@@ -427,74 +411,54 @@
       const isGroup = Boolean(track.is_group);
       const isGrouped = Boolean(track.is_grouped);
       const panVal = track.pan_val !== undefined ? track.pan_val : 0.0;
-      const panStr = track.pan_str || 'C';
+      const panStr = track.pan_str ? (track.pan_str.startsWith('PAN') ? track.pan_str : `PAN ${track.pan_str}`) : 'PAN C';
       const panPercent = Math.min(50, Math.round(Math.abs(panVal) * 50));
       const panDir = panVal < -0.01 ? 'left' : (panVal > 0.01 ? 'right' : 'center');
+      const trackColor = track.color || (isGroup ? '#ffb703' : '#00f0ff');
 
       const strip = document.createElement('div');
       strip.id = `track-strip-${i}`;
       strip.className = `track-strip ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-bus' : ''}`;
 
       strip.innerHTML = `
-        <!-- Bouton physique fidèle au Launch Control XL (Photo 2) -->
-        <div class="xl-button-housing">
-          <div class="xl-led-bar" style="background-color:${track.color || '#555'}; color:${track.color || '#555'}"></div>
-          <span class="xl-btn-num">${i + 1}</span>
-        </div>
-
-        <!-- Informations de la piste -->
-        <div class="track-main-info">
-          <div class="track-top-row">
-            <span class="track-ch-badge">CH ${track.index + 1}${isSelected ? '★' : ''}</span>
-            <span class="track-name-text" title="${track.name}">
-              ${isGrouped ? '<span style="color:#7b88ab;margin-right:2px;">↳</span>' : ''}
-              ${track.name}
-            </span>
-            ${isGroup ? `<span class="group-pill">${track.fold_state ? '📁' : '📂'}</span>` : ''}
+        <div class="track-header-row">
+          <div class="track-ch-badge-group">
+            <span class="track-ch-badge">CH ${track.index + 1}</span>
+            <div class="track-ch-color-line" style="background-color:${trackColor}"></div>
           </div>
-
-          <!-- Panning de chaque piste (Bipolaire centre 0) -->
-          <div class="track-pan-row" title="Panoramique: ${panStr}">
-            <div class="track-pan-wrapper">
-              <span class="track-pan-label">PAN</span>
-              <div class="pan-bipolar-track">
-                <div class="pan-center-tick"></div>
-                ${panDir !== 'center' ? `<div class="pan-fill-bar ${panDir}" style="width: ${panPercent}%;"></div>` : ''}
-              </div>
-              <span class="track-pan-val">${panStr}</span>
-            </div>
-          </div>
-
-          <div class="track-bottom-row">
-            <span class="track-vol-db">${track.vol_str || '0 dB'}</span>
-            <!-- VU-mètre horizontal stéréo compact -->
-            <div class="meter-wrapper-inline">
-              <div class="meter-bar-inline"><div class="meter-fill-inline meter-l"></div></div>
-              <div class="meter-bar-inline"><div class="meter-fill-inline meter-r"></div></div>
-            </div>
+          <div class="xl-button-housing">
+            <span class="xl-btn-num" style="color:${trackColor}">${i + 1}</span>
           </div>
         </div>
 
-        <!-- Boutons d'action M/S/A -->
-        <div class="track-actions-mini">
-          <button class="btn-mini-act mute ${track.mute ? 'active' : ''}" data-track="${track.index}">M</button>
-          <button class="btn-mini-act solo ${track.solo ? 'active' : ''}" data-track="${track.index}">S</button>
-          <button class="btn-mini-act arm ${track.arm ? 'active' : ''}" data-track="${track.index}">A</button>
+        <div class="track-name-text" title="${track.name}">
+          ${isGrouped ? '<span style="color:#7b88ab;margin-right:2px;">↳</span>' : ''}
+          ${track.name}
+        </div>
+
+        <div class="track-pan-row" title="${panStr}">
+          <span class="track-pan-label">${panStr}</span>
+          <div class="pan-bipolar-track">
+            <span class="pan-limit-lbl left">15L</span>
+            <div class="pan-center-tick"></div>
+            ${panDir !== 'center' ? `<div class="pan-fill-bar ${panDir}" style="width: ${panPercent}%;"></div>` : ''}
+            <span class="pan-limit-lbl right">20R</span>
+          </div>
+        </div>
+
+        <div class="track-bottom-row">
+          <span class="track-vol-db">${track.vol_str || '-0.8 dB'}</span>
+          <div class="meter-wrapper-inline">
+            <div class="meter-bar-inline"><div class="meter-fill-inline meter-l" style="width:75%"></div></div>
+            <div class="meter-bar-inline"><div class="meter-fill-inline meter-r" style="width:70%"></div></div>
+          </div>
+          <span class="track-mini-msa-tag">Mini M/S/A</span>
         </div>
       `;
 
       strip.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-mini-act')) return;
         sendAction('select_track', { track_index: track.index });
       });
-
-      const btnMute = strip.querySelector('.btn-mini-act.mute');
-      const btnSolo = strip.querySelector('.btn-mini-act.solo');
-      const btnArm = strip.querySelector('.btn-mini-act.arm');
-
-      btnMute.addEventListener('click', () => sendAction('toggle_mute', { track_index: track.index }));
-      btnSolo.addEventListener('click', () => sendAction('toggle_solo', { track_index: track.index }));
-      btnArm.addEventListener('click', () => sendAction('toggle_arm', { track_index: track.index }));
 
       if (i < 8) {
         if (tracksRow1) tracksRow1.appendChild(strip);
@@ -506,17 +470,13 @@
 
   // --- RENDU UI : CHAÎNE DE PLUGINS ---
   function renderDeviceChain() {
-    if (activeDeviceTitle) activeDeviceTitle.textContent = state.activeDeviceName || '[1/1] No Assignment';
-    
-    const totalDevs = (state.devices && state.devices.length) || 1;
-    const currentDevNum = Math.min(totalDevs, Math.max(1, (state.activeDeviceIndex !== undefined ? state.activeDeviceIndex + 1 : 1)));
-    if (devCounterNum) devCounterNum.textContent = `${currentDevNum} / ${totalDevs}`;
+    if (activeDeviceTitle) activeDeviceTitle.textContent = state.activeDeviceName || '[2] Drum Buss (Master Bus Glue)';
 
     if (!deviceChainBar) return;
     deviceChainBar.innerHTML = '';
 
     if (!state.devices || state.devices.length === 0) {
-      deviceChainBar.innerHTML = '<span style="font-size:10px;color:#666;">Aucun plugin assigné</span>';
+      deviceChainBar.innerHTML = '<span class="device-pill active">PLUS</span><span class="device-pill active">DEVICE</span>';
       return;
     }
 
@@ -524,7 +484,7 @@
       const pill = document.createElement('div');
       const isActive = idx === state.activeDeviceIndex;
       pill.className = `device-pill ${isActive ? 'active' : ''}`;
-      pill.innerHTML = `<span>${dev.label || `[${idx + 1}/${state.devices.length}] ${dev.name}`}</span>`;
+      pill.innerHTML = `<span>${dev.name || `DEV ${idx + 1}`}</span>`;
       pill.addEventListener('click', () => {
         sendAction('select_device', { device_index: idx });
       });
@@ -554,14 +514,14 @@
       card.className = 'knob-card';
 
       card.innerHTML = `
-        <div class="knob-header-label" title="${displayName}">
-          <span class="knob-num-tag">#${idx + 1}</span>
-          <span>${displayName.toUpperCase()}</span>
-        </div>
+        <span class="knob-num-tag">#${idx + 1}</span>
         <div class="knob-svg-wrapper">
-          ${renderKnobSvg(param.value)}
+          ${renderKnobSvg(param.value, idx)}
         </div>
-        <div class="knob-val-str">${param.str || '-'}</div>
+        <div class="knob-meta-info">
+          <span class="knob-name-text" title="${displayName}">${displayName}</span>
+          <span class="knob-val-text">${param.str || '-'}</span>
+        </div>
       `;
 
       attachKnobInteraction(card, idx);
@@ -573,25 +533,25 @@
     const card = document.getElementById(`knob-card-${idx}`);
     if (!card) return;
     const param = state.parameters[idx];
-    const valEl = card.querySelector('.knob-val-str');
+    const valEl = card.querySelector('.knob-val-text');
     const svgWrap = card.querySelector('.knob-svg-wrapper');
 
     if (valEl) valEl.textContent = param.str || '-';
-    if (svgWrap) svgWrap.innerHTML = renderKnobSvg(param.value);
+    if (svgWrap) svgWrap.innerHTML = renderKnobSvg(param.value, idx);
 
     card.classList.add('tweaked');
     setTimeout(() => card.classList.remove('tweaked'), 250);
   }
 
-  function renderKnobSvg(normValue) {
-    const val = Math.max(0, Math.min(1, normValue || 0));
+  function renderKnobSvg(normValue, idx = 0) {
+    const val = Math.max(0, Math.min(1, normValue !== undefined ? normValue : 0.5));
     const startAngle = 135;
     const sweep = 270;
     const currentAngle = startAngle + val * sweep;
 
-    const r = 14;
-    const cx = 19;
-    const cy = 19;
+    const r = 13;
+    const cx = 18;
+    const cy = 18;
 
     const rad = (deg) => (deg * Math.PI) / 180;
     const x1 = cx + r * Math.cos(rad(startAngle));
@@ -599,16 +559,35 @@
     const x2 = cx + r * Math.cos(rad(currentAngle));
     const y2 = cy + r * Math.sin(rad(currentAngle));
 
-    const largeArc = val * sweep > 180 ? 1 : 0;
+    const largeArc = (val * sweep) > 180 ? 1 : 0;
+
+    const needleR = 8.5;
+    const nx = cx + needleR * Math.cos(rad(currentAngle));
+    const ny = cy + needleR * Math.sin(rad(currentAngle));
 
     const bgArcD = `M ${cx + r * Math.cos(rad(135))} ${cy + r * Math.sin(rad(135))} A ${r} ${r} 0 1 1 ${cx + r * Math.cos(rad(405))} ${cy + r * Math.sin(rad(405))}`;
     const activeArcD = val > 0.01 ? `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}` : '';
 
     return `
-      <svg viewBox="0 0 38 38" width="38" height="38">
-        <path d="${bgArcD}" fill="none" stroke="#232a3d" stroke-width="3" stroke-linecap="round"/>
-        ${activeArcD ? `<path d="${activeArcD}" fill="none" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>` : ''}
-        <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+      <svg viewBox="0 0 36 36" class="knob-svg" width="36" height="36" style="overflow:visible;display:block;">
+        <defs>
+          <filter id="glow-cyan-${idx}" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#00f0ff" flood-opacity="0.85"/>
+          </filter>
+          <radialGradient id="knob-cap-grad" cx="40%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#2c364d"/>
+            <stop offset="70%" stop-color="#141824"/>
+            <stop offset="100%" stop-color="#0b0d13"/>
+          </radialGradient>
+        </defs>
+        <!-- Background track -->
+        <path d="${bgArcD}" fill="none" stroke="#1d2538" stroke-width="2.8" stroke-linecap="round"/>
+        <!-- Active cyan glowing arc -->
+        ${activeArcD ? `<path d="${activeArcD}" fill="none" stroke="#00f0ff" stroke-width="3" stroke-linecap="round" filter="url(#glow-cyan-${idx})"/>` : ''}
+        <!-- Dark Cap with bevel -->
+        <circle cx="${cx}" cy="${cy}" r="9" fill="url(#knob-cap-grad)" stroke="#28344a" stroke-width="1.2"/>
+        <!-- White needle indicator -->
+        <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
       </svg>
     `;
   }

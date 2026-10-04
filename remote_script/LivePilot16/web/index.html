@@ -67,25 +67,13 @@
     <!-- 2. BANDEAU DE SCÈNE PLEINE LARGEUR (TOUTE LA LARGEUR DE L'ÉCRAN) -->
     <section id="scene-full-banner" class="scene-full-width-strip" title="Cliquer pour afficher la liste de toutes les scènes">
       <!-- LIGNE 1 (AU-DESSUS) : NUMÉRO ET LIBELLÉ DE LA SCÈNE EN COURS (LIBELLÉ AGRANDI) -->
-      <div class="scene-row scene-current-row">
-        <div class="scene-badge-current">
-          <span class="scene-play-symbol">▶</span>
-          <span id="scene-active-num" class="scene-badge-num">SCÈNE #03 / 12</span>
-        </div>
-        <div id="scene-active-title" class="scene-title-text">
-          03 - MAIN DROP (PEAK ENERGY)
-        </div>
+      <div id="scene-active-title" class="scene-row scene-current-row">
+        03 - VERSE A (SYNTH & BASSLINE) [126 BPM]
       </div>
 
       <!-- LIGNE 2 (EN-DESSOUS) : NUMÉRO ET LIBELLÉ DE LA SCÈNE QUI SUIT (LIBELLÉ AGRANDI) -->
-      <div class="scene-row scene-next-row">
-        <div class="scene-badge-next">
-          <span class="scene-next-symbol">⏭</span>
-          <span id="scene-next-num" class="scene-badge-num">SCÈNE #04 / 12</span>
-        </div>
-        <div id="scene-next-title" class="scene-next-text">
-          04 - BREAKDOWN AMBIENT & LEAD SYNTH
-        </div>
+      <div id="scene-next-title" class="scene-row scene-next-row">
+        04 - BUILDUP INTENSE DROPOUT (TRANSITION)
       </div>
     </section>
 
@@ -120,51 +108,31 @@
       </div>
     </section>
 
-    <!-- 4. SECTION DEVICE & 24 POTENTIOMÈTRES (EXACTEMENT 8 COLONNES SUR 3 LIGNES - ESPACEMENT RESSERRÉ SANS PERTE DE PLACE) -->
+    <!-- 4. SECTION DEVICE & 24 POTENTIOMÈTRES (EXACTEMENT 8 COLONNES SUR 3 LIGNES) -->
     <section id="device-section">
       <div class="device-header">
         <div class="device-track-info">
-          <span class="device-sublabel">PLUGIN ACTIF :</span>
-          <span id="active-device-title" class="active-device-badge">[1/2] Drum Buss</span>
+          <span id="active-device-title" class="active-device-badge">[2] Drum Buss (Master Bus Glue)</span>
         </div>
 
-        <!-- Chaîne complète des plugins sur la piste -->
-        <div id="device-chain-bar" class="device-chain-scroll"></div>
-
-        <div class="device-nav-buttons">
-          <button id="btn-device-prev" class="btn-action">◄ DEV</button>
-          <button id="btn-device-next" class="btn-action">DEV ►</button>
+        <div class="device-header-right">
+          <span class="device-chain-label">device chain</span>
+          <div id="device-chain-bar" class="device-chain-scroll"></div>
+          <div class="device-nav-buttons">
+            <button id="btn-device-prev" class="btn-action" title="Plugin précédent">◄</button>
+            <button id="btn-device-next" class="btn-action" title="Plugin suivant">►</button>
+          </div>
         </div>
       </div>
 
-      <!-- MATRICE DES 24 PARAMÈTRES AVEC BARRE LATÉRALE DE NAVIGATION GAUCHE/DROITE -->
-      <div class="device-body-container">
-        <!-- 2 BOUTONS GAUCHE / DROITE DE NAVIGATION PLUGIN (ALIGNÉS AVEC LES BOUTONS DE BANQUE) -->
-        <div class="device-side-nav">
-          <button id="btn-device-side-prev" class="device-side-btn" title="Plugin précédent">
-            <span class="dev-nav-arrow">◄</span>
-            <span class="dev-nav-label">PRÉC</span>
-          </button>
-          
-          <div class="device-counter-badge">
-            <span id="dev-counter-num" class="dev-counter-val">1 / 2</span>
-            <span class="dev-counter-sub">PLUGIN</span>
-          </div>
-
-          <button id="btn-device-side-next" class="device-side-btn" title="Plugin suivant">
-            <span class="dev-nav-arrow">►</span>
-            <span class="dev-nav-label">SUIV</span>
-          </button>
-        </div>
-
-        <div class="knobs-wrapper-compact">
-          <!-- Rangée 1 : Knobs 1 à 8 -->
-          <div id="knobs-row-1" class="knobs-grid row-1"></div>
-          <!-- Rangée 2 : Knobs 9 à 16 -->
-          <div id="knobs-row-2" class="knobs-grid row-2"></div>
-          <!-- Rangée 3 : Knobs 17 à 24 -->
-          <div id="knobs-row-3" class="knobs-grid row-3"></div>
-        </div>
+      <!-- MATRICE DES 24 PARAMÈTRES (8 COLONNES SUR 3 RANGÉES) -->
+      <div class="knobs-wrapper-compact">
+        <!-- Rangée 1 : Knobs 1 à 8 -->
+        <div id="knobs-row-1" class="knobs-grid row-1"></div>
+        <!-- Rangée 2 : Knobs 9 à 16 -->
+        <div id="knobs-row-2" class="knobs-grid row-2"></div>
+        <!-- Rangée 3 : Knobs 17 à 24 -->
+        <div id="knobs-row-3" class="knobs-grid row-3"></div>
       </div>
     </section>
 
