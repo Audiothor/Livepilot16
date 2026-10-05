@@ -472,6 +472,13 @@
   function renderDeviceChain() {
     if (activeDeviceTitle) activeDeviceTitle.textContent = state.activeDeviceName || '[2] Drum Buss (Master Bus Glue)';
 
+    const sideDevCounter = document.getElementById('side-dev-counter');
+    if (sideDevCounter) {
+      const totalDevs = (state.devices && state.devices.length) ? state.devices.length : 1;
+      const currIdx = (state.activeDeviceIndex !== undefined) ? state.activeDeviceIndex + 1 : 1;
+      sideDevCounter.textContent = `${currIdx} / ${totalDevs}`;
+    }
+
     if (!deviceChainBar) return;
     deviceChainBar.innerHTML = '';
 

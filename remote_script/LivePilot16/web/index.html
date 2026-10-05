@@ -25,9 +25,7 @@
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <div class="brand-title">
-          LIVEPILOT <span class="brand-accent">16</span>
-        </div>
+        <img src="logo.png" alt="LIVEPILOT 16" class="brand-logo-img" style="height: 24px; object-fit: contain;">
       </div>
 
       <!-- CENTRE : 3 INFOS ÉTATS CLÉS (PLAY/PAUSE/STOP, TRACK ACTIF, BPM) -->
@@ -118,21 +116,30 @@
         <div class="device-header-right">
           <span class="device-chain-label">device chain</span>
           <div id="device-chain-bar" class="device-chain-scroll"></div>
-          <div class="device-nav-buttons">
-            <button id="btn-device-prev" class="btn-action" title="Plugin précédent">◄</button>
-            <button id="btn-device-next" class="btn-action" title="Plugin suivant">►</button>
-          </div>
         </div>
       </div>
 
-      <!-- MATRICE DES 24 PARAMÈTRES (8 COLONNES SUR 3 RANGÉES) -->
-      <div class="knobs-wrapper-compact">
-        <!-- Rangée 1 : Knobs 1 à 8 -->
-        <div id="knobs-row-1" class="knobs-grid row-1"></div>
-        <!-- Rangée 2 : Knobs 9 à 16 -->
-        <div id="knobs-row-2" class="knobs-grid row-2"></div>
-        <!-- Rangée 3 : Knobs 17 à 24 -->
-        <div id="knobs-row-3" class="knobs-grid row-3"></div>
+      <!-- CORPS DE SECTION : NAVIGATION PLUGINS GAUCHE + 24 KNOBS EN 8x3 -->
+      <div class="knobs-deck-layout" style="display: flex; gap: 8px; flex: 1; align-items: stretch;">
+        <!-- Colonne Gauche : 2 Boutons Plugin Précédent / Suivant -->
+        <div class="device-nav-sidebar" style="display: flex; flex-direction: column; width: 85px; flex-shrink: 0; background: #0b0e17; border: 1px solid #1d263b; border-radius: 6px; padding: 6px; gap: 6px;">
+          <div style="text-align: center;">
+            <span style="font-family: var(--font-mono); font-size: 8px; font-weight: 800; color: #8d9bb5; text-transform: uppercase;">PLUGINS</span>
+            <div id="side-dev-counter" style="font-family: var(--font-mono); font-size: 11px; font-weight: 900; color: #ffcc00;">1 / 2</div>
+          </div>
+          <button id="btn-device-prev" class="btn-plugin-nav" style="flex: 1; display: flex; align-items: center; justify-content: center; background: #131926; border: 1px solid #243049; color: #00f0ff; border-radius: 5px; font-size: 16px; font-weight: 900; cursor: pointer;" title="Plugin précédent">◄</button>
+          <button id="btn-device-next" class="btn-plugin-nav" style="flex: 1; display: flex; align-items: center; justify-content: center; background: #131926; border: 1px solid #243049; color: #00f0ff; border-radius: 5px; font-size: 16px; font-weight: 900; cursor: pointer;" title="Plugin suivant">►</button>
+        </div>
+
+        <!-- MATRICE DES 24 PARAMÈTRES (8 COLONNES SUR 3 RANGÉES) -->
+        <div class="knobs-wrapper-compact" style="flex: 1;">
+          <!-- Rangée 1 : Knobs 1 à 8 -->
+          <div id="knobs-row-1" class="knobs-grid row-1"></div>
+          <!-- Rangée 2 : Knobs 9 à 16 -->
+          <div id="knobs-row-2" class="knobs-grid row-2"></div>
+          <!-- Rangée 3 : Knobs 17 à 24 -->
+          <div id="knobs-row-3" class="knobs-grid row-3"></div>
+        </div>
       </div>
     </section>
 
