@@ -13,11 +13,11 @@
 ## 🌟 Key Features
 
 * **High-Visibility Stage HUD**: Designed specifically for dark stages, festivals, and live performance with high-contrast color coding and zero visual clutter.
-* **16-Track Mixer Deck (8x2)**: Direct overview of 16 channels in two rows of 8 tracks, featuring dual stereo high-precision linear gradient VU-meters, explicit group track differentiation (dashed amber borders & `GRP` badges), real-time dB readouts, and pan indicators. Bank switching allows control over up to 64 tracks (`Bank 1/4`).
-* **24 Plugin Macros (8x3)**: 24 rotary encoders numbered `#1` to `#24` with multi-colored LED indicator arcs, clear parameter titles, and numerical values. Dynamic header displays active plugin index and name (`PLUGIN — [2/5] Serum`).
+* **16-Track Mixer Deck (8x2)**: Direct overview of 16 channels in two rows of 8 tracks, featuring enlarged high-visibility channel banners (numbers & names), dual stereo high-precision linear gradient VU-meters with calibrated 0 dB reference marks, explicit group track differentiation (dashed amber borders & `GRP` badges), real-time dB readouts, and pan indicators. Bank switching allows control over up to 64 tracks (`Bank 1/4`).
+* **24 Plugin Macros (8x3)**: 24 rotary encoders with large, high-visibility stage badges numbered `#1` to `#24`, multi-colored LED indicator arcs, clear parameter titles, and numerical values. Dynamic header displays active plugin index and name (`PLUGIN — [2/5] Serum`).
 * **3-Card Scene Banner**: Seamless live progression tracking with **Previous Scene**, **Current Scene** (prominent glowing emerald container with play button), and **Next Scene**, free of visual clutter.
-* **Master Output HUD**: Integrated Ableton Master output stereo VU-meter with peak dB monitoring and calibrated scale ticks.
-* **Device / Plugin Control**: Instant navigation through the track's device chain with VST name, maker, position counter (`2 / 5`), quick navigation buttons, and **Auto-follow device** toggle.
+* **Direct Track & Device Navigation**: Quick-access touch buttons in the sidebar (`◀ Piste précédente` / `Piste suivante ▶` and `◀ Device précédent` / `Device suivant ▶`) with **Auto-follow device** toggle.
+* **Master Output HUD**: Integrated Ableton Master output stereo VU-meter with `MAIN` peak dB monitoring and calibrated scale ticks.
 * **Zero Audio Latency**: Native Python 3 MIDI Remote Script communicating with Live's LOM (Live Object Model) and streaming real-time telemetry over WebSockets.
 * **Hardware Synergy**: Works seamlessly alongside Novation Launch Control XL (16 track buttons, 24 knobs) and Launchpad Pro MK3 (scene launch, clip trigger).
 

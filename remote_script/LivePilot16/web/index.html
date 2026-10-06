@@ -139,19 +139,9 @@
             <div class="track-hero-accent-bar" id="sel-accent-bar"></div>
             <div class="track-hero-name" id="sel-track-name">02 - Bass</div>
           </div>
-          <div class="track-meta-row">
-            <div class="meta-col">
-              <span class="meta-label">Couleur</span>
-              <div class="color-swatch" id="sel-swatch"></div>
-            </div>
-            <div class="meta-col">
-              <span class="meta-label">Type</span>
-              <span class="meta-val" id="sel-type">Instrument</span>
-            </div>
-            <div class="meta-col">
-              <span class="meta-label">MIDI In</span>
-              <span class="meta-val" id="sel-midi">All Channels</span>
-            </div>
+          <div class="track-nav-actions">
+            <button id="btn-track-prev" class="track-nav-btn">◀ Piste précédente</button>
+            <button id="btn-track-next" class="track-nav-btn">Piste suivante ▶</button>
           </div>
         </div>
 
@@ -279,7 +269,7 @@
               </svg>
               MASTER OUTPUT
             </div>
-            <div id="master-db-readout" class="master-db-tag">0.0 dB</div>
+            <div id="master-db-readout" class="master-db-tag"><span class="main-prefix">MAIN : </span>-0.2 dB</div>
           </div>
 
           <div class="master-meter-box">

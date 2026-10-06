@@ -59,17 +59,17 @@ L'interface web est calibrée pour un usage scénique (fort contraste, éclairag
 * **Organisation en grille 8 colonnes x 2 rangées** (Pistes 1 à 8 en haut, Pistes 9 à 16 en bas).
 * **Sélecteur de banques** : `◀ Banque 1 / 4 ▶` (contrôle jusqu'à 64 pistes par banques de 16).
 * **Chaque tranche de console comprend** :
-  * Bannière de couleur native Ableton avec numéro et nom de la piste.
+  * Bannière de couleur grand format (hauteur 33px) avec numéro (`11px` gras) et nom de piste (`12px` gras) ultra-lisibles sur scène.
   * **Distinction visuelle des Groupes** : Bordure en pointillés ambrée `#ffb703` et badge noir `GRP` pour identifier immédiatement les pistes de groupe.
   * Encadrement doré lumineux `#ffd600` pour la piste activement sélectionnée.
-  * Double VU-mètre stéréo L/R horizontal à dégradé linéaire haute précision (Vert `#00e676` -> Jaune `#ffd600` -> Rouge `#ff3366`).
+  * Double VU-mètre stéréo L/R horizontal à dégradé linéaire haute précision (Vert `#00e676` -> Jaune `#ffd600` -> Rouge `#ff3366`), avec **trait repère vertical blanc calibré à 0 dB** et graduation (`-∞`, `0 dB`, `+3`).
   * Affichage numérique du niveau crête en décibels (ex. `-4.1 dB`).
   * Ligne de panoramique avec curseur central `L • R`.
 
 ### 2.4. Deck Gauche — Paramètres du Plugin (24 Contrôles 3x8)
 * **En-tête épuré et informatif** : `PLUGIN — [2/5] Serum` (index du device sur le nombre total de plugins et nom du device).
 * **24 potentiomètres rotatifs compacts organisés en 3 rangées de 8**.
-* Numérotation explicite `#1` à `#24`.
+* Numérotation grand format explicite **`#1` à `#24`** en blanc contrasté sur fond sombre pour une visibilité immédiate en live.
 * Anneau circulaire LED néon multicolore (palette arc-en-ciel contrastée).
 * Curseur ponctuel lumineux indiquant la position angulaire exacte.
 * Libellé du paramètre VST / Macro en clair (ex. `Cutoff`, `Drive`, `Resonance`).
@@ -78,8 +78,8 @@ L'interface web est calibrée pour un usage scénique (fort contraste, éclairag
 
 ### 2.5. Volet Latéral Droit (Sidebar)
 * **Piste Sélectionnée** :
-  * Barre d'accent doré, titre de la piste.
-  * Métadonnées : pastille de couleur, type (`Audio`, `MIDI`, `Instrument`), routage MIDI.
+  * Barre d'accent doré, titre de la piste (ex. `02 - Bass`).
+  * **Boutons tactiles de navigation directe** : `◀ Piste précédente` et `Piste suivante ▶` pour naviguer confortablement de piste en piste sur la tablette.
 * **Device / Plugin** :
   * Carrousel de navigation avec flèches `◀` et `▶`.
   * Icône d'instrument / touches de piano.
@@ -93,8 +93,8 @@ L'interface web est calibrée pour un usage scénique (fort contraste, éclairag
   * `Vue Scènes`.
 * **Master Output VU-Meter Design** :
   * Double échelle stéréo L / R à dégradé continu haute luminosité.
-  * Affichage crête dynamique en décibels (ex. `-1.2 dB`).
-  * Graduations calibrées `-∞`, `-12`, `-6`, `0`, `+3 dB`.
+  * Affichage crête dynamique avec libellé officiel : **`MAIN : -0.2 dB`**.
+  * Graduations calibrées `-∞`, `-24`, `-12`, `-6`, `0`, `+3 dB`.
 
 ---
 

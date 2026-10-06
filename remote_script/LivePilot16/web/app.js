@@ -376,9 +376,16 @@
           <div class="meter-stereo-wrap">
             <div class="meter-channel-bar">
               <div class="meter-gradient-fill left" style="width: ${defaultInfo.lvlL}%;"></div>
+              <div class="meter-tick-ref" style="left: 80%;"></div>
             </div>
             <div class="meter-channel-bar">
               <div class="meter-gradient-fill right" style="width: ${defaultInfo.lvlR}%;"></div>
+              <div class="meter-tick-ref" style="left: 80%;"></div>
+            </div>
+            <div class="meter-scale-legend">
+              <span>-∞</span>
+              <span class="scale-ref-zero">0 dB</span>
+              <span>+3</span>
             </div>
           </div>
           <div class="track-db-readout">${trk.vol_str || defaultInfo.db}</div>
@@ -431,7 +438,7 @@
       cell.className = 'knob-cell';
 
       cell.innerHTML = `
-        <span class="knob-index">${i + 1}</span>
+        <span class="knob-index">#${i + 1}</span>
         <div class="knob-svg-wrap">
           ${makeKnobSVG(p.value, color)}
         </div>
@@ -584,7 +591,7 @@
     const barR = document.getElementById('master-meter-r');
 
     const vol = state.masterVolume || { value: 0.82, str: '-0.2 dB' };
-    if (dbTag) dbTag.textContent = vol.str || '-0.2 dB';
+    if (dbTag) dbTag.innerHTML = `<span class="main-prefix">MAIN : </span>${vol.str || '-0.2 dB'}`;
     const pct = Math.min(100, Math.round((vol.value || 0.82) * 100));
     if (barL) barL.style.width = `${pct}%`;
     if (barR) barR.style.width = `${Math.max(0, pct - 2)}%`;
@@ -592,6 +599,27 @@
 
   // --- EVENT LISTENERS INITIALIZATION ---
   function initListeners() {
+    // Selected Track Navigation (◀ Piste précédente / Piste suivante ▶)
+    const btnTrackPrev = document.getElementById('btn-track-prev');
+    if (btnTrackPrev) {
+      btnTrackPrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const curIdx = state.selectedTrackIndex;
+        const targetIdx = Math.max(0, curIdx - 1);
+        sendAction('select_track', { track_index: targetIdx });
+      });
+    }
+
+    const btnTrackNext = document.getElementById('btn-track-next');
+    if (btnTrackNext) {
+      btnTrackNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const curIdx = state.selectedTrackIndex;
+        const maxIdx = (state.tracks && state.tracks.length > 0) ? state.tracks.length - 1 : 15;
+        const targetIdx = Math.min(maxIdx, curIdx + 1);
+        sendAction('select_track', { track_index: targetIdx });
+      });
+    }
     // Scene navigation
     const btnScenePrev = document.getElementById('btn-scene-prev');
     if (btnScenePrev) {
