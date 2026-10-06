@@ -696,9 +696,7 @@ html, body {
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
+  gap: 6px;
 }
 
 .devices-list {
@@ -799,13 +797,13 @@ html, body {
   text-transform: uppercase;
 }
 
-/* Navigation buttons (Bottom of Devices / Plugins) */
+/* Navigation buttons (Directement sous le dernier device/plugin de la liste) */
 .devices-nav-actions {
   display: flex;
   gap: 6px;
   width: 100%;
-  margin-top: auto;
-  padding-top: 4px;
+  margin-top: 4px;
+  padding-top: 0;
 }
 
 .device-nav-btn {

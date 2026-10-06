@@ -588,8 +588,8 @@
     const r = 16;
     const cx = 21;
     const cy = 21;
-    const startAngle = 135;
-    const maxSweep = 270;
+    const startAngle = 225; // Départ à 7h30 (bas-gauche)
+    const maxSweep = 270;   // Balayage horaire de 270° jusqu'à 4h30 (bas-droite)
     const currentSweep = Math.max(0.01, Math.min(1, val)) * maxSweep;
 
     const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
@@ -600,18 +600,15 @@
       };
     };
 
-    const describeArc = (x, y, radius, sAngle, eAngle) => {
-      const start = polarToCartesian(x, y, radius, eAngle);
-      const end = polarToCartesian(x, y, radius, sAngle);
-      const arcSweep = eAngle - sAngle <= 180 ? "0" : "1";
-      return [
-        "M", start.x, start.y, 
-        "A", radius, radius, 0, arcSweep, 0, end.x, end.y
-      ].join(" ");
+    const describeArc = (x, y, radius, sAngle, sweep) => {
+      const start = polarToCartesian(x, y, radius, sAngle);
+      const end = polarToCartesian(x, y, radius, sAngle + sweep);
+      const largeArc = sweep > 180 ? 1 : 0;
+      return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
     };
 
-    const bgPath = describeArc(cx, cy, r, startAngle, startAngle + maxSweep);
-    const valPath = describeArc(cx, cy, r, startAngle, startAngle + currentSweep);
+    const bgPath = describeArc(cx, cy, r, startAngle, maxSweep);
+    const valPath = describeArc(cx, cy, r, startAngle, currentSweep);
     const tipPos = polarToCartesian(cx, cy, r, startAngle + currentSweep);
 
     return `
@@ -619,7 +616,7 @@
         <circle cx="${cx}" cy="${cy}" r="${r - 3}" fill="#0f1523" stroke="#161f31" stroke-width="1.2"/>
         <path d="${bgPath}" fill="none" stroke="#182338" stroke-width="3" stroke-linecap="round"/>
         <path d="${valPath}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" style="filter: drop-shadow(0 0 3px ${color});"/>
-        <circle cx="${tipPos.x}" cy="${tipPos.y}" r="2" fill="${color}" style="filter: drop-shadow(0 0 2px ${color});"/>
+        <circle cx="${tipPos.x.toFixed(2)}" cy="${tipPos.y.toFixed(2)}" r="2" fill="${color}" style="filter: drop-shadow(0 0 2px ${color});"/>
       </svg>
     `;
   }
