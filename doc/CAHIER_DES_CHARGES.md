@@ -36,40 +36,38 @@ L'interface web est calibrée pour un usage scénique (fort contraste, éclairag
 * **Statut Transport & Sync** :
   * Tempo dynamique (`120 BPM`).
   * Signature rythmique (`4 / 4`).
-  * Badge de synchronisation Ableton Link (vert).
-  * Indicateur d'état de connexion WebSocket (`Connected` / `Offline`).
-  * Nom du Live Set actif (`Set : Live Set 01`).
-  * Bouton paramètres `⚙️`.
+  * Point d'accès unique : Bouton menu latéral `≡` (aucun doublon d'icône).
+  * Indicateur d'état clair : `Connected` (vert néon si relié à Live) ou `Disconnected` (rouge vif si hors ligne).
 
-### 2.2. Bandeau Scénique Hero (Progression à 3 Cartes)
+### 2.2. Bandeau Scénique Hero (Progression à 3 Cartes Épurée)
 * **Carte Gauche (Scène Précédente)** :
   * Bouton déclencheur `◀`.
   * Libellé `SCÈNE PRÉCÉDENTE`.
-  * Numéro et titre (ex. `01 - Intro`).
-  * Notes scéniques et repères d'arrangement (ex. *Ambiance d'ouverture, sans batterie, montée progressive*).
+  * Numéro et titre en grand format et haute lisibilité (ex. `01 - Intro`), sans texte superflu.
 * **Carte Centrale (Scène Actuelle — Hero)** :
   * Conteneur proéminent cerclé de vert néon `#00e676` avec lueur diffuse.
   * Icône Play `▶` interactive.
   * Libellé `SCÈNE ACTUELLE`.
-  * Numéro et titre en grand format (ex. `02 - Couplet`).
-  * Notes scéniques (ex. *Basse + Pads + FX, rythme principal, énergie qui s'installe*).
+  * Numéro et titre en très grand format (ex. `02 - Couplet`).
 * **Carte Droite (Scène Suivante)** :
   * Libellé `SCÈNE SUIVANTE`.
-  * Numéro et titre (ex. `03 - Refrain`).
-  * Notes scéniques (ex. *Batterie complète, puissance maximale, accroche mélodique*).
+  * Numéro et titre en grand format (ex. `03 - Refrain`).
   * Bouton déclencheur `▶`.
 
 ### 2.3. Deck Gauche — Section Pistes (Mixeur 16 Voies)
+* **En-tête dynamique** : `PISTES (Banque 1/4 : Pistes 1 - 16) — Piste #02 : Bass` (rappel immédiat de la piste active).
 * **Organisation en grille 8 colonnes x 2 rangées** (Pistes 1 à 8 en haut, Pistes 9 à 16 en bas).
-* **Sélecteur de banques** : `◀ Banque 1 / 4 ▶` (permettant de contrôler jusqu'à 64 pistes par banques de 16).
+* **Sélecteur de banques** : `◀ Banque 1 / 4 ▶` (contrôle jusqu'à 64 pistes par banques de 16).
 * **Chaque tranche de console comprend** :
   * Bannière de couleur native Ableton avec numéro et nom de la piste.
-  * Encadrement doré lumineux `#ffd600` pour la piste sélectionnée.
-  * Double VU-mètre stéréo horizontal segmenté à 12 LED (Vert, Jaune, Rouge).
-  * Affichage numérique du niveau en décibels (ex. `-4.1 dB`).
+  * **Distinction visuelle des Groupes** : Bordure en pointillés ambrée `#ffb703` et badge noir `GRP` pour identifier immédiatement les pistes de groupe.
+  * Encadrement doré lumineux `#ffd600` pour la piste activement sélectionnée.
+  * Double VU-mètre stéréo L/R horizontal à dégradé linéaire haute précision (Vert `#00e676` -> Jaune `#ffd600` -> Rouge `#ff3366`).
+  * Affichage numérique du niveau crête en décibels (ex. `-4.1 dB`).
   * Ligne de panoramique avec curseur central `L • R`.
 
 ### 2.4. Deck Gauche — Paramètres du Plugin (24 Contrôles 3x8)
+* **En-tête épuré et informatif** : `PLUGIN — [2/5] Serum` (index du device sur le nombre total de plugins et nom du device).
 * **24 potentiomètres rotatifs compacts organisés en 3 rangées de 8**.
 * Numérotation explicite `#1` à `#24`.
 * Anneau circulaire LED néon multicolore (palette arc-en-ciel contrastée).
@@ -93,7 +91,10 @@ L'interface web est calibrée pour un usage scénique (fort contraste, éclairag
   * `Contrôle Plugins` (mode principal actif).
   * `Mixeur`.
   * `Vue Scènes`.
-* **Pied de page** : *Live without limits. Your music. Your control.*
+* **Master Output VU-Meter Design** :
+  * Double échelle stéréo L / R à dégradé continu haute luminosité.
+  * Affichage crête dynamique en décibels (ex. `-1.2 dB`).
+  * Graduations calibrées `-∞`, `-12`, `-6`, `0`, `+3 dB`.
 
 ---
 

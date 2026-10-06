@@ -16,9 +16,9 @@
     
     <!-- 1. TOP BAR -->
     <header class="top-bar">
-      <!-- Left: Hamburger & Authentic Logo -->
+      <!-- Left: Single burger button & Official Logo -->
       <div class="top-left">
-        <button id="btn-config" class="menu-btn" title="Configuration">
+        <button id="btn-config" class="menu-btn" title="Paramètres & Configuration">
           <span></span>
           <span></span>
           <span></span>
@@ -28,17 +28,10 @@
         </div>
       </div>
 
-      <!-- Right Stats -->
+      <!-- Right: Transport & Status (Clean, No Link, No duplicate gear, No Set text) -->
       <div class="top-right">
         <div id="bpm-display" class="pill-stat">120 BPM</div>
         <div id="meter-signature" class="pill-stat">4 / 4</div>
-        <div id="link-badge" class="link-pill">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-          </svg>
-          Link
-        </div>
         <div id="connection-status" class="connected-status">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
@@ -48,17 +41,10 @@
           </svg>
           Connected
         </div>
-        <div id="set-name-display" class="set-name">Set : Live Set 01</div>
-        <button id="btn-settings" class="settings-btn" title="Paramètres">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </button>
       </div>
     </header>
 
-    <!-- 2. SCENE BANNER (HERO 3 CARDS) -->
+    <!-- 2. SCENE BANNER (HERO 3 CARDS - AÉRÉ SANS TEXTES INUTILES) -->
     <section class="scene-hero-grid">
       <!-- Left Card: Previous Scene -->
       <div id="scene-prev-card" class="scene-card-side">
@@ -66,11 +52,6 @@
         <div class="scene-content">
           <div class="scene-subtag">SCÈNE PRÉCÉDENTE</div>
           <div id="scene-prev-title" class="scene-title-side">01 - Intro</div>
-          <div id="scene-prev-desc" class="scene-desc-side">
-            Ambiance d'ouverture<br>
-            Sans batterie<br>
-            Montée progressive
-          </div>
         </div>
       </div>
 
@@ -80,11 +61,6 @@
         <div class="scene-active-content">
           <div class="scene-active-tag">SCÈNE ACTUELLE</div>
           <div id="scene-active-title" class="scene-active-title">02 - Couplet</div>
-          <div id="scene-active-desc" class="scene-active-desc">
-            Basse + Pads + FX<br>
-            Rythme principal<br>
-            Énergie qui s'installe
-          </div>
         </div>
       </div>
 
@@ -93,11 +69,6 @@
         <div class="scene-content">
           <div class="scene-subtag">SCÈNE SUIVANTE</div>
           <div id="scene-next-title" class="scene-title-side">03 - Refrain</div>
-          <div id="scene-next-desc" class="scene-desc-side">
-            Batterie complète<br>
-            Puissance maximale<br>
-            Accroche mélodique
-          </div>
         </div>
         <div id="btn-scene-next" class="scene-arrow">▶</div>
       </div>
@@ -109,7 +80,7 @@
       <div class="left-column">
         
         <!-- PISTES (16 TRACKS) -->
-        <div class="deck-panel" style="flex: 1.1; min-height: 0;">
+        <div class="deck-panel" style="flex: 1.15; min-height: 0;">
           <div class="deck-header">
             <div class="deck-title-group">
               <svg class="deck-icon" viewBox="0 0 24 24">
@@ -119,6 +90,7 @@
                 <rect x="14" y="14" width="7" height="7" rx="1.5"/>
               </svg>
               <span id="tracks-deck-title">PISTES (Banque 1/4 : Pistes 1 - 16)</span>
+              <span id="tracks-current-focus-badge" class="current-focus-badge">— Piste #02 : Bass</span>
             </div>
             <div class="bank-nav-group">
               <button id="btn-bank-prev" class="bank-arrow-btn">◀</button>
@@ -133,7 +105,7 @@
           </div>
         </div>
 
-        <!-- 24 KNOBS PANEL -->
+        <!-- 24 KNOBS PANEL WITH NEW STREAMLINED HEADER -->
         <div class="deck-panel knobs-panel">
           <div class="deck-header">
             <div class="deck-title-group">
@@ -145,7 +117,7 @@
                 <line x1="3" y1="12" x2="7" y2="12"/>
                 <line x1="17" y1="12" x2="21" y2="12"/>
               </svg>
-              <span>PARAMÈTRES DU PLUGIN &nbsp;—&nbsp; 24 CONTRÔLES (3 x 8)</span>
+              <span id="plugin-deck-title">PLUGIN &nbsp;—&nbsp; [2/5] Serum</span>
             </div>
           </div>
 
@@ -294,10 +266,44 @@
               Vue Scènes
             </div>
           </div>
+        </div>
 
-          <div class="sidebar-footer">
-            Live without limits.<br>
-            Your music. Your control.
+        <!-- ABLETON MASTER VU-METER DESIGN (REMPLACE LE TEXTE INUTILE) -->
+        <div class="master-hud-panel">
+          <div class="master-header-row">
+            <div class="master-title">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              MASTER OUTPUT
+            </div>
+            <div id="master-db-readout" class="master-db-tag">0.0 dB</div>
+          </div>
+
+          <div class="master-meter-box">
+            <div class="master-channel-strip">
+              <span class="master-ch-label">L</span>
+              <div class="master-led-ladder-track">
+                <div id="master-meter-l" class="master-led-gradient-bar" style="width: 82%;"></div>
+              </div>
+            </div>
+            <div class="master-channel-strip">
+              <span class="master-ch-label">R</span>
+              <div class="master-led-ladder-track">
+                <div id="master-meter-r" class="master-led-gradient-bar" style="width: 80%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="master-scale-ticks">
+            <span>-∞</span>
+            <span>-24</span>
+            <span>-12</span>
+            <span>-6</span>
+            <span>0</span>
+            <span>+3</span>
           </div>
         </div>
 

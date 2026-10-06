@@ -1,30 +1,30 @@
 /**
  * LivePilot 16 — Live Control Cockpit Client Application
- * Layout strictly matching media_1791311346086.jpg
- * 16 Tracks (8x2), 24 Knobs (8x3), 3-Card Scene Banner, Device Sidebar
+ * Layout strictly matching user-approved Stage HUD specifications
+ * 16 Tracks (8x2), 24 Knobs (8x3), 3-Card Scene Banner, Master Output VU
  */
 
 (function () {
   'use strict';
 
-  // --- DEFAULT DATA FROM MASTER SCREENSHOT ---
+  // --- DEFAULT MOCK DATA ---
   const defaultTrackNames = [
-    { num: '01', name: 'Drums', color: '#ff2a5f', dark: false, db: '-6.2 dB', pan: 50, lvlL: 7, lvlR: 8 },
-    { num: '02', name: 'Bass', color: '#ffd000', dark: true, db: '-4.1 dB', pan: 50, lvlL: 9, lvlR: 9 },
-    { num: '03', name: 'Pads', color: '#2979ff', dark: false, db: '-8.3 dB', pan: 50, lvlL: 6, lvlR: 6 },
-    { num: '04', name: 'Lead', color: '#b388ff', dark: true, db: '-10.5 dB', pan: 50, lvlL: 5, lvlR: 5 },
-    { num: '05', name: 'FX', color: '#00e676', dark: true, db: '-12.0 dB', pan: 50, lvlL: 4, lvlR: 4 },
-    { num: '06', name: 'Vocals', color: '#ff4081', dark: false, db: '-7.1 dB', pan: 50, lvlL: 7, lvlR: 7 },
-    { num: '07', name: 'Guitar', color: '#ff9100', dark: true, db: '-9.6 dB', pan: 50, lvlL: 6, lvlR: 5 },
-    { num: '08', name: 'Keys', color: '#00e5ff', dark: true, db: '-11.4 dB', pan: 50, lvlL: 5, lvlR: 5 },
-    { num: '09', name: 'Perc', color: '#7c4dff', dark: false, db: '-5.8 dB', pan: 50, lvlL: 8, lvlR: 7 },
-    { num: '10', name: 'Stabs', color: '#76ff03', dark: true, db: '-14.1 dB', pan: 50, lvlL: 4, lvlR: 4 },
-    { num: '11', name: 'Atmos', color: '#00b0ff', dark: true, db: '-11.2 dB', pan: 50, lvlL: 5, lvlR: 5 },
-    { num: '12', name: 'Arp', color: '#f50057', dark: false, db: '-9.0 dB', pan: 50, lvlL: 6, lvlR: 6 },
-    { num: '13', name: 'Brass', color: '#1de9b6', dark: true, db: '-16.3 dB', pan: 50, lvlL: 3, lvlR: 3 },
-    { num: '14', name: 'Strings', color: '#ff6e40', dark: true, db: '-16.6 dB', pan: 50, lvlL: 3, lvlR: 3 },
-    { num: '15', name: 'Synths', color: '#d500f9', dark: false, db: '-8.9 dB', pan: 50, lvlL: 6, lvlR: 7 },
-    { num: '16', name: 'Vox FX', color: '#00bcd4', dark: true, db: '-12.7 dB', pan: 50, lvlL: 4, lvlR: 5 }
+    { num: '01', name: 'Drums', color: '#ff2a5f', dark: false, db: '-6.2 dB', pan: 50, lvlL: 68, lvlR: 72, isGroup: true },
+    { num: '02', name: 'Bass', color: '#ffd000', dark: true, db: '-4.1 dB', pan: 50, lvlL: 78, lvlR: 78, isGroup: false },
+    { num: '03', name: 'Pads', color: '#2979ff', dark: false, db: '-8.3 dB', pan: 50, lvlL: 55, lvlR: 58, isGroup: false },
+    { num: '04', name: 'Lead', color: '#b388ff', dark: true, db: '-10.5 dB', pan: 50, lvlL: 48, lvlR: 45, isGroup: false },
+    { num: '05', name: 'FX', color: '#00e676', dark: true, db: '-12.0 dB', pan: 50, lvlL: 42, lvlR: 40, isGroup: false },
+    { num: '06', name: 'Vocals', color: '#ff4081', dark: false, db: '-7.1 dB', pan: 50, lvlL: 62, lvlR: 64, isGroup: false },
+    { num: '07', name: 'Guitar', color: '#ff9100', dark: true, db: '-9.6 dB', pan: 50, lvlL: 52, lvlR: 50, isGroup: false },
+    { num: '08', name: 'Keys', color: '#00e5ff', dark: true, db: '-11.4 dB', pan: 50, lvlL: 45, lvlR: 48, isGroup: false },
+    { num: '09', name: 'Perc', color: '#7c4dff', dark: false, db: '-5.8 dB', pan: 50, lvlL: 70, lvlR: 68, isGroup: false },
+    { num: '10', name: 'Stabs', color: '#76ff03', dark: true, db: '-14.1 dB', pan: 50, lvlL: 38, lvlR: 35, isGroup: false },
+    { num: '11', name: 'Atmos', color: '#00b0ff', dark: true, db: '-11.2 dB', pan: 50, lvlL: 46, lvlR: 46, isGroup: false },
+    { num: '12', name: 'Arp', color: '#f50057', dark: false, db: '-9.0 dB', pan: 50, lvlL: 54, lvlR: 56, isGroup: false },
+    { num: '13', name: 'Brass', color: '#1de9b6', dark: true, db: '-16.3 dB', pan: 50, lvlL: 32, lvlR: 30, isGroup: false },
+    { num: '14', name: 'Strings', color: '#ff6e40', dark: true, db: '-16.6 dB', pan: 50, lvlL: 30, lvlR: 32, isGroup: false },
+    { num: '15', name: 'Synths', color: '#d500f9', dark: false, db: '-8.9 dB', pan: 50, lvlL: 56, lvlR: 60, isGroup: true },
+    { num: '16', name: 'Vox FX', color: '#00bcd4', dark: true, db: '-12.7 dB', pan: 50, lvlL: 40, lvlR: 44, isGroup: false }
   ];
 
   const defaultParamDefs = [
@@ -68,18 +68,15 @@
     isPlaying: false,
     playStatus: 'STOP',
     position: '1.1.1',
-    setName: 'Live Set 01',
+    masterVolume: { value: 0.82, str: '-0.2 dB' },
     activeScene: {
       num: 2,
       total: 12,
       name: '02 - Couplet',
-      desc: 'Basse + Pads + FX\nRythme principal\nÉnergie qui s\'installe',
       prev_num: 1,
       prev_name: '01 - Intro',
-      prev_desc: 'Ambiance d\'ouverture\nSans batterie\nMontée progressive',
       next_num: 3,
-      next_name: '03 - Refrain',
-      next_desc: 'Batterie complète\nPuissance maximale\nAccroche mélodique'
+      next_name: '03 - Refrain'
     },
     scenes: [],
     bankIndex: 0,
@@ -113,7 +110,7 @@
       state.connected = true;
       const connEl = document.getElementById('connection-status');
       if (connEl) {
-        connEl.classList.remove('offline');
+        connEl.className = 'connected-status';
         connEl.innerHTML = `
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
@@ -135,17 +132,16 @@
       state.connected = false;
       const connEl = document.getElementById('connection-status');
       if (connEl) {
-        connEl.classList.add('offline');
+        connEl.className = 'connected-status disconnected';
         connEl.innerHTML = `
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="1" y1="1" x2="23" y2="23"/>
             <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
             <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
             <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
-            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
             <circle cx="12" cy="20" r="1.5" fill="currentColor"/>
           </svg>
-          Offline
+          Disconnected
         `;
       }
       if (!reconnectTimer) {
@@ -197,6 +193,9 @@
       case 'param_value':
         updateParamValue(msg.data);
         break;
+      case 'master_volume':
+        updateMasterVolume(msg.data);
+        break;
       default:
         break;
     }
@@ -207,7 +206,6 @@
     if (data.signature) state.signature = data.signature;
     if (data.is_playing !== undefined) state.isPlaying = data.is_playing;
     if (data.play_status !== undefined) state.playStatus = data.play_status;
-    if (data.set_name) state.setName = data.set_name;
     if (data.active_scene) state.activeScene = data.active_scene;
     if (data.scenes) state.scenes = data.scenes;
     if (data.bank_index !== undefined) state.bankIndex = data.bank_index;
@@ -219,6 +217,7 @@
     if (data.active_device_name !== undefined) state.activeDeviceName = data.active_device_name;
     if (data.active_device_maker) state.activeDeviceMaker = data.active_device_maker;
     if (data.auto_follow !== undefined) state.autoFollow = data.auto_follow;
+    if (data.master_volume) state.masterVolume = data.master_volume;
     if (data.parameters) state.parameters = data.parameters;
 
     renderTopBar();
@@ -226,6 +225,7 @@
     renderTracks();
     renderKnobs();
     renderSidebar();
+    renderMasterMeter();
   }
 
   function updateMeters(meters) {
@@ -233,25 +233,11 @@
     meters.forEach((m, idx) => {
       const card = document.getElementById(`track-card-${idx}`);
       if (!card) return;
-      const ladderL = card.querySelector('.meter-channel-ladder.left');
-      const ladderR = card.querySelector('.meter-channel-ladder.right');
-      if (ladderL && m.left !== undefined) updateLadderLeds(ladderL, m.left);
-      if (ladderR && m.right !== undefined) updateLadderLeds(ladderR, m.right);
+      const barL = card.querySelector('.meter-gradient-fill.left');
+      const barR = card.querySelector('.meter-gradient-fill.right');
+      if (barL && m.left !== undefined) barL.style.width = `${Math.min(100, Math.round(m.left * 100))}%`;
+      if (barR && m.right !== undefined) barR.style.width = `${Math.min(100, Math.round(m.right * 100))}%`;
     });
-  }
-
-  function updateLadderLeds(ladder, level) {
-    const leds = ladder.children;
-    const litCount = Math.round(Math.max(0, Math.min(1, level)) * 12);
-    for (let i = 0; i < leds.length; i++) {
-      if (i < litCount) {
-        if (i < 7) leds[i].className = 'led-seg lit-green';
-        else if (i < 10) leds[i].className = 'led-seg lit-yellow';
-        else leds[i].className = 'led-seg lit-red';
-      } else {
-        leds[i].className = 'led-seg';
-      }
-    }
   }
 
   function updateTransport(data) {
@@ -299,6 +285,11 @@
     }
   }
 
+  function updateMasterVolume(data) {
+    state.masterVolume = data;
+    renderMasterMeter();
+  }
+
   // --- RENDER TOP BAR ---
   function renderTopBar() {
     const bpmEl = document.getElementById('bpm-display');
@@ -306,32 +297,23 @@
 
     const sigEl = document.getElementById('meter-signature');
     if (sigEl) sigEl.textContent = state.signature || '4 / 4';
-
-    const setEl = document.getElementById('set-name-display');
-    if (setEl) setEl.textContent = `Set : ${state.setName || 'Live Set 01'}`;
   }
 
-  // --- RENDER SCENE BANNER ---
+  // --- RENDER SCENE BANNER (AÉRÉ SANS TEXTES INUTILES) ---
   function renderSceneBanner() {
     const sc = state.activeScene || {};
     
     // Left (Previous)
     const prevTitle = document.getElementById('scene-prev-title');
-    const prevDesc = document.getElementById('scene-prev-desc');
     if (prevTitle) prevTitle.textContent = sc.prev_name || '01 - Intro';
-    if (prevDesc) prevDesc.innerHTML = (sc.prev_desc || "Ambiance d'ouverture<br>Sans batterie<br>Montée progressive").replace(/\n/g, '<br>');
 
     // Center (Active)
     const actTitle = document.getElementById('scene-active-title');
-    const actDesc = document.getElementById('scene-active-desc');
     if (actTitle) actTitle.textContent = sc.name || '02 - Couplet';
-    if (actDesc) actDesc.innerHTML = (sc.desc || "Basse + Pads + FX<br>Rythme principal<br>Énergie qui s'installe").replace(/\n/g, '<br>');
 
     // Right (Next)
     const nextTitle = document.getElementById('scene-next-title');
-    const nextDesc = document.getElementById('scene-next-desc');
     if (nextTitle) nextTitle.textContent = sc.next_name || '03 - Refrain';
-    if (nextDesc) nextDesc.innerHTML = (sc.next_desc || "Batterie complète<br>Puissance maximale<br>Accroche mélodique").replace(/\n/g, '<br>');
   }
 
   // --- RENDER TRACKS (16 Tracks: 8x2) ---
@@ -344,6 +326,15 @@
       titleEl.textContent = `PISTES (Banque ${b}/${state.totalBanks} : Pistes ${startTrk} - ${endTrk})`;
     }
 
+    // Dynamic focus badge appended after parentheses
+    const focusBadge = document.getElementById('tracks-current-focus-badge');
+    const selTrk = state.tracks.find(t => t.index === state.selectedTrackIndex);
+    const selNum = (state.selectedTrackIndex + 1 < 10) ? `0${state.selectedTrackIndex + 1}` : `${state.selectedTrackIndex + 1}`;
+    const selName = selTrk ? selTrk.name : 'Bass';
+    if (focusBadge) {
+      focusBadge.textContent = `— Piste #${selNum} : ${selName}`;
+    }
+
     const bankInd = document.getElementById('bank-indicator');
     if (bankInd) bankInd.textContent = `Banque ${state.bankIndex + 1} / ${state.totalBanks}`;
 
@@ -353,50 +344,42 @@
 
     for (let i = 0; i < 16; i++) {
       const globalIdx = (state.bankIndex * 16) + i;
-      const defaultInfo = defaultTrackNames[i] || { num: (i+1 < 10 ? '0'+(i+1) : ''+(i+1)), name: `Track ${i+1}`, color: '#2979ff', dark: false, db: '-6.0 dB', pan: 50, lvlL: 5, lvlR: 5 };
+      const defaultInfo = defaultTrackNames[i] || { num: (i+1 < 10 ? '0'+(i+1) : ''+(i+1)), name: `Track ${i+1}`, color: '#2979ff', dark: false, db: '-6.0 dB', pan: 50, lvlL: 50, lvlR: 50, isGroup: false };
       const trk = state.tracks[i] || {
         index: globalIdx,
         name: defaultInfo.name,
         color: defaultInfo.color,
         vol_str: defaultInfo.db,
-        pan_val: 0.0
+        pan_val: 0.0,
+        is_group: defaultInfo.isGroup
       };
 
       const isSelected = (trk.index === state.selectedTrackIndex);
+      const isGroup = Boolean(trk.is_group || defaultInfo.isGroup);
       const color = trk.color || defaultInfo.color;
       const isDark = defaultInfo.dark;
       const textColor = isDark ? '#000000' : '#ffffff';
 
       const card = document.createElement('div');
       card.id = `track-card-${i}`;
-      card.className = `track-card ${isSelected ? 'selected' : ''}`;
-
-      // Build 12 LED segment ladders for L and R
-      const makeLadderHTML = (lvl) => {
-        let leds = '';
-        for (let s = 1; s <= 12; s++) {
-          let litClass = '';
-          if (s <= lvl) {
-            if (s <= 7) litClass = 'lit-green';
-            else if (s <= 10) litClass = 'lit-yellow';
-            else litClass = 'lit-red';
-          }
-          leds += `<div class="led-seg ${litClass}"></div>`;
-        }
-        return leds;
-      };
+      card.className = `track-card ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-track' : ''}`;
 
       const panDotLeft = 50 + (trk.pan_val !== undefined ? trk.pan_val * 45 : 0);
+      const grpBadge = isGroup ? `<span class="grp-tag-badge">GRP</span>` : '';
 
       card.innerHTML = `
         <div class="track-top-banner" style="background: ${color}; color: ${textColor};">
           <span class="trk-num">${defaultInfo.num}</span>
-          <span class="trk-name">${trk.name}</span>
+          <div class="trk-name">${grpBadge} <span>${trk.name}</span></div>
         </div>
         <div class="track-inner-body">
           <div class="meter-stereo-wrap">
-            <div class="meter-channel-ladder left">${makeLadderHTML(defaultInfo.lvlL || 5)}</div>
-            <div class="meter-channel-ladder right">${makeLadderHTML(defaultInfo.lvlR || 5)}</div>
+            <div class="meter-channel-bar">
+              <div class="meter-gradient-fill left" style="width: ${defaultInfo.lvlL}%;"></div>
+            </div>
+            <div class="meter-channel-bar">
+              <div class="meter-gradient-fill right" style="width: ${defaultInfo.lvlR}%;"></div>
+            </div>
           </div>
           <div class="track-db-readout">${trk.vol_str || defaultInfo.db}</div>
           <div class="pan-line-wrap">
@@ -419,6 +402,15 @@
 
   // --- RENDER 24 KNOBS (3 rows of 8) ---
   function renderKnobs() {
+    // Dynamic Plugin Header
+    const plugTitle = document.getElementById('plugin-deck-title');
+    if (plugTitle) {
+      const totalDevs = (state.devices && state.devices.length) ? state.devices.length : 5;
+      const curDev = (state.activeDeviceIndex !== undefined ? state.activeDeviceIndex + 1 : 2);
+      const devName = state.activeDeviceName || 'Serum';
+      plugTitle.innerHTML = `PLUGIN &nbsp;—&nbsp; [${curDev}/${totalDevs}] ${devName}`;
+    }
+
     const container = document.getElementById('knobs-container');
     if (!container) return;
     container.innerHTML = '';
@@ -585,6 +577,19 @@
     }
   }
 
+  // --- RENDER MASTER METER ---
+  function renderMasterMeter() {
+    const dbTag = document.getElementById('master-db-readout');
+    const barL = document.getElementById('master-meter-l');
+    const barR = document.getElementById('master-meter-r');
+
+    const vol = state.masterVolume || { value: 0.82, str: '-0.2 dB' };
+    if (dbTag) dbTag.textContent = vol.str || '-0.2 dB';
+    const pct = Math.min(100, Math.round((vol.value || 0.82) * 100));
+    if (barL) barL.style.width = `${pct}%`;
+    if (barR) barR.style.width = `${Math.max(0, pct - 2)}%`;
+  }
+
   // --- EVENT LISTENERS INITIALIZATION ---
   function initListeners() {
     // Scene navigation
@@ -711,6 +716,7 @@
     renderTracks();
     renderKnobs();
     renderSidebar();
+    renderMasterMeter();
     connectWebSocket();
   });
 
