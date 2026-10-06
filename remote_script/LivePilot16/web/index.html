@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>LivePilot Cockpit — Stage HUD</title>
-  <meta name="theme-color" content="#0a0b0e">
+  <title>LivePilot 16 — Live Control Cockpit</title>
+  <meta name="theme-color" content="#080b12">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -12,179 +12,298 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="cockpit-container">
+  <div id="tablet-app">
     
-    <!-- 1. TOP BAR COMPACTE : Menu, 3 Indicateurs clés, Volume Général Ableton -->
-    <header id="top-bar">
-      <!-- GAUCHE : Configuration / Menu & Titre -->
-      <div class="top-left-group">
-        <button id="btn-config" class="btn-config-menu" title="Accéder aux Configurations">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
+    <!-- 1. TOP BAR -->
+    <header class="top-bar">
+      <!-- Left: Hamburger & Authentic Logo -->
+      <div class="top-left">
+        <button id="btn-config" class="menu-btn" title="Configuration">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="brand-logo-wrap">
+          <img src="logo.png" alt="LIVEPILOT 16" class="brand-logo-img">
+        </div>
+      </div>
+
+      <!-- Right Stats -->
+      <div class="top-right">
+        <div id="bpm-display" class="pill-stat">120 BPM</div>
+        <div id="meter-signature" class="pill-stat">4 / 4</div>
+        <div id="link-badge" class="link-pill">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          Link
+        </div>
+        <div id="connection-status" class="connected-status">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+            <circle cx="12" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+          Connected
+        </div>
+        <div id="set-name-display" class="set-name">Set : Live Set 01</div>
+        <button id="btn-settings" class="settings-btn" title="Paramètres">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
         </button>
-        <img src="logo.png" alt="LIVEPILOT 16" class="brand-logo-img" style="height: 24px; object-fit: contain;">
-      </div>
-
-      <!-- CENTRE : 3 INFOS ÉTATS CLÉS (PLAY/PAUSE/STOP, TRACK ACTIF, BPM) -->
-      <div class="top-status-cockpit">
-        <!-- STATUT PLAY / PAUSE / STOP -->
-        <div id="play-status-badge" class="status-pill stop">
-          <span id="play-status-icon">⏹</span>
-          <span id="play-status-text">STOP</span>
-        </div>
-
-        <!-- NUMÉRO DU TRACK SÉLECTIONNÉ -->
-        <div id="track-focus-pill" class="status-pill track-pill">
-          <span class="pill-label">TRACK</span>
-          <span id="focused-track-num" class="pill-val">#01 DRUMS</span>
-        </div>
-
-        <!-- TEMPO BPM -->
-        <div class="status-pill tempo-pill">
-          <span id="tempo-display" class="pill-val">120.0</span>
-          <span class="pill-unit">BPM</span>
-        </div>
-      </div>
-
-      <!-- DROITE : VOLUME GÉNÉRAL ABLETON (MASTER VOLUME) -->
-      <div class="master-volume-box" title="Volume Général Ableton (Master)">
-        <div class="master-vol-header">
-          <span class="master-vol-label">MASTER VOL</span>
-          <span id="master-vol-text" class="master-vol-val">0.0 dB</span>
-        </div>
-        <div id="master-vol-slider-wrap" class="master-vol-slider-wrap">
-          <div id="master-led-ladder" class="master-led-ladder"></div>
-          <input type="range" id="master-vol-slider" min="0" max="1" step="0.005" value="0.85" class="master-vol-range">
-        </div>
       </div>
     </header>
 
-    <!-- 2. BANDEAU DE SCÈNE PLEINE LARGEUR (TOUTE LA LARGEUR DE L'ÉCRAN) -->
-    <section id="scene-full-banner" class="scene-full-width-strip" title="Cliquer pour afficher la liste de toutes les scènes">
-      <!-- LIGNE 1 (AU-DESSUS) : NUMÉRO ET LIBELLÉ DE LA SCÈNE EN COURS (LIBELLÉ AGRANDI) -->
-      <div id="scene-active-title" class="scene-row scene-current-row">
-        03 - VERSE A (SYNTH & BASSLINE) [126 BPM]
+    <!-- 2. SCENE BANNER (HERO 3 CARDS) -->
+    <section class="scene-hero-grid">
+      <!-- Left Card: Previous Scene -->
+      <div id="scene-prev-card" class="scene-card-side">
+        <div id="btn-scene-prev" class="scene-arrow">◀</div>
+        <div class="scene-content">
+          <div class="scene-subtag">SCÈNE PRÉCÉDENTE</div>
+          <div id="scene-prev-title" class="scene-title-side">01 - Intro</div>
+          <div id="scene-prev-desc" class="scene-desc-side">
+            Ambiance d'ouverture<br>
+            Sans batterie<br>
+            Montée progressive
+          </div>
+        </div>
       </div>
 
-      <!-- LIGNE 2 (EN-DESSOUS) : NUMÉRO ET LIBELLÉ DE LA SCÈNE QUI SUIT (LIBELLÉ AGRANDI) -->
-      <div id="scene-next-title" class="scene-row scene-next-row">
-        04 - BUILDUP INTENSE DROPOUT (TRANSITION)
+      <!-- Center Card: Active Hero Scene -->
+      <div id="scene-active-card" class="scene-card-active">
+        <div id="scene-play-btn" class="scene-play-icon">▶</div>
+        <div class="scene-active-content">
+          <div class="scene-active-tag">SCÈNE ACTUELLE</div>
+          <div id="scene-active-title" class="scene-active-title">02 - Couplet</div>
+          <div id="scene-active-desc" class="scene-active-desc">
+            Basse + Pads + FX<br>
+            Rythme principal<br>
+            Énergie qui s'installe
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Card: Next Scene -->
+      <div id="scene-next-card" class="scene-card-side">
+        <div class="scene-content">
+          <div class="scene-subtag">SCÈNE SUIVANTE</div>
+          <div id="scene-next-title" class="scene-title-side">03 - Refrain</div>
+          <div id="scene-next-desc" class="scene-desc-side">
+            Batterie complète<br>
+            Puissance maximale<br>
+            Accroche mélodique
+          </div>
+        </div>
+        <div id="btn-scene-next" class="scene-arrow">▶</div>
       </div>
     </section>
 
-    <!-- 3. SECTION MIXER (4 BOUTONS DE BANQUES VERROUILLÉS À GAUCHE + 2 RANGÉES DE 8 PISTES À DROITE) -->
-    <section id="mixer-section">
-      <!-- 4 BOUTONS VERTICAUX DE SÉLECTION DE BANQUE (CONFORMES AU CAHIER DES CHARGES) -->
-      <div class="bank-sidebar">
-        <button class="bank-btn active" data-bank="0">
-          <span class="bank-btn-title">BANQUE 1</span>
-          <span class="bank-btn-sub">CH 1-16</span>
-        </button>
-        <button class="bank-btn" data-bank="1">
-          <span class="bank-btn-title">BANQUE 2</span>
-          <span class="bank-btn-sub">CH 17-32</span>
-        </button>
-        <button class="bank-btn" data-bank="2">
-          <span class="bank-btn-title">BANQUE 3</span>
-          <span class="bank-btn-sub">CH 33-48</span>
-        </button>
-        <button class="bank-btn" data-bank="3">
-          <span class="bank-btn-title">BANQUE 4</span>
-          <span class="bank-btn-sub">CH 49-64</span>
-        </button>
+    <!-- 3. MAIN WORKSPACE -->
+    <div class="workspace-split">
+      <!-- LEFT COLUMN (TRACKS + 24 KNOBS) -->
+      <div class="left-column">
+        
+        <!-- PISTES (16 TRACKS) -->
+        <div class="deck-panel" style="flex: 1.1; min-height: 0;">
+          <div class="deck-header">
+            <div class="deck-title-group">
+              <svg class="deck-icon" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+              </svg>
+              <span id="tracks-deck-title">PISTES (Banque 1/4 : Pistes 1 - 16)</span>
+            </div>
+            <div class="bank-nav-group">
+              <button id="btn-bank-prev" class="bank-arrow-btn">◀</button>
+              <div id="bank-indicator" class="bank-pill">Banque 1 / 4</div>
+              <button id="btn-bank-next" class="bank-arrow-btn">▶</button>
+            </div>
+          </div>
+
+          <!-- 16 TRACKS GRID -->
+          <div class="tracks-grid" id="tracks-container">
+            <!-- Dynamically populated by app.js -->
+          </div>
+        </div>
+
+        <!-- 24 KNOBS PANEL -->
+        <div class="deck-panel knobs-panel">
+          <div class="deck-header">
+            <div class="deck-title-group">
+              <svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="3" x2="12" y2="7"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+                <line x1="3" y1="12" x2="7" y2="12"/>
+                <line x1="17" y1="12" x2="21" y2="12"/>
+              </svg>
+              <span>PARAMÈTRES DU PLUGIN &nbsp;—&nbsp; 24 CONTRÔLES (3 x 8)</span>
+            </div>
+          </div>
+
+          <!-- 24 KNOBS GRID -->
+          <div class="knobs-grid" id="knobs-container">
+            <!-- Dynamically populated by app.js -->
+          </div>
+        </div>
+
       </div>
 
-      <!-- LES 16 TRANCHES EN EXACTEMENT 8 COLONNES x 2 RANGÉES (BOUTONS 1-8 HAUT, 9-16 BAS) -->
-      <div class="tracks-deck-container">
-        <!-- Rangée Haute : Boutons 1 à 8 -->
-        <div id="tracks-row-1" class="tracks-row-grid"></div>
-        <!-- Rangée Basse : Boutons 9 à 16 -->
-        <div id="tracks-row-2" class="tracks-row-grid"></div>
-      </div>
-    </section>
-
-    <!-- 4. SECTION DEVICE & 24 POTENTIOMÈTRES (EXACTEMENT 8 COLONNES SUR 3 LIGNES) -->
-    <section id="device-section">
-      <div class="device-header">
-        <div class="device-track-info">
-          <span id="active-device-title" class="active-device-badge">[2] Drum Buss (Master Bus Glue)</span>
-        </div>
-
-        <div class="device-header-right">
-          <span class="device-chain-label">device chain</span>
-          <div id="device-chain-bar" class="device-chain-scroll"></div>
-        </div>
-      </div>
-
-      <!-- CORPS DE SECTION : NAVIGATION PLUGINS GAUCHE + 24 KNOBS EN 8x3 -->
-      <div class="knobs-deck-layout" style="display: flex; gap: 8px; flex: 1; align-items: stretch;">
-        <!-- Colonne Gauche : 2 Boutons Plugin Précédent / Suivant -->
-        <div class="device-nav-sidebar" style="display: flex; flex-direction: column; width: 85px; flex-shrink: 0; background: #0b0e17; border: 1px solid #1d263b; border-radius: 6px; padding: 6px; gap: 6px;">
-          <div style="text-align: center;">
-            <span style="font-family: var(--font-mono); font-size: 8px; font-weight: 800; color: #8d9bb5; text-transform: uppercase;">PLUGINS</span>
-            <div id="side-dev-counter" style="font-family: var(--font-mono); font-size: 11px; font-weight: 900; color: #ffcc00;">1 / 2</div>
+      <!-- RIGHT SIDEBAR (~26%) -->
+      <aside class="right-sidebar">
+        
+        <!-- PISTE SÉLECTIONNÉE -->
+        <div class="track-info-card">
+          <div class="sidebar-title">PISTE SÉLECTIONNÉE</div>
+          <div class="track-hero-row">
+            <div class="track-hero-accent-bar" id="sel-accent-bar"></div>
+            <div class="track-hero-name" id="sel-track-name">02 - Bass</div>
           </div>
-          <button id="btn-device-prev" class="btn-plugin-nav" style="flex: 1; display: flex; align-items: center; justify-content: center; background: #131926; border: 1px solid #243049; color: #00f0ff; border-radius: 5px; font-size: 16px; font-weight: 900; cursor: pointer;" title="Plugin précédent">◄</button>
-          <button id="btn-device-next" class="btn-plugin-nav" style="flex: 1; display: flex; align-items: center; justify-content: center; background: #131926; border: 1px solid #243049; color: #00f0ff; border-radius: 5px; font-size: 16px; font-weight: 900; cursor: pointer;" title="Plugin suivant">►</button>
+          <div class="track-meta-row">
+            <div class="meta-col">
+              <span class="meta-label">Couleur</span>
+              <div class="color-swatch" id="sel-swatch"></div>
+            </div>
+            <div class="meta-col">
+              <span class="meta-label">Type</span>
+              <span class="meta-val" id="sel-type">Instrument</span>
+            </div>
+            <div class="meta-col">
+              <span class="meta-label">MIDI In</span>
+              <span class="meta-val" id="sel-midi">All Channels</span>
+            </div>
+          </div>
         </div>
 
-        <!-- MATRICE DES 24 PARAMÈTRES (8 COLONNES SUR 3 RANGÉES) -->
-        <div class="knobs-wrapper-compact" style="flex: 1;">
-          <!-- Rangée 1 : Knobs 1 à 8 -->
-          <div id="knobs-row-1" class="knobs-grid row-1"></div>
-          <!-- Rangée 2 : Knobs 9 à 16 -->
-          <div id="knobs-row-2" class="knobs-grid row-2"></div>
-          <!-- Rangée 3 : Knobs 17 à 24 -->
-          <div id="knobs-row-3" class="knobs-grid row-3"></div>
-        </div>
-      </div>
-    </section>
+        <!-- DEVICE / PLUGIN -->
+        <div class="device-card">
+          <div class="sidebar-title">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="4" y="4" width="16" height="16" rx="3"/>
+              <rect x="8" y="8" width="8" height="8" rx="1.5"/>
+              <line x1="9" y1="1" x2="9" y2="4"/>
+              <line x1="15" y1="1" x2="15" y2="4"/>
+              <line x1="9" y1="20" x2="9" y2="23"/>
+              <line x1="15" y1="20" x2="15" y2="23"/>
+              <line x1="1" y1="9" x2="4" y2="9"/>
+              <line x1="1" y1="15" x2="4" y2="15"/>
+              <line x1="20" y1="9" x2="23" y2="9"/>
+              <line x1="20" y1="15" x2="23" y2="15"/>
+            </svg>
+            DEVICE / PLUGIN
+          </div>
 
-    <!-- MODAL CONFIGURATION (MENU HAMBURGER EN HAUT À GAUCHE) -->
-    <div id="config-modal" class="modal-overlay hidden">
-      <div class="modal-content config-modal-box">
-        <div class="modal-header">
-          <h3>⚙️ CONFIGURATIONS & PRÉFÉRENCES STAGE</h3>
-          <button id="btn-close-config" class="btn-close">&times;</button>
+          <div class="device-carousel-box">
+            <button id="btn-device-carousel-prev" class="carousel-nav-btn">◀</button>
+            <div class="device-center-info">
+              <div class="device-keys-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
+                  <rect x="2" y="3" width="20" height="18" rx="2" fill="#2d3748"/>
+                  <rect x="3" y="4" width="4" height="16" rx="1" fill="#f8fafc"/>
+                  <rect x="8" y="4" width="4" height="16" rx="1" fill="#f8fafc"/>
+                  <rect x="13" y="4" width="4" height="16" rx="1" fill="#f8fafc"/>
+                  <rect x="18" y="4" width="3" height="16" rx="1" fill="#f8fafc"/>
+                  <rect x="6" y="4" width="2.5" height="10" fill="#0f172a"/>
+                  <rect x="11" y="4" width="2.5" height="10" fill="#0f172a"/>
+                  <rect x="16" y="4" width="2.5" height="10" fill="#0f172a"/>
+                </svg>
+              </div>
+              <div class="device-text-col">
+                <div id="device-name-text" class="device-name-text">Serum</div>
+                <div id="device-maker-text" class="device-maker-text">Xfer Records</div>
+              </div>
+            </div>
+            <div id="device-counter-badge" class="device-counter-badge">2 / 5</div>
+            <button id="btn-device-carousel-next" class="carousel-nav-btn">▶</button>
+          </div>
+
+          <div class="device-actions-row">
+            <button id="btn-device-prev-quick" class="dev-action-btn">◀ Device précédent</button>
+            <button id="btn-device-next-quick" class="dev-action-btn">Device suivant ▶</button>
+          </div>
+
+          <div class="auto-follow-row">
+            <div class="auto-follow-left">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              Auto-follow device
+            </div>
+            <div id="auto-follow-toggle" class="ios-toggle active"></div>
+          </div>
         </div>
-        <div class="config-modal-body">
-          <div class="config-item">
-            <span class="config-label">Connexion WebSocket Ableton</span>
-            <span id="cfg-conn-status" class="config-badge-on">CONNECTÉ (127.0.0.1:8765)</span>
+
+        <!-- MODES -->
+        <div class="modes-card">
+          <div class="sidebar-title">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            MODES
           </div>
-          <div class="config-item">
-            <span class="config-label">Surface physique</span>
-            <span class="config-val">Novation Launch Control XL (CC 64-79)</span>
+
+          <div class="modes-list">
+            <div class="mode-item active" data-mode="plugins">
+              <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="4" y1="21" x2="4" y2="14"/>
+                <line x1="4" y1="10" x2="4" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12" y2="3"/>
+                <line x1="20" y1="21" x2="20" y2="16"/>
+                <line x1="20" y1="12" x2="20" y2="3"/>
+                <line x1="1" y1="14" x2="7" y2="14"/>
+                <line x1="9" y1="8" x2="15" y2="8"/>
+                <line x1="17" y1="16" x2="23" y2="16"/>
+              </svg>
+              Contrôle Plugins
+            </div>
+
+            <div class="mode-item" data-mode="mixer">
+              <svg class="mode-icon" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="8" width="4" height="13" rx="1"/>
+                <rect x="10" y="4" width="4" height="17" rx="1"/>
+                <rect x="17" y="11" width="4" height="10" rx="1"/>
+              </svg>
+              Mixeur
+            </div>
+
+            <div class="mode-item" data-mode="scenes">
+              <svg class="mode-icon" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="3" width="4.5" height="4.5" rx="1"/>
+                <rect x="9.75" y="3" width="4.5" height="4.5" rx="1"/>
+                <rect x="16.5" y="3" width="4.5" height="4.5" rx="1"/>
+                <rect x="3" y="9.75" width="4.5" height="4.5" rx="1"/>
+                <rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/>
+                <rect x="16.5" y="9.75" width="4.5" height="4.5" rx="1"/>
+                <rect x="3" y="16.5" width="4.5" height="4.5" rx="1"/>
+                <rect x="9.75" y="16.5" width="4.5" height="4.5" rx="1"/>
+                <rect x="16.5" y="16.5" width="4.5" height="4.5" rx="1"/>
+              </svg>
+              Vue Scènes
+            </div>
           </div>
-          <div class="config-item">
-            <span class="config-label">Contrôleur Scènes / Transport</span>
-            <span class="config-val">Novation Launchpad Pro MK3</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">Taux de rafraîchissement VU-Mètres</span>
-            <span class="config-val">25 FPS (Temps réel)</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">Mode Plein Écran</span>
-            <button id="btn-fullscreen-toggle" class="btn-action">Basculer Plein Écran</button>
+
+          <div class="sidebar-footer">
+            Live without limits.<br>
+            Your music. Your control.
           </div>
         </div>
-      </div>
+
+      </aside>
     </div>
 
-    <!-- MODAL / DRAWER DES SCÈNES -->
-    <div id="scenes-modal" class="modal-overlay hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>ABLETON LIVE — LISTE DES SCÈNES</h3>
-          <button id="btn-close-scenes" class="btn-close">&times;</button>
-        </div>
-        <div id="scenes-list" class="scenes-grid"></div>
-      </div>
-    </div>
   </div>
 
   <script src="app.js"></script>

@@ -186,6 +186,9 @@ class LivePilot16(ControlSurface):
         self._broadcast_full_sync()
 
     def _on_selected_track_changed(self):
+        # Auto-follow désactivé depuis la tablette : la piste/device contrôlé reste verrouillé
+        if not getattr(self, '_auto_follow', True):
+            return
         self._current_track = self.song().view.selected_track
         # Aligne automatiquement la banque si la piste sélectionnée est hors de la banque courante
         self._auto_align_bank_for_track(self._current_track)
@@ -462,6 +465,16 @@ class LivePilot16(ControlSurface):
             scene_idx + 1, total_sc, tempo, sig_num, sig_den
         )
 
+        # Scène précédente (carte de gauche du bandeau)
+        prev_sc_idx = scene_idx - 1
+        if prev_sc_idx >= 0:
+            prev_sc = song.scenes[prev_sc_idx]
+            prev_sc_name = prev_sc.name if (prev_sc and prev_sc.name) else ("Scene %d" % (prev_sc_idx + 1))
+            prev_sc_num = prev_sc_idx + 1
+        else:
+            prev_sc_name = "--- DÉBUT DU LIVE ---"
+            prev_sc_num = 0
+
         return {
             'num': scene_idx + 1,
             'total': total_sc,
@@ -471,7 +484,10 @@ class LivePilot16(ControlSurface):
             'is_playing': bool(song.is_playing),
             'next_num': next_sc_num,
             'next_name': next_sc_name,
-            'next_color': next_sc_color
+            'next_color': next_sc_color,
+            'prev_num': prev_sc_num,
+            'prev_name': prev_sc_name,
+            'signature': "%d/%d" % (sig_num, sig_den)
         }
 
     def _get_play_status_string(self):
@@ -524,6 +540,7 @@ class LivePilot16(ControlSurface):
                     'num': idx + 1,
                     'total': total_devs,
                     'name': dev.name,
+                    'maker': str(getattr(dev, 'class_display_name', '') or ''),
                     'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
                 })
 
@@ -607,6 +624,7 @@ class LivePilot16(ControlSurface):
                 'num': idx + 1,
                 'total': total_devs,
                 'name': dev.name,
+                'maker': str(getattr(dev, 'class_display_name', '') or ''),
                 'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
             })
 
@@ -774,6 +792,21 @@ class LivePilot16(ControlSurface):
 
         elif action == 'nav_device_next':
             self._nav_device_next()
+
+        elif action == 'set_auto_follow':
+            self._auto_follow = bool(msg.get('value', True))
+            if self._auto_follow:
+                self._on_selected_track_changed()
+
+        elif action == 'fire_relative_scene':
+            # Flèches du bandeau de scènes : -1 = précédente, +1 = suivante
+            delta = int(msg.get('delta', 1))
+            info = self._get_active_scene_info()
+            scenes = list(self.song().scenes)
+            target = (info.get('num', 1) - 1) + delta
+            if 0 <= target < len(scenes):
+                scenes[target].fire()
+                self.song().view.selected_scene = scenes[target]
 
         elif action in ('toggle_mute', 'toggle_solo', 'toggle_arm'):
             t_idx = msg.get('track_index', 0)

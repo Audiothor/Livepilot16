@@ -1,79 +1,91 @@
 # LivePilot 16
-> **"Ne regardez plus l'écran, pilotez votre son."**  
-> *(Alternative internationale : "Eyes off the screen, hands on the sound.")*
 
-![LivePilot 16 Mockup](doc/assets/livepilot16_mockup.jpg)
-
-**LivePilot 16** est une surface de contrôle matérielle professionnelle pour **Ableton Live**, basée sur l'ESP32-S3 et conçue pour la scène et le studio. Elle permet de naviguer intuitivement et les yeux fermés dans l'arborescence :
-$$\text{Projet} \longrightarrow \text{Banque de Pistes} \longrightarrow \text{Piste (Track)} \longrightarrow \text{Plugin (Device)} \longrightarrow \text{16 Paramètres}$$
+> **LivePilot 16** is an interactive stage cockpit for Ableton Live, combining 16-track and 24-plugin macro control with real-time, high-visibility visual feedback on tablet.
+>
+> *(Version française : **LivePilot 16** est un cockpit scénique interactif pour Ableton Live, combinant le contrôle physique de 16 pistes et 24 macros de plugins avec un retour visuel temps réel haute visibilité sur tablette.)*
 
 ---
 
-## 📂 Structure du Répertoire (Monorepo Professionnel)
+![LivePilot 16 Tablet Cockpit](doc/assets/tablet_cockpit_preview.jpg)
 
-Chaque discipline technique dispose de son propre répertoire totalement autonome :
+---
+
+## 🌟 Key Features
+
+* **High-Visibility Stage HUD**: Designed specifically for dark stages, festivals, and live performance with high-contrast color coding and zero visual clutter.
+* **16-Track Mixer Deck (8x2)**: Direct overview of 16 channels in two rows of 8 tracks, featuring dual stereo segmented LED VU-meters, real-time dB levels, and pan indicators. Bank switching allows control over up to 64 tracks (`Bank 1/4`).
+* **24 Plugin Macros (8x3)**: 24 rotary encoders numbered `#1` to `#24` with multi-colored LED indicator arcs, clear parameter titles, and numerical values.
+* **3-Card Scene Banner**: Seamless live progression tracking with **Previous Scene**, **Current Scene** (prominent glowing emerald container with play button), and **Next Scene**.
+* **Device / Plugin Control**: Instant navigation through the track's device chain with VST name, maker, position counter (`2 / 5`), quick navigation buttons, and **Auto-follow device** toggle.
+* **Zero Audio Latency**: Native Python 3 MIDI Remote Script communicating with Live's LOM (Live Object Model) and streaming real-time telemetry over WebSockets.
+* **Hardware Synergy**: Works seamlessly alongside Novation Launch Control XL (16 track buttons, 24 knobs) and Launchpad Pro MK3 (scene launch, clip trigger).
+
+---
+
+## 📂 Repository Structure
 
 ```
 LivePilot16/
-├── firmware/              # [ESP32-S3] Projet PlatformIO en C++17 (Drivers, USB-MIDI, TFT, FreeRTOS)
-│   ├── platformio.ini     # Configuration PlatformIO (TinyUSB, LovyanGFX, MCP23017)
-│   ├── include/           # Headers (config.h, protocol.h)
-│   └── src/               # Code source principal (main.cpp Dual-Core)
+├── remote_script/LivePilot16/   # [ABLETON] Native Python 3 MIDI Remote Script
+│   ├── __init__.py              # Ableton control surface entrypoint
+│   ├── LivePilot16.py           # Core LOM listener engine & WebSocket bridge
+│   ├── consts.py                # MIDI mappings and default constants
+│   ├── web_server.py            # High-performance async WebSocket & HTTP server
+│   └── web/                     # Tablet Web App (PWA)
+│       ├── index.html           # Cockpit interface structure
+│       ├── style.css            # Dark high-contrast stage styling
+│       ├── app.js               # Real-time WebSocket telemetry & touch interaction
+│       └── logo.png             # Official LivePilot 16 emblem
 │
-├── remote_script/         # [ABLETON] MIDI Remote Script natif en Python 3
-│   └── LivePilot16/       # Package officiel Ableton Live (__init__.py, LivePilot16.py, consts.py)
+├── doc/                         # [DOCUMENTATION]
+│   ├── CAHIER_DES_CHARGES.md    # Full technical & functional specifications
+│   ├── GUIDE_TABLETTE_LIVE.md   # Stage tablet setup guide (USB & Wi-Fi)
+│   └── assets/                  # High-resolution screenshots and diagrams
 │
-├── hardware/              # [ÉLECTRONIQUE] Conception PCB sous KiCad v8
-│   ├── kicad/             # Schémas et typons de routage
-│   ├── gerber/            # Fichiers de fabrication pour JLCPCB / PCBWay
-│   └── bom/               # Nomenclature détaillée des composants
+├── tools/                       # [UTILITIES]
+│   ├── install_script.py        # 1-click automatic deployment into Ableton Live
+│   └── cockpit_bridge.py        # Testing & bridge utility
 │
-├── enclosure/             # [MÉCANIQUE] Modélisation 3D du châssis incliné 15°
-│   ├── openscad/          # Scripts paramétriques OpenSCAD
-│   ├── stl/               # Modèles 3D prêts à trancher et imprimer
-│   └── step/              # Fichiers CAO neutres pour FreeCAD / Fusion 360
-│
-├── tools/                 # [UTILITAIRES] Scripts d'automatisation
-│   └── install_script.py  # Déploiement en 1 clic dans Ableton Live
-│
-└── doc/                   # [DOCUMENTATION] Cahier des charges, rendus visuels & specs
-    ├── CAHIER_DES_CHARGES.md
-    └── assets/
+├── firmware/                    # [OPTIONAL DIY HARDWARE] ESP32-S3 PlatformIO C++ firmware
+├── hardware/                    # [OPTIONAL DIY HARDWARE] KiCad schematic & JLCPCB Gerber files
+└── enclosure/                   # [OPTIONAL DIY HARDWARE] OpenSCAD 15° angled chassis
 ```
 
 ---
 
-## 🚀 Démarrage Rapide
+## 🚀 Quick Start
 
-### 1. Installation du Remote Script dans Ableton Live
-Exécutez simplement le script d'installation automatique :
+### 1. Install the Remote Script in Ableton Live
+
+Run the automated installer:
 ```bash
 python tools/install_script.py
 ```
-Puis, dans **Ableton Live** :
-* Allez dans `Options` > `Préférences` > `Link, Tempo & MIDI`.
-* Dans la première ligne des **Surfaces de contrôle**, sélectionnez `LivePilot 16`.
-* Sélectionnez les ports MIDI `LivePilot 16` en Entrée et Sortie.
 
-### 2. Compilation et Flash du Firmware ESP32-S3
-```bash
-# Installation de PlatformIO CLI (si non installé)
-pip install platformio
+Then in **Ableton Live 11 or 12**:
+1. Open `Options` > `Preferences` > `Link, Tempo & MIDI`.
+2. Under **Control Surfaces**, select `LivePilot 16`.
+3. Set Input and Output to `None` (the script directly hosts the Web/WebSocket server on port `8080`).
 
-# Compilation du firmware
-pio run -d firmware
+### 2. Connect Your Tablet
 
-# Téléversement vers l'ESP32-S3 connecté en USB
-pio run -d firmware -t upload
-
-# Surveillance du port série
-pio device monitor -d firmware
-```
+1. **Option A (Recommended for Stage - USB Cable)**: Connect your tablet to your laptop via USB and enable **USB Tethering** (Modem USB). This provides zero latency, uninterrupted power charging, and zero wireless interference.
+2. **Option B (Wi-Fi)**: Connect the tablet and laptop to the same Wi-Fi network (or laptop hotspot).
+3. Open Chrome or Safari on your tablet and navigate to:
+   ```
+   http://[YOUR_PC_IP]:8080
+   ```
+4. Tap **"Add to Home Screen"** to run LivePilot 16 as a borderless full-screen Progressive Web App (PWA).
 
 ---
 
-## 📄 Documentation Complète
-Consultez le [Cahier des Charges Technique & Fonctionnel](CAHIER_DES_CHARGES.md) pour retrouver :
-* La nomenclature complète (BOM) avec références et liens d'achat exacts.
-* L'estimation budgétaire détaillée (~258 € TTC en qualité pro double écran IPS).
-* Les spécifications du protocole SysEx et l'ergonomie d'affichage.
+## 📖 Detailed Documentation
+
+* [Cahier des Charges Technique & Fonctionnel (v1.0.0)](CAHIER_DES_CHARGES.md)
+* [Guide Officiel d'Utilisation Tablette en Live](doc/GUIDE_TABLETTE_LIVE.md)
+
+---
+
+## 📜 License
+
+Licensed under the MIT License. Developed for musicians and live performers worldwide.
