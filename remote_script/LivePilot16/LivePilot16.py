@@ -408,7 +408,7 @@ class LivePilot16(ControlSurface):
         params_out = []
         if not self._current_device:
             for i in range(NUM_ENCODERS):
-                params_out.append({'index': i, 'name': '-', 'value': 0.0, 'str': '-'})
+                params_out.append({'index': i, 'name': '-', 'value': 0.0, 'str': '-', 'is_assigned': False})
             return params_out
 
         dev_params = self._current_device.parameters[1:NUM_ENCODERS+1]
@@ -421,10 +421,11 @@ class LivePilot16(ControlSurface):
                     'index': i,
                     'name': p.name[:14],
                     'value': norm_val,
-                    'str': str(p)[:10]
+                    'str': str(p)[:10],
+                    'is_assigned': True
                 })
             else:
-                params_out.append({'index': i, 'name': '-', 'value': 0.0, 'str': '-'})
+                params_out.append({'index': i, 'name': '-', 'value': 0.0, 'str': '-', 'is_assigned': False})
         return params_out
 
     def _get_active_scene_info(self):

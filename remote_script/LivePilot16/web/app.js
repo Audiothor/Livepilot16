@@ -50,17 +50,7 @@
       { name: 'Freq 4', val: 0.82 },
       { name: 'Gain 4', val: 0.48 },
       { name: 'Q 4', val: 0.40 },
-      { name: 'High Cut', val: 0.88 },
-      { name: 'Output', val: 0.70 },
-      { name: 'Scale', val: 0.75 },
-      { name: 'Mid/Side', val: 0.00 },
-      { name: 'Stereo', val: 1.00 },
-      { name: 'Audition', val: 0.00 },
-      { name: 'Reso Freq', val: 0.50 },
-      { name: 'Soft Clip', val: 1.00 },
-      { name: 'Dyn EQ', val: 0.30 },
-      { name: 'Phase Inv', val: 0.00 },
-      { name: 'Dry/Wet', val: 1.00 }
+      { name: 'High Cut', val: 0.88 }
     ],
     'Serum': [
       { name: 'Cutoff', val: 0.72 },
@@ -104,15 +94,7 @@
       { name: 'Peak/RMS', val: 0.70 },
       { name: 'Expander', val: 0.00 },
       { name: 'Auto Rel', val: 1.00 },
-      { name: 'Gain Red', val: 0.38 },
-      { name: 'Input', val: 0.70 },
-      { name: 'Output', val: 0.72 },
-      { name: 'Hold', val: 0.15 },
-      { name: 'HPF', val: 0.20 },
-      { name: 'Stereo Link', val: 1.00 },
-      { name: 'Transfer', val: 0.50 },
-      { name: 'Saturation', val: 0.25 },
-      { name: 'Limiter', val: 0.00 }
+      { name: 'Gain Red', val: 0.38 }
     ],
     'Echo': [
       { name: 'Delay L', val: 0.38 },
@@ -134,11 +116,7 @@
       { name: 'Phase', val: 0.50 },
       { name: 'Stereo Mode', val: 1.00 },
       { name: 'Ping Pong', val: 1.00 },
-      { name: 'Clipper', val: 0.30 },
-      { name: 'Offset', val: 0.12 },
-      { name: 'Time L', val: 0.33 },
-      { name: 'Time R', val: 0.33 },
-      { name: 'Output', val: 0.80 }
+      { name: 'Clipper', val: 0.30 }
     ],
     'Utility': [
       { name: 'Gain', val: 0.50 },
@@ -148,23 +126,7 @@
       { name: 'Phase L', val: 0.00 },
       { name: 'Phase R', val: 0.00 },
       { name: 'Bass Mono', val: 1.00 },
-      { name: 'Mono Freq', val: 0.35 },
-      { name: 'DC Offset', val: 0.00 },
-      { name: 'Solo L', val: 0.00 },
-      { name: 'Solo R', val: 0.00 },
-      { name: 'Channel Swap', val: 0.00 },
-      { name: 'Clip Guard', val: 1.00 },
-      { name: 'Headroom', val: 0.70 },
-      { name: 'Output', val: 0.75 },
-      { name: 'Smoothing', val: 0.50 },
-      { name: 'Invert', val: 0.00 },
-      { name: 'Trim', val: 0.50 },
-      { name: 'Sub Balance', val: 0.50 },
-      { name: 'Low Pan', val: 0.50 },
-      { name: 'High Pan', val: 0.50 },
-      { name: 'Link L/R', val: 1.00 },
-      { name: 'Dim', val: 0.00 },
-      { name: 'Range', val: 0.85 }
+      { name: 'Mono Freq', val: 0.35 }
     ]
   };
 
@@ -552,30 +514,36 @@
     container.innerHTML = '';
 
     for (let i = 0; i < 24; i++) {
-      const p = state.parameters[i] || {
-        index: i,
-        name: defaultParamDefs[i].name,
-        value: defaultParamDefs[i].val,
-        str: `${Math.round(defaultParamDefs[i].val * 100)} %`
-      };
-
-      const name = (p.name && p.name !== '-') ? p.name : defaultParamDefs[i].name;
-      const color = knobColors[i % knobColors.length];
+      const p = state.parameters[i];
+      const isAssigned = Boolean(p && p.name && p.name !== '-' && p.name.trim() !== '' && p.name !== 'None' && p.is_assigned !== false);
 
       const cell = document.createElement('div');
       cell.id = `knob-cell-${i}`;
-      cell.className = 'knob-cell';
 
-      cell.innerHTML = `
-        <span class="knob-index">${i + 1}</span>
-        <div class="knob-svg-wrap">
-          ${makeKnobSVG(p.value, color)}
-        </div>
-        <div class="knob-name">${name}</div>
-        <div class="knob-value" style="color: ${color};">${p.str || `${Math.round(p.value * 100)} %`}</div>
-      `;
+      if (isAssigned) {
+        const color = knobColors[i % knobColors.length];
+        cell.className = 'knob-cell';
+        cell.innerHTML = `
+          <span class="knob-index">${i + 1}</span>
+          <div class="knob-svg-wrap">
+            ${makeKnobSVG(p.value, color)}
+          </div>
+          <div class="knob-name">${p.name}</div>
+          <div class="knob-value" style="color: ${color};">${p.str || `${Math.round(p.value * 100)} %`}</div>
+        `;
+        attachKnobDrag(cell, i);
+      } else {
+        cell.className = 'knob-cell unassigned';
+        cell.innerHTML = `
+          <span class="knob-index">${i + 1}</span>
+          <div class="knob-svg-wrap">
+            ${makeUnassignedKnobSVG()}
+          </div>
+          <div class="knob-name"></div>
+          <div class="knob-value"></div>
+        `;
+      }
 
-      attachKnobDrag(cell, i);
       container.appendChild(cell);
     }
   }
@@ -584,16 +552,48 @@
     const cell = document.getElementById(`knob-cell-${i}`);
     if (!cell) return;
     const p = state.parameters[i];
+    const isAssigned = Boolean(p && p.name && p.name !== '-' && p.name.trim() !== '' && p.name !== 'None' && p.is_assigned !== false);
+
+    if (!isAssigned) {
+      cell.className = 'knob-cell unassigned';
+      const svgWrap = cell.querySelector('.knob-svg-wrap');
+      if (svgWrap) svgWrap.innerHTML = makeUnassignedKnobSVG();
+      const nameEl = cell.querySelector('.knob-name');
+      if (nameEl) nameEl.textContent = '';
+      const valEl = cell.querySelector('.knob-value');
+      if (valEl) {
+        valEl.textContent = '';
+        valEl.style.color = 'transparent';
+      }
+      return;
+    }
+
+    cell.className = 'knob-cell';
     const color = knobColors[i % knobColors.length];
 
     const svgWrap = cell.querySelector('.knob-svg-wrap');
     if (svgWrap) svgWrap.innerHTML = makeKnobSVG(p.value, color);
+
+    const nameEl = cell.querySelector('.knob-name');
+    if (nameEl) nameEl.textContent = p.name;
 
     const valEl = cell.querySelector('.knob-value');
     if (valEl) {
       valEl.textContent = p.str || `${Math.round(p.value * 100)} %`;
       valEl.style.color = color;
     }
+  }
+
+  function makeUnassignedKnobSVG() {
+    const r = 16;
+    const cx = 21;
+    const cy = 21;
+    return `
+      <svg viewBox="0 0 42 42" width="42" height="42">
+        <circle cx="${cx}" cy="${cy}" r="${r - 3}" fill="#080c14" stroke="#121824" stroke-width="1.2"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#151e2e" stroke-width="2" stroke-dasharray="2 3"/>
+      </svg>
+    `;
   }
 
   function makeKnobSVG(val, color) {
@@ -727,18 +727,32 @@
     // Load parameters profile for this device
     const profile = deviceParameterProfiles[targetDev.name];
     if (profile) {
-      state.parameters = profile.map((p, i) => ({
-        index: i,
-        name: p.name,
-        value: p.val,
-        str: `${Math.round(p.val * 100)} %`
-      }));
+      state.parameters = Array.from({ length: 24 }, (_, i) => {
+        if (i < profile.length) {
+          return {
+            index: i,
+            name: profile[i].name,
+            value: profile[i].val,
+            str: profile[i].str || `${Math.round(profile[i].val * 100)} %`,
+            is_assigned: true
+          };
+        } else {
+          return {
+            index: i,
+            name: '-',
+            value: 0.0,
+            str: '-',
+            is_assigned: false
+          };
+        }
+      });
     } else {
       state.parameters = Array.from({ length: 24 }, (_, i) => ({
         index: i,
         name: `Param ${i + 1}`,
         value: 0.50,
-        str: '50 %'
+        str: '50 %',
+        is_assigned: true
       }));
     }
 
@@ -947,6 +961,36 @@
       if (urlParams.has('track')) {
         state.selectedTrackIndex = parseInt(urlParams.get('track'), 10);
         state.bankIndex = Math.floor(state.selectedTrackIndex / 16);
+      }
+      if (urlParams.has('device')) {
+        const d = parseInt(urlParams.get('device'), 10);
+        const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+        if (d >= 0 && d < devs.length) {
+          state.activeDeviceIndex = d;
+          state.activeDeviceName = devs[d].name;
+          const profile = deviceParameterProfiles[devs[d].name];
+          if (profile) {
+            state.parameters = Array.from({ length: 24 }, (_, i) => {
+              if (i < profile.length) {
+                return {
+                  index: i,
+                  name: profile[i].name,
+                  value: profile[i].val,
+                  str: profile[i].str || `${Math.round(profile[i].val * 100)} %`,
+                  is_assigned: true
+                };
+              } else {
+                return {
+                  index: i,
+                  name: '-',
+                  value: 0.0,
+                  str: '-',
+                  is_assigned: false
+                };
+              }
+            });
+          }
+        }
       }
     } catch (e) {
       // ignore

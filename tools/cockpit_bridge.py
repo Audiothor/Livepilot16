@@ -43,17 +43,7 @@ DEVICE_PARAM_PROFILES = {
         {"name": "Freq 4", "val": 0.82, "str": "8.0 kHz"},
         {"name": "Gain 4", "val": 0.48, "str": "-0.8 dB"},
         {"name": "Q 4", "val": 0.40, "str": "0.65"},
-        {"name": "High Cut", "val": 0.88, "str": "18 kHz"},
-        {"name": "Output", "val": 0.70, "str": "0.0 dB"},
-        {"name": "Scale", "val": 0.75, "str": "100 %"},
-        {"name": "Mid/Side", "val": 0.00, "str": "Stereo"},
-        {"name": "Stereo", "val": 1.00, "str": "On"},
-        {"name": "Audition", "val": 0.00, "str": "Off"},
-        {"name": "Reso Freq", "val": 0.50, "str": "Flat"},
-        {"name": "Soft Clip", "val": 1.00, "str": "On"},
-        {"name": "Dyn EQ", "val": 0.30, "str": "30 %"},
-        {"name": "Phase Inv", "val": 0.00, "str": "Off"},
-        {"name": "Dry/Wet", "val": 1.00, "str": "100 %"}
+        {"name": "High Cut", "val": 0.88, "str": "18 kHz"}
     ],
     "Serum": [
         {"name": "Cutoff", "val": 0.72, "str": "72 %"},
@@ -97,15 +87,7 @@ DEVICE_PARAM_PROFILES = {
         {"name": "Peak/RMS", "val": 0.70, "str": "Peak"},
         {"name": "Expander", "val": 0.00, "str": "Off"},
         {"name": "Auto Rel", "val": 1.00, "str": "On"},
-        {"name": "Gain Red", "val": 0.38, "str": "-4.2 dB"},
-        {"name": "Input", "val": 0.70, "str": "-0.5 dB"},
-        {"name": "Output", "val": 0.72, "str": "0.0 dB"},
-        {"name": "Hold", "val": 0.15, "str": "25 ms"},
-        {"name": "HPF", "val": 0.20, "str": "80 Hz"},
-        {"name": "Stereo Link", "val": 1.00, "str": "100 %"},
-        {"name": "Transfer", "val": 0.50, "str": "Linear"},
-        {"name": "Saturation", "val": 0.25, "str": "Warm"},
-        {"name": "Limiter", "val": 0.00, "str": "Off"}
+        {"name": "Gain Red", "val": 0.38, "str": "-4.2 dB"}
     ],
     "Echo": [
         {"name": "Delay L", "val": 0.38, "str": "3/16"},
@@ -127,11 +109,7 @@ DEVICE_PARAM_PROFILES = {
         {"name": "Phase", "val": 0.50, "str": "180°"},
         {"name": "Stereo Mode", "val": 1.00, "str": "Wide"},
         {"name": "Ping Pong", "val": 1.00, "str": "On"},
-        {"name": "Clipper", "val": 0.30, "str": "Soft"},
-        {"name": "Offset", "val": 0.12, "str": "12 ms"},
-        {"name": "Time L", "val": 0.33, "str": "250 ms"},
-        {"name": "Time R", "val": 0.33, "str": "375 ms"},
-        {"name": "Output", "val": 0.80, "str": "0 dB"}
+        {"name": "Clipper", "val": 0.30, "str": "Soft"}
     ],
     "Utility": [
         {"name": "Gain", "val": 0.50, "str": "0.0 dB"},
@@ -141,31 +119,34 @@ DEVICE_PARAM_PROFILES = {
         {"name": "Phase L", "val": 0.00, "str": "Normal"},
         {"name": "Phase R", "val": 0.00, "str": "Normal"},
         {"name": "Bass Mono", "val": 1.00, "str": "On"},
-        {"name": "Mono Freq", "val": 0.35, "str": "120 Hz"},
-        {"name": "DC Offset", "val": 0.00, "str": "Filter"},
-        {"name": "Solo L", "val": 0.00, "str": "Off"},
-        {"name": "Solo R", "val": 0.00, "str": "Off"},
-        {"name": "Channel Swap", "val": 0.00, "str": "L/R"},
-        {"name": "Clip Guard", "val": 1.00, "str": "On"},
-        {"name": "Headroom", "val": 0.70, "str": "+6 dB"},
-        {"name": "Output", "val": 0.75, "str": "0 dB"},
-        {"name": "Smoothing", "val": 0.50, "str": "Fast"},
-        {"name": "Invert", "val": 0.00, "str": "Off"},
-        {"name": "Trim", "val": 0.50, "str": "0 dB"},
-        {"name": "Sub Balance", "val": 0.50, "str": "C"},
-        {"name": "Low Pan", "val": 0.50, "str": "C"},
-        {"name": "High Pan", "val": 0.50, "str": "C"},
-        {"name": "Link L/R", "val": 1.00, "str": "Linked"},
-        {"name": "Dim", "val": 0.00, "str": "Off"},
-        {"name": "Range", "val": 0.85, "str": "Full"}
+        {"name": "Mono Freq", "val": 0.35, "str": "120 Hz"}
     ]
 }
 
 def build_params(dev_name):
     profile = DEVICE_PARAM_PROFILES.get(dev_name)
     if profile:
-        return [{"index": i, "name": p["name"], "value": p["val"], "str": p["str"]} for i, p in enumerate(profile)]
-    return [{"index": i, "name": f"Param {i+1}", "value": 0.50, "str": "50 %"} for i in range(24)]
+        params = []
+        for i in range(24):
+            if i < len(profile):
+                p = profile[i]
+                params.append({
+                    "index": i,
+                    "name": p["name"],
+                    "value": p["val"],
+                    "str": p["str"],
+                    "is_assigned": True
+                })
+            else:
+                params.append({
+                    "index": i,
+                    "name": "-",
+                    "value": 0.0,
+                    "str": "-",
+                    "is_assigned": False
+                })
+        return params
+    return [{"index": i, "name": f"Param {i+1}", "value": 0.50, "str": "50 %", "is_assigned": True} for i in range(24)]
 
 # =============================================================================
 # DONNÉES DE SIMULATION COCKPIT (64 PISTES SUR 4 BANQUES)
