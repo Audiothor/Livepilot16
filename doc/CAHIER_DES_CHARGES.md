@@ -115,25 +115,14 @@ LivePilot16/
 │       ├── logo.png             # Logo officiel LIVEPILOT 16
 │       └── manifest.json        # Configuration PWA plein écran
 │
-├── tools/                       # [OUTILS DE DÉPLOIEMENT]
+├── tools/                       # [OUTILS DE DÉPLOIEMENT & SIMULATION]
 │   ├── install_script.py        # Script d'installation automatique dans Ableton
-│   └── cockpit_bridge.py        # Passerelle et utilitaire de test
-│
-├── firmware/                    # [OPTION MATÉRIELLE ESP32-S3]
-│   ├── platformio.ini           # Configuration PlatformIO C++17
-│   ├── include/                 # Headers (protocoles, registres)
-│   └── src/main.cpp             # Drivers Dual-Core, USB-MIDI, SPI
-│
-├── hardware/                    # [OPTION ELECTRONIQUE KICAD]
-│   ├── gerber/                  # Fichiers de fabrication PCB
-│   └── kicad/                   # Schémas et typons
-│
-├── enclosure/                   # [OPTION CHÂSSIS 3D]
-│   └── openscad/                # Modélisation paramétrique inclinée 15°
+│   └── cockpit_bridge.py        # Simulateur et serveur de test autonome
 │
 └── doc/                         # [DOCUMENTATION & RENDUS]
-    ├── GUIDE_TABLETTE_LIVE.md   # Guide de prise en main sur scène
-    └── assets/                  # Visuels et captures d'écran de référence
+    ├── CAHIER_DES_CHARGES.md    # Cahier des charges technique & fonctionnel
+    ├── GUIDE_TABLETTE_LIVE.md   # Guide de prise en main sur scène (USB / Wi-Fi)
+    └── assets/                  # Visuels et captures d'écran HD du cockpit
 ```
 
 ### 3.2. Protocole d'Échange Temps Réel

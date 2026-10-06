@@ -45,11 +45,8 @@ LivePilot16/
 │
 ├── tools/                       # [UTILITIES]
 │   ├── install_script.py        # 1-click automatic deployment into Ableton Live
-│   └── cockpit_bridge.py        # Testing & bridge utility
-│
-├── firmware/                    # [OPTIONAL DIY HARDWARE] ESP32-S3 PlatformIO C++ firmware
-├── hardware/                    # [OPTIONAL DIY HARDWARE] KiCad schematic & JLCPCB Gerber files
-└── enclosure/                   # [OPTIONAL DIY HARDWARE] OpenSCAD 15° angled chassis
+│   └── cockpit_bridge.py        # Standalone testing & simulation server
+└── .gitignore                   # Clean ignore rules
 ```
 
 ---
@@ -70,9 +67,9 @@ Then in **Ableton Live 11 or 12**:
 
 ### 2. Connect Your Tablet
 
-1. **Option A (Recommended for Stage - USB Cable)**: Connect your tablet to your laptop via USB and enable **USB Tethering** (Modem USB). This provides zero latency, uninterrupted power charging, and zero wireless interference.
+1. **Option A (Recommended for Stage - USB Cable)**: Connect your tablet to your laptop via USB and enable **USB Tethering** (Modem USB). This provides ultra-low latency, uninterrupted power charging, and immunity to wireless interference.
 2. **Option B (Wi-Fi)**: Connect the tablet and laptop to the same Wi-Fi network (or laptop hotspot).
-3. Open Chrome or Safari on your tablet and navigate to:
+3. Open Chrome, Safari, or Firefox on your tablet and navigate to:
    ```
    http://[YOUR_PC_IP]:8080
    ```
@@ -82,7 +79,7 @@ Then in **Ableton Live 11 or 12**:
 
 ## 📖 Detailed Documentation
 
-* [Cahier des Charges Technique & Fonctionnel (v1.0.0)](CAHIER_DES_CHARGES.md)
+* [Cahier des Charges Technique & Fonctionnel](doc/CAHIER_DES_CHARGES.md)
 * [Guide Officiel d'Utilisation Tablette en Live](doc/GUIDE_TABLETTE_LIVE.md)
 
 ---
