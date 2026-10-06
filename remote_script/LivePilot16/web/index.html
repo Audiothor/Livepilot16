@@ -145,7 +145,7 @@
           </div>
         </div>
 
-        <!-- DEVICE / PLUGIN -->
+        <!-- DEVICES / PLUGINS -->
         <div class="device-card">
           <div class="sidebar-title">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -160,101 +160,18 @@
               <line x1="20" y1="9" x2="23" y2="9"/>
               <line x1="20" y1="15" x2="23" y2="15"/>
             </svg>
-            DEVICE / PLUGIN
+            DEVICES / PLUGINS
           </div>
 
-          <div class="device-carousel-box">
-            <button id="btn-device-carousel-prev" class="carousel-nav-btn">◀</button>
-            <div class="device-center-info">
-              <div class="device-keys-icon">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
-                  <rect x="2" y="3" width="20" height="18" rx="2" fill="#2d3748"/>
-                  <rect x="3" y="4" width="4" height="16" rx="1" fill="#f8fafc"/>
-                  <rect x="8" y="4" width="4" height="16" rx="1" fill="#f8fafc"/>
-                  <rect x="13" y="4" width="4" height="16" rx="1" fill="#f8fafc"/>
-                  <rect x="18" y="4" width="3" height="16" rx="1" fill="#f8fafc"/>
-                  <rect x="6" y="4" width="2.5" height="10" fill="#0f172a"/>
-                  <rect x="11" y="4" width="2.5" height="10" fill="#0f172a"/>
-                  <rect x="16" y="4" width="2.5" height="10" fill="#0f172a"/>
-                </svg>
-              </div>
-              <div class="device-text-col">
-                <div id="device-name-text" class="device-name-text">Serum</div>
-                <div id="device-maker-text" class="device-maker-text">Xfer Records</div>
-              </div>
-            </div>
-            <div id="device-counter-badge" class="device-counter-badge">2 / 5</div>
-            <button id="btn-device-carousel-next" class="carousel-nav-btn">▶</button>
+          <!-- RECTANGLES DE HAUT EN BAS (PLUGINS DE LA PISTE ACTUELLE) -->
+          <div id="devices-list-container" class="devices-list">
+            <!-- Dynamically populated by app.js -->
           </div>
 
-          <div class="device-actions-row">
-            <button id="btn-device-prev-quick" class="dev-action-btn">◀ Device précédent</button>
-            <button id="btn-device-next-quick" class="dev-action-btn">Device suivant ▶</button>
-          </div>
-
-          <div class="auto-follow-row">
-            <div class="auto-follow-left">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              </svg>
-              Auto-follow device
-            </div>
-            <div id="auto-follow-toggle" class="ios-toggle active"></div>
-          </div>
-        </div>
-
-        <!-- MODES -->
-        <div class="modes-card">
-          <div class="sidebar-title">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
-              <rect x="3" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            MODES
-          </div>
-
-          <div class="modes-list">
-            <div class="mode-item active" data-mode="plugins">
-              <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="4" y1="21" x2="4" y2="14"/>
-                <line x1="4" y1="10" x2="4" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="12"/>
-                <line x1="12" y1="8" x2="12" y2="3"/>
-                <line x1="20" y1="21" x2="20" y2="16"/>
-                <line x1="20" y1="12" x2="20" y2="3"/>
-                <line x1="1" y1="14" x2="7" y2="14"/>
-                <line x1="9" y1="8" x2="15" y2="8"/>
-                <line x1="17" y1="16" x2="23" y2="16"/>
-              </svg>
-              Contrôle Plugins
-            </div>
-
-            <div class="mode-item" data-mode="mixer">
-              <svg class="mode-icon" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="3" y="8" width="4" height="13" rx="1"/>
-                <rect x="10" y="4" width="4" height="17" rx="1"/>
-                <rect x="17" y="11" width="4" height="10" rx="1"/>
-              </svg>
-              Mixeur
-            </div>
-
-            <div class="mode-item" data-mode="scenes">
-              <svg class="mode-icon" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="3" y="3" width="4.5" height="4.5" rx="1"/>
-                <rect x="9.75" y="3" width="4.5" height="4.5" rx="1"/>
-                <rect x="16.5" y="3" width="4.5" height="4.5" rx="1"/>
-                <rect x="3" y="9.75" width="4.5" height="4.5" rx="1"/>
-                <rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/>
-                <rect x="16.5" y="9.75" width="4.5" height="4.5" rx="1"/>
-                <rect x="3" y="16.5" width="4.5" height="4.5" rx="1"/>
-                <rect x="9.75" y="16.5" width="4.5" height="4.5" rx="1"/>
-                <rect x="16.5" y="16.5" width="4.5" height="4.5" rx="1"/>
-              </svg>
-              Vue Scènes
-            </div>
+          <!-- BOUTONS PRÉCÉDENT / SUIVANT -->
+          <div class="devices-nav-actions">
+            <button id="btn-device-prev" class="device-nav-btn">◀ Précédent</button>
+            <button id="btn-device-next" class="device-nav-btn">Suivant ▶</button>
           </div>
         </div>
 

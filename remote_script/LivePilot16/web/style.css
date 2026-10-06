@@ -688,7 +688,7 @@ html, body {
   margin-right: 2px;
 }
 
-/* Card 2: DEVICE / PLUGIN */
+/* Card 2: DEVICES / PLUGINS (RECTANGLES LIST) */
 .device-card {
   background: #0b0f19;
   border: 1px solid #172134;
@@ -696,198 +696,151 @@ html, body {
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
 }
 
-.device-carousel-box {
-  background: #0e1320;
-  border: 1px solid #182236;
-  border-radius: 6px;
-  padding: 7px 8px;
+.devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.devices-list::-webkit-scrollbar {
+  width: 4px;
+}
+.devices-list::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 2px;
+}
+
+/* Device Item Rectangle */
+.device-item-rect {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-}
-
-.carousel-nav-btn {
-  width: 20px;
-  height: 24px;
-  background: transparent;
-  border: none;
-  color: #7e91ad;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: #0e1320;
+  border: 1px solid #1a253a;
+  color: #94a3b8;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-}
-.carousel-nav-btn:hover {
-  color: #fff;
+  transition: all 0.15s ease;
+  user-select: none;
 }
 
-.device-center-info {
+.device-item-rect:hover {
+  background: #131c2e;
+  border-color: #273957;
+  color: #cbd5e1;
+}
+
+/* Active Device Rectangle: DISTINCT COLOR OUTLINE (NEON CYAN & GLOW) */
+.device-item-rect.active {
+  border: 2px solid #00f0ff;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.16) 0%, rgba(14, 21, 35, 0.95) 100%);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.dev-item-left {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
+  overflow: hidden;
 }
 
-.device-keys-icon {
-  width: 26px;
-  height: 26px;
-  background: #161e30;
-  border: 1px solid #222e48;
+.dev-item-num {
+  font-size: 11px;
+  font-weight: 900;
+  color: #64748b;
+  background: #151d2d;
+  padding: 2px 5px;
   border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  letter-spacing: -0.2px;
+  min-width: 22px;
+  text-align: center;
 }
 
-.device-text-col {
-  display: flex;
-  flex-direction: column;
+.device-item-rect.active .dev-item-num {
+  background: #00f0ff;
+  color: #040914;
+  font-weight: 900;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.6);
 }
 
-.device-name-text {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.1;
+.dev-item-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: inherit;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
 }
 
-.device-maker-text {
-  font-size: 9.5px;
-  font-weight: 600;
-  color: #7e91ad;
+.device-item-rect.active .dev-item-name {
+  font-weight: 800;
+  color: #ffffff;
 }
 
-.device-counter-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: #94a3b8;
+.dev-item-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.device-actions-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* Navigation buttons (Bottom of Devices / Plugins) */
+.devices-nav-actions {
+  display: flex;
   gap: 6px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 4px;
 }
 
-.dev-action-btn {
-  background: #0e1320;
-  border: 1px solid #1a253a;
-  border-radius: 5px;
-  padding: 5px 6px;
+.device-nav-btn {
+  flex: 1;
+  background: #101625;
+  border: 1px solid #1f2d46;
+  border-radius: 6px;
   color: #cbd5e1;
-  font-size: 9.5px;
-  font-weight: 700;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 8px 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-}
-.dev-action-btn:hover {
-  background: #161f31;
-  color: #fff;
-}
-
-.auto-follow-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 2px;
-  font-size: 10px;
-  color: #cbd5e1;
-  font-weight: 600;
-}
-
-.auto-follow-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ios-toggle {
-  width: 32px;
-  height: 18px;
-  background: #1e293b;
-  border-radius: 10px;
-  position: relative;
-  cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ios-toggle.active {
-  background: #00e676;
-  box-shadow: 0 0 6px rgba(0,230,118,0.4);
-}
-
-.ios-toggle::after {
-  content: '';
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  background: #ffffff;
-  border-radius: 50%;
-  top: 2px;
-  left: 2px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  transition: transform 0.2s ease;
-}
-
-.ios-toggle.active::after {
-  transform: translateX(14px);
-}
-
-/* Card 3: MODES */
-.modes-card {
-  background: #0b0f19;
-  border: 1px solid #172134;
-  border-radius: 8px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.modes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.mode-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  cursor: pointer;
-  border: 1px solid #1a253a;
-  background: #0e1320;
-  color: #8da1bc;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.mode-item.active {
-  border: 1.5px solid #00e676;
-  background: #072216;
-  color: #00e676;
-  box-shadow: 0 0 10px rgba(0,230,118,0.25);
+.device-nav-btn:hover:not(:disabled) {
+  background: #19253a;
+  border-color: #00f0ff;
+  color: #00f0ff;
 }
 
-.mode-icon {
-  width: 15px;
-  height: 15px;
-  fill: currentColor;
+.device-nav-btn:active:not(:disabled) {
+  background: #0c121d;
+  transform: scale(0.97);
+}
+
+.device-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #151d2d;
+  color: #475569;
 }
 
 /* Card 4: DESIGN ABLETON MASTER VU-METER */

@@ -736,6 +736,17 @@ class LivePilot16(ControlSurface):
                 self._send_parameters_info()
                 self._broadcast_selected_device()
 
+        elif action == 'select_relative_device':
+            offset = int(msg.get('offset', 1))
+            new_idx = self._current_device_idx + offset
+            if 0 <= new_idx < len(self._assigned_devices):
+                self._current_device_idx = new_idx
+                self._current_device = self._assigned_devices[new_idx]
+                self._attach_parameter_listeners()
+                self._send_active_device_info()
+                self._send_parameters_info()
+                self._broadcast_selected_device()
+
         elif action == 'set_parameter':
             p_idx = msg.get('index', 0)
             norm_val = msg.get('value', 0.0)

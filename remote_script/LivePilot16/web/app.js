@@ -27,32 +27,148 @@
     { num: '16', name: 'Vox FX', color: '#00bcd4', dark: true, db: '-12.7 dB', pan: 50, lvlL: 40, lvlR: 44, isGroup: false }
   ];
 
-  const defaultParamDefs = [
-    { name: 'Cutoff', val: 0.72 },
-    { name: 'Resonance', val: 0.28 },
-    { name: 'Drive', val: 0.54 },
-    { name: 'Sub Level', val: 0.81 },
-    { name: 'Noise', val: 0.23 },
-    { name: 'FM Amount', val: 0.46 },
-    { name: 'Osc Blend', val: 0.67 },
-    { name: 'Pan', val: 0.50 },
-    { name: 'Attack', val: 0.12 },
-    { name: 'Decay', val: 0.58 },
-    { name: 'Sustain', val: 0.76 },
-    { name: 'Release', val: 0.34 },
-    { name: 'Env Amount', val: 0.62 },
-    { name: 'LFO 1 Rate', val: 0.48 },
-    { name: 'LFO 1 Amt', val: 0.55 },
-    { name: 'LFO 2 Rate', val: 0.39 },
-    { name: 'LFO 2 Amt', val: 0.21 },
-    { name: 'Warp', val: 0.66 },
-    { name: 'Filter Env', val: 0.43 },
-    { name: 'Unison', val: 0.75 },
-    { name: 'Detune', val: 0.31 },
-    { name: 'Width', val: 0.59 },
-    { name: 'Delay Mix', val: 0.22 },
-    { name: 'Reverb Mix', val: 0.68 }
+  const defaultTrackDevices = [
+    { index: 0, num: '01', name: 'EQ Eight', type: 'EQ' },
+    { index: 1, num: '02', name: 'Serum', type: 'SYNTH' },
+    { index: 2, num: '03', name: 'Compressor', type: 'DYN' },
+    { index: 3, num: '04', name: 'Echo', type: 'FX' },
+    { index: 4, num: '05', name: 'Utility', type: 'UTIL' }
   ];
+
+  const deviceParameterProfiles = {
+    'EQ Eight': [
+      { name: 'Low Cut', val: 0.20 },
+      { name: 'Freq 1', val: 0.35 },
+      { name: 'Gain 1', val: 0.52 },
+      { name: 'Q 1', val: 0.45 },
+      { name: 'Freq 2', val: 0.48 },
+      { name: 'Gain 2', val: 0.42 },
+      { name: 'Q 2', val: 0.50 },
+      { name: 'Freq 3', val: 0.65 },
+      { name: 'Gain 3', val: 0.60 },
+      { name: 'Q 3', val: 0.55 },
+      { name: 'Freq 4', val: 0.82 },
+      { name: 'Gain 4', val: 0.48 },
+      { name: 'Q 4', val: 0.40 },
+      { name: 'High Cut', val: 0.88 },
+      { name: 'Output', val: 0.70 },
+      { name: 'Scale', val: 0.75 },
+      { name: 'Mid/Side', val: 0.00 },
+      { name: 'Stereo', val: 1.00 },
+      { name: 'Audition', val: 0.00 },
+      { name: 'Reso Freq', val: 0.50 },
+      { name: 'Soft Clip', val: 1.00 },
+      { name: 'Dyn EQ', val: 0.30 },
+      { name: 'Phase Inv', val: 0.00 },
+      { name: 'Dry/Wet', val: 1.00 }
+    ],
+    'Serum': [
+      { name: 'Cutoff', val: 0.72 },
+      { name: 'Resonance', val: 0.28 },
+      { name: 'Drive', val: 0.54 },
+      { name: 'Sub Level', val: 0.81 },
+      { name: 'Noise', val: 0.23 },
+      { name: 'FM Amount', val: 0.46 },
+      { name: 'Osc Blend', val: 0.67 },
+      { name: 'Pan', val: 0.50 },
+      { name: 'Attack', val: 0.12 },
+      { name: 'Decay', val: 0.58 },
+      { name: 'Sustain', val: 0.76 },
+      { name: 'Release', val: 0.34 },
+      { name: 'Env Amount', val: 0.62 },
+      { name: 'LFO 1 Rate', val: 0.48 },
+      { name: 'LFO 1 Amt', val: 0.55 },
+      { name: 'LFO 2 Rate', val: 0.39 },
+      { name: 'LFO 2 Amt', val: 0.21 },
+      { name: 'Warp', val: 0.66 },
+      { name: 'Filter Env', val: 0.43 },
+      { name: 'Unison', val: 0.75 },
+      { name: 'Detune', val: 0.31 },
+      { name: 'Width', val: 0.59 },
+      { name: 'Delay Mix', val: 0.22 },
+      { name: 'Reverb Mix', val: 0.68 }
+    ],
+    'Compressor': [
+      { name: 'Threshold', val: 0.45 },
+      { name: 'Ratio', val: 0.60 },
+      { name: 'Attack', val: 0.25 },
+      { name: 'Release', val: 0.40 },
+      { name: 'Knee', val: 0.30 },
+      { name: 'Dry/Wet', val: 0.85 },
+      { name: 'Makeup', val: 0.55 },
+      { name: 'Lookahead', val: 0.10 },
+      { name: 'Sidechain', val: 0.00 },
+      { name: 'SC Freq', val: 0.35 },
+      { name: 'SC Gain', val: 0.50 },
+      { name: 'SC Listen', val: 0.00 },
+      { name: 'Peak/RMS', val: 0.70 },
+      { name: 'Expander', val: 0.00 },
+      { name: 'Auto Rel', val: 1.00 },
+      { name: 'Gain Red', val: 0.38 },
+      { name: 'Input', val: 0.70 },
+      { name: 'Output', val: 0.72 },
+      { name: 'Hold', val: 0.15 },
+      { name: 'HPF', val: 0.20 },
+      { name: 'Stereo Link', val: 1.00 },
+      { name: 'Transfer', val: 0.50 },
+      { name: 'Saturation', val: 0.25 },
+      { name: 'Limiter', val: 0.00 }
+    ],
+    'Echo': [
+      { name: 'Delay L', val: 0.38 },
+      { name: 'Delay R', val: 0.45 },
+      { name: 'Sync', val: 1.00 },
+      { name: 'Feedback', val: 0.52 },
+      { name: 'Dry/Wet', val: 0.40 },
+      { name: 'Filter HP', val: 0.25 },
+      { name: 'Filter LP', val: 0.75 },
+      { name: 'Resonance', val: 0.30 },
+      { name: 'Wobble', val: 0.45 },
+      { name: 'Morph', val: 0.60 },
+      { name: 'Noise', val: 0.15 },
+      { name: 'Gate', val: 0.00 },
+      { name: 'Reverb Mix', val: 0.35 },
+      { name: 'Ducking', val: 0.20 },
+      { name: 'Mod Depth', val: 0.55 },
+      { name: 'Mod Rate', val: 0.40 },
+      { name: 'Phase', val: 0.50 },
+      { name: 'Stereo Mode', val: 1.00 },
+      { name: 'Ping Pong', val: 1.00 },
+      { name: 'Clipper', val: 0.30 },
+      { name: 'Offset', val: 0.12 },
+      { name: 'Time L', val: 0.33 },
+      { name: 'Time R', val: 0.33 },
+      { name: 'Output', val: 0.80 }
+    ],
+    'Utility': [
+      { name: 'Gain', val: 0.50 },
+      { name: 'Pan', val: 0.50 },
+      { name: 'Width', val: 0.80 },
+      { name: 'Mute', val: 0.00 },
+      { name: 'Phase L', val: 0.00 },
+      { name: 'Phase R', val: 0.00 },
+      { name: 'Bass Mono', val: 1.00 },
+      { name: 'Mono Freq', val: 0.35 },
+      { name: 'DC Offset', val: 0.00 },
+      { name: 'Solo L', val: 0.00 },
+      { name: 'Solo R', val: 0.00 },
+      { name: 'Channel Swap', val: 0.00 },
+      { name: 'Clip Guard', val: 1.00 },
+      { name: 'Headroom', val: 0.70 },
+      { name: 'Output', val: 0.75 },
+      { name: 'Smoothing', val: 0.50 },
+      { name: 'Invert', val: 0.00 },
+      { name: 'Trim', val: 0.50 },
+      { name: 'Sub Balance', val: 0.50 },
+      { name: 'Low Pan', val: 0.50 },
+      { name: 'High Pan', val: 0.50 },
+      { name: 'Link L/R', val: 1.00 },
+      { name: 'Dim', val: 0.00 },
+      { name: 'Range', val: 0.85 }
+    ]
+  };
+
+  const defaultParamDefs = deviceParameterProfiles['Serum'];
 
   const knobColors = [
     '#ff4b72', '#ff7043', '#ffd54f', '#69f0ae', '#00e5ff', '#2979ff', '#b388ff', '#ff4081',
@@ -83,11 +199,9 @@
     totalBanks: 4,
     selectedTrackIndex: 1,
     tracks: [],
-    devices: [],
+    devices: defaultTrackDevices,
     activeDeviceIndex: 1,
     activeDeviceName: 'Serum',
-    activeDeviceMaker: 'Xfer Records',
-    autoFollow: true,
     parameters: Array.from({ length: 24 }, (_, i) => ({
       index: i,
       name: defaultParamDefs[i].name,
@@ -255,9 +369,8 @@
   function updateSelectedTrack(data) {
     state.selectedTrackIndex = data.track_index;
     if (data.tracks) state.tracks = data.tracks;
-    if (data.devices) state.devices = data.devices;
+    if (data.devices && data.devices.length > 0) state.devices = data.devices;
     if (data.active_device_name) state.activeDeviceName = data.active_device_name;
-    if (data.active_device_maker) state.activeDeviceMaker = data.active_device_maker;
     if (data.active_device_index !== undefined) state.activeDeviceIndex = data.active_device_index;
     if (data.parameters) state.parameters = data.parameters;
 
@@ -268,8 +381,7 @@
 
   function updateSelectedDevice(data) {
     state.activeDeviceIndex = data.device_index;
-    state.activeDeviceName = data.device_name;
-    if (data.device_maker) state.activeDeviceMaker = data.device_maker;
+    if (data.device_name) state.activeDeviceName = data.device_name;
     if (data.parameters) state.parameters = data.parameters;
 
     renderKnobs();
@@ -400,6 +512,9 @@
       `;
 
       card.addEventListener('click', () => {
+        state.selectedTrackIndex = trk.index;
+        renderTracks();
+        renderSidebar();
         sendAction('select_track', { track_index: trk.index });
       });
 
@@ -412,9 +527,11 @@
     // Dynamic Plugin Header
     const plugTitle = document.getElementById('plugin-deck-title');
     if (plugTitle) {
-      const totalDevs = (state.devices && state.devices.length) ? state.devices.length : 5;
-      const curDev = (state.activeDeviceIndex !== undefined ? state.activeDeviceIndex + 1 : 2);
-      const devName = state.activeDeviceName || 'Serum';
+      const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+      const totalDevs = devs.length;
+      const curDev = state.activeDeviceIndex + 1;
+      const curObj = devs[state.activeDeviceIndex];
+      const devName = (curObj && curObj.name) ? curObj.name : (state.activeDeviceName || 'Serum');
       plugTitle.innerHTML = `PLUGIN &nbsp;—&nbsp; [${curDev}/${totalDevs}] ${devName}`;
     }
 
@@ -543,6 +660,86 @@
     }, { passive: true });
   }
 
+  // --- DEVICES / PLUGINS LIST (VERTICAL RECTANGLES) ---
+  function renderDevicesList() {
+    const container = document.getElementById('devices-list-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+
+    devs.forEach((dev, idx) => {
+      const isActive = (idx === state.activeDeviceIndex);
+      const numStr = (idx + 1 < 10) ? `0${idx + 1}` : `${idx + 1}`;
+
+      const item = document.createElement('div');
+      item.className = `device-item-rect ${isActive ? 'active' : ''}`;
+      item.id = `device-rect-${idx}`;
+
+      item.innerHTML = `
+        <div class="dev-item-left">
+          <span class="dev-item-num">${numStr}</span>
+          <span class="dev-item-name">${dev.name}</span>
+        </div>
+        ${isActive ? `<span class="dev-item-badge">ACTIF</span>` : ''}
+      `;
+
+      item.addEventListener('click', () => {
+        selectDevice(idx);
+      });
+
+      container.appendChild(item);
+    });
+
+    updateDeviceNavButtons();
+  }
+
+  function updateDeviceNavButtons() {
+    const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+    const btnPrev = document.getElementById('btn-device-prev');
+    const btnNext = document.getElementById('btn-device-next');
+
+    if (btnPrev) {
+      btnPrev.disabled = (state.activeDeviceIndex <= 0);
+    }
+    if (btnNext) {
+      btnNext.disabled = (state.activeDeviceIndex >= devs.length - 1);
+    }
+  }
+
+  function selectDevice(index) {
+    const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+    if (index < 0 || index >= devs.length) return;
+
+    state.activeDeviceIndex = index;
+    const targetDev = devs[index];
+    state.activeDeviceName = targetDev.name;
+
+    // Load parameters profile for this device
+    const profile = deviceParameterProfiles[targetDev.name];
+    if (profile) {
+      state.parameters = profile.map((p, i) => ({
+        index: i,
+        name: p.name,
+        value: p.val,
+        str: `${Math.round(p.val * 100)} %`
+      }));
+    } else {
+      state.parameters = Array.from({ length: 24 }, (_, i) => ({
+        index: i,
+        name: `Param ${i + 1}`,
+        value: 0.50,
+        str: '50 %'
+      }));
+    }
+
+    renderKnobs();
+    renderDevicesList();
+    updateDeviceNavButtons();
+
+    sendAction('select_device', { device_index: index });
+  }
+
   // --- RENDER SIDEBAR ---
   function renderSidebar() {
     // 1. Selected Track Info
@@ -563,25 +760,8 @@
       bar.style.boxShadow = `0 0 6px ${selTrk.color || '#ffd000'}`;
     }
 
-    // 2. Device / Plugin
-    const devName = document.getElementById('device-name-text');
-    if (devName) devName.textContent = state.activeDeviceName || 'Serum';
-
-    const devMaker = document.getElementById('device-maker-text');
-    if (devMaker) devMaker.textContent = state.activeDeviceMaker || 'Xfer Records';
-
-    const devCounter = document.getElementById('device-counter-badge');
-    if (devCounter) {
-      const total = state.devices.length || 5;
-      const cur = (state.activeDeviceIndex !== undefined ? state.activeDeviceIndex + 1 : 2);
-      devCounter.textContent = `${cur} / ${total}`;
-    }
-
-    const autoToggle = document.getElementById('auto-follow-toggle');
-    if (autoToggle) {
-      if (state.autoFollow) autoToggle.classList.add('active');
-      else autoToggle.classList.remove('active');
-    }
+    // 2. Devices / Plugins List
+    renderDevicesList();
   }
 
   // --- RENDER MASTER METER ---
@@ -606,6 +786,9 @@
         e.stopPropagation();
         const curIdx = state.selectedTrackIndex;
         const targetIdx = Math.max(0, curIdx - 1);
+        state.selectedTrackIndex = targetIdx;
+        renderTracks();
+        renderSidebar();
         sendAction('select_track', { track_index: targetIdx });
       });
     }
@@ -617,6 +800,9 @@
         const curIdx = state.selectedTrackIndex;
         const maxIdx = (state.tracks && state.tracks.length > 0) ? state.tracks.length - 1 : 15;
         const targetIdx = Math.min(maxIdx, curIdx + 1);
+        state.selectedTrackIndex = targetIdx;
+        renderTracks();
+        renderSidebar();
         sendAction('select_track', { track_index: targetIdx });
       });
     }
@@ -687,53 +873,27 @@
       });
     }
 
-    // Device Navigation
-    const btnDevPrev = document.getElementById('btn-device-carousel-prev');
+    // Device Navigation (◀ Précédent / Suivant ▶)
+    const btnDevPrev = document.getElementById('btn-device-prev');
     if (btnDevPrev) {
-      btnDevPrev.addEventListener('click', () => {
-        sendAction('select_relative_device', { offset: -1 });
+      btnDevPrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (state.activeDeviceIndex > 0) {
+          selectDevice(state.activeDeviceIndex - 1);
+        }
       });
     }
 
-    const btnDevNext = document.getElementById('btn-device-carousel-next');
+    const btnDevNext = document.getElementById('btn-device-next');
     if (btnDevNext) {
-      btnDevNext.addEventListener('click', () => {
-        sendAction('select_relative_device', { offset: 1 });
+      btnDevNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+        if (state.activeDeviceIndex < devs.length - 1) {
+          selectDevice(state.activeDeviceIndex + 1);
+        }
       });
     }
-
-    const btnDevPrevQuick = document.getElementById('btn-device-prev-quick');
-    if (btnDevPrevQuick) {
-      btnDevPrevQuick.addEventListener('click', () => {
-        sendAction('select_relative_device', { offset: -1 });
-      });
-    }
-
-    const btnDevNextQuick = document.getElementById('btn-device-next-quick');
-    if (btnDevNextQuick) {
-      btnDevNextQuick.addEventListener('click', () => {
-        sendAction('select_relative_device', { offset: 1 });
-      });
-    }
-
-    // Auto-follow Device Toggle
-    const autoToggle = document.getElementById('auto-follow-toggle');
-    if (autoToggle) {
-      autoToggle.addEventListener('click', () => {
-        state.autoFollow = !state.autoFollow;
-        autoToggle.classList.toggle('active', state.autoFollow);
-        sendAction('set_auto_follow', { enabled: state.autoFollow });
-      });
-    }
-
-    // Mode Selector
-    const modeItems = document.querySelectorAll('.mode-item');
-    modeItems.forEach(item => {
-      item.addEventListener('click', () => {
-        modeItems.forEach(m => m.classList.remove('active'));
-        item.classList.add('active');
-      });
-    });
   }
 
   // --- START APP ---
