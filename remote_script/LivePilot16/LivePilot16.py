@@ -783,8 +783,8 @@ class LivePilot16(ControlSurface):
                 tracks[t_idx].mixer_device.panning.value = max(-1.0, min(1.0, p_val))
                 self._broadcast_selected_track()
 
-        elif action == 'select_bank':
-            b_idx = int(msg.get('bank_index', 0))
+        elif action in ('select_bank', 'switch_bank'):
+            b_idx = int(msg.get('bank_index', msg.get('bank', 0)))
             tracks = self.song().tracks
             total_banks = max(1, (len(tracks) + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
             self._current_bank_index = max(0, min(total_banks - 1, b_idx))

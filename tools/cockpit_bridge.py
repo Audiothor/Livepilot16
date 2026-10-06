@@ -168,9 +168,10 @@ def build_params(dev_name):
     return [{"index": i, "name": f"Param {i+1}", "value": 0.50, "str": "50 %"} for i in range(24)]
 
 # =============================================================================
-# DONNÉES DE SIMULATION COCKPIT
+# DONNÉES DE SIMULATION COCKPIT (64 PISTES SUR 4 BANQUES)
 # =============================================================================
-DEMO_TRACKS = [
+ALL_DEMO_TRACKS = [
+    # BANQUE 1 (Pistes 1 à 16 : Pistes de base)
     {"index": 0, "name": "Drums", "color": "#ff2a5f", "is_group": True, "vol_str": "-6.2 dB", "pan_val": 0.0},
     {"index": 1, "name": "Bass", "color": "#ffd000", "is_group": False, "vol_str": "-4.1 dB", "pan_val": 0.0},
     {"index": 2, "name": "Pads", "color": "#2979ff", "is_group": False, "vol_str": "-8.3 dB", "pan_val": 0.0},
@@ -186,8 +187,69 @@ DEMO_TRACKS = [
     {"index": 12, "name": "Brass", "color": "#1de9b6", "is_group": False, "vol_str": "-16.3 dB", "pan_val": 0.0},
     {"index": 13, "name": "Strings", "color": "#ff6e40", "is_group": False, "vol_str": "-16.6 dB", "pan_val": 0.0},
     {"index": 14, "name": "Synths", "color": "#d500f9", "is_group": True, "vol_str": "-8.9 dB", "pan_val": 0.0},
-    {"index": 15, "name": "Vox FX", "color": "#00bcd4", "is_group": False, "vol_str": "-12.7 dB", "pan_val": 0.0}
+    {"index": 15, "name": "Vox FX", "color": "#00bcd4", "is_group": False, "vol_str": "-12.7 dB", "pan_val": 0.0},
+
+    # BANQUE 2 (Pistes 17 à 32 : Éléments rythmiques & synthés)
+    {"index": 16, "name": "Kick", "color": "#ff2a5f", "is_group": False, "vol_str": "-3.0 dB", "pan_val": 0.0},
+    {"index": 17, "name": "Snare", "color": "#ff5252", "is_group": False, "vol_str": "-4.5 dB", "pan_val": 0.0},
+    {"index": 18, "name": "HiHat", "color": "#ffd54f", "is_group": False, "vol_str": "-8.0 dB", "pan_val": 0.1},
+    {"index": 19, "name": "Perc 2", "color": "#ffa726", "is_group": False, "vol_str": "-7.5 dB", "pan_val": -0.2},
+    {"index": 20, "name": "808 Sub", "color": "#ffd000", "is_group": False, "vol_str": "-2.8 dB", "pan_val": 0.0},
+    {"index": 21, "name": "Reese", "color": "#ff9800", "is_group": False, "vol_str": "-6.0 dB", "pan_val": 0.0},
+    {"index": 22, "name": "Pluck", "color": "#2979ff", "is_group": False, "vol_str": "-9.2 dB", "pan_val": 0.15},
+    {"index": 23, "name": "Bell", "color": "#00e5ff", "is_group": False, "vol_str": "-11.0 dB", "pan_val": -0.15},
+    {"index": 24, "name": "Choir", "color": "#b388ff", "is_group": False, "vol_str": "-13.5 dB", "pan_val": 0.0},
+    {"index": 25, "name": "Strings 2", "color": "#9575cd", "is_group": False, "vol_str": "-12.0 dB", "pan_val": 0.2},
+    {"index": 26, "name": "Horns", "color": "#1de9b6", "is_group": False, "vol_str": "-10.0 dB", "pan_val": -0.1},
+    {"index": 27, "name": "Impact", "color": "#00e676", "is_group": False, "vol_str": "-8.0 dB", "pan_val": 0.0},
+    {"index": 28, "name": "Sweep", "color": "#26c6da", "is_group": False, "vol_str": "-9.5 dB", "pan_val": 0.0},
+    {"index": 29, "name": "Riser", "color": "#42a5f5", "is_group": False, "vol_str": "-7.0 dB", "pan_val": 0.0},
+    {"index": 30, "name": "Noise", "color": "#78909c", "is_group": False, "vol_str": "-14.0 dB", "pan_val": 0.0},
+    {"index": 31, "name": "Sub Drop", "color": "#ff4081", "is_group": False, "vol_str": "-5.0 dB", "pan_val": 0.0},
+
+    # BANQUE 3 (Pistes 33 à 48 : Harmonies, Voix & Acoustique)
+    {"index": 32, "name": "Lead Vox", "color": "#ff4081", "is_group": False, "vol_str": "-4.0 dB", "pan_val": 0.0},
+    {"index": 33, "name": "Back Vox 1", "color": "#f06292", "is_group": False, "vol_str": "-9.0 dB", "pan_val": -0.3},
+    {"index": 34, "name": "Back Vox 2", "color": "#f06292", "is_group": False, "vol_str": "-9.0 dB", "pan_val": 0.3},
+    {"index": 35, "name": "Harmony L", "color": "#ba68c8", "is_group": False, "vol_str": "-10.5 dB", "pan_val": -0.4},
+    {"index": 36, "name": "Harmony R", "color": "#ba68c8", "is_group": False, "vol_str": "-10.5 dB", "pan_val": 0.4},
+    {"index": 37, "name": "Acoustic Gtr", "color": "#ff9100", "is_group": False, "vol_str": "-8.2 dB", "pan_val": -0.2},
+    {"index": 38, "name": "Electric Gtr", "color": "#ffa726", "is_group": False, "vol_str": "-7.5 dB", "pan_val": 0.25},
+    {"index": 39, "name": "Grand Piano", "color": "#00e5ff", "is_group": False, "vol_str": "-6.8 dB", "pan_val": 0.0},
+    {"index": 40, "name": "Rhodes", "color": "#26c6da", "is_group": False, "vol_str": "-8.5 dB", "pan_val": 0.1},
+    {"index": 41, "name": "Hammond", "color": "#4db6ac", "is_group": False, "vol_str": "-9.0 dB", "pan_val": -0.15},
+    {"index": 42, "name": "Clavinet", "color": "#81c784", "is_group": False, "vol_str": "-11.0 dB", "pan_val": 0.2},
+    {"index": 43, "name": "Shaker", "color": "#aed581", "is_group": False, "vol_str": "-12.5 dB", "pan_val": 0.3},
+    {"index": 44, "name": "Tambourine", "color": "#dce775", "is_group": False, "vol_str": "-13.0 dB", "pan_val": -0.25},
+    {"index": 45, "name": "Claps", "color": "#fff176", "is_group": False, "vol_str": "-6.5 dB", "pan_val": 0.0},
+    {"index": 46, "name": "Snaps", "color": "#ffd54f", "is_group": False, "vol_str": "-9.0 dB", "pan_val": 0.05},
+    {"index": 47, "name": "Foley", "color": "#90a4ae", "is_group": False, "vol_str": "-15.0 dB", "pan_val": 0.0},
+
+    # BANQUE 4 (Pistes 49 à 64 : Orchestral, Cuivres, Bois & Percussions Live)
+    {"index": 48, "name": "Trumpets", "color": "#ffd000", "is_group": False, "vol_str": "-5.5 dB", "pan_val": -0.2},
+    {"index": 49, "name": "Trombones", "color": "#ffb300", "is_group": False, "vol_str": "-6.2 dB", "pan_val": 0.2},
+    {"index": 50, "name": "French Horn", "color": "#ff8f00", "is_group": False, "vol_str": "-7.8 dB", "pan_val": -0.15},
+    {"index": 51, "name": "Tuba", "color": "#e65100", "is_group": False, "vol_str": "-4.5 dB", "pan_val": 0.0},
+    {"index": 52, "name": "Sax Alto", "color": "#00e676", "is_group": False, "vol_str": "-6.0 dB", "pan_val": -0.1},
+    {"index": 53, "name": "Sax Tenor", "color": "#00c853", "is_group": False, "vol_str": "-6.5 dB", "pan_val": 0.15},
+    {"index": 54, "name": "Flutes", "color": "#69f0ae", "is_group": False, "vol_str": "-10.2 dB", "pan_val": 0.0},
+    {"index": 55, "name": "Clarinets", "color": "#00b0ff", "is_group": False, "vol_str": "-11.0 dB", "pan_val": -0.25},
+    {"index": 56, "name": "Violins 1", "color": "#2979ff", "is_group": False, "vol_str": "-8.0 dB", "pan_val": -0.35},
+    {"index": 57, "name": "Violins 2", "color": "#3d5afe", "is_group": False, "vol_str": "-8.5 dB", "pan_val": -0.2},
+    {"index": 58, "name": "Violas", "color": "#651fff", "is_group": False, "vol_str": "-9.0 dB", "pan_val": 0.2},
+    {"index": 59, "name": "Cellos", "color": "#7c4dff", "is_group": False, "vol_str": "-7.2 dB", "pan_val": 0.3},
+    {"index": 60, "name": "Double Bass", "color": "#b388ff", "is_group": False, "vol_str": "-5.0 dB", "pan_val": 0.0},
+    {"index": 61, "name": "Brass Orch", "color": "#1de9b6", "is_group": True, "vol_str": "-4.2 dB", "pan_val": 0.0},
+    {"index": 62, "name": "Timpani", "color": "#ff5252", "is_group": False, "vol_str": "-6.0 dB", "pan_val": 0.0},
+    {"index": 63, "name": "Tubular Bell", "color": "#ff4081", "is_group": False, "vol_str": "-11.5 dB", "pan_val": 0.05}
 ]
+
+def get_bank_tracks(bank_index):
+    start_idx = max(0, min(3, bank_index)) * 16
+    end_idx = start_idx + 16
+    return ALL_DEMO_TRACKS[start_idx:end_idx]
+
+DEMO_TRACKS = ALL_DEMO_TRACKS[:16]
 
 TRACK_DEVICES_MAP = {
     0: [{"index": 0, "name": "Drum Rack"}, {"index": 1, "name": "Glue Comp"}, {"index": 2, "name": "Saturator"}, {"index": 3, "name": "EQ Eight"}],
@@ -253,6 +315,7 @@ def run_simulator(open_browser=False):
     # État interactif du simulateur
     state = {
         "selected_track_index": 1,
+        "bank_index": 0,
         "active_device_index": 1,
         "is_playing": True,
         "active_scene_index": 1,
@@ -263,7 +326,10 @@ def run_simulator(open_browser=False):
         return TRACK_DEVICES_MAP.get(track_idx, DEFAULT_DEVICES)
 
     def broadcast_full_sync():
-        devs = get_track_devices(state["selected_track_index"])
+        cur_bank = state.get("bank_index", 0)
+        bank_tracks = get_bank_tracks(cur_bank)
+        sel_idx = state["selected_track_index"]
+        devs = get_track_devices(sel_idx)
         d_idx = min(state["active_device_index"], len(devs) - 1)
         cur_dev = devs[d_idx]
         cur_params = build_params(cur_dev["name"])
@@ -292,10 +358,10 @@ def run_simulator(open_browser=False):
                     "next_name": next_sc["name"]
                 },
                 "scenes": DEMO_SCENES,
-                "bank_index": 0,
+                "bank_index": cur_bank,
                 "total_banks": 4,
-                "selected_track_index": state["selected_track_index"],
-                "tracks": DEMO_TRACKS,
+                "selected_track_index": sel_idx,
+                "tracks": bank_tracks,
                 "devices": devs,
                 "active_device_index": d_idx,
                 "active_device_name": cur_dev["name"],
@@ -309,19 +375,31 @@ def run_simulator(open_browser=False):
         if action == "request_full_sync":
             broadcast_full_sync()
 
+        elif action in ("switch_bank", "select_bank"):
+            b_idx = int(msg.get("bank", msg.get("bank_index", 0)))
+            state["bank_index"] = max(0, min(3, b_idx))
+            start_t = state["bank_index"] * 16
+            end_t = start_t + 16
+            if not (start_t <= state["selected_track_index"] < end_t):
+                state["selected_track_index"] = start_t
+            broadcast_full_sync()
+
         elif action == "select_track":
             t_idx = int(msg.get("track_index", 0))
-            state["selected_track_index"] = max(0, min(15, t_idx))
+            state["selected_track_index"] = max(0, min(63, t_idx))
+            state["bank_index"] = state["selected_track_index"] // 16
             devs = get_track_devices(state["selected_track_index"])
             state["active_device_index"] = 0
             cur_dev = devs[0]
             cur_params = build_params(cur_dev["name"])
+            bank_tracks = get_bank_tracks(state["bank_index"])
 
             server.broadcast({
                 "type": "track_selected",
                 "data": {
                     "track_index": state["selected_track_index"],
-                    "tracks": DEMO_TRACKS,
+                    "bank_index": state["bank_index"],
+                    "tracks": bank_tracks,
                     "devices": devs,
                     "active_device_name": cur_dev["name"],
                     "active_device_index": 0,

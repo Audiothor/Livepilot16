@@ -440,11 +440,15 @@
 
     // Dynamic focus badge appended after parentheses
     const focusBadge = document.getElementById('tracks-current-focus-badge');
-    const selTrk = state.tracks.find(t => t.index === state.selectedTrackIndex);
-    const selNum = (state.selectedTrackIndex + 1 < 10) ? `0${state.selectedTrackIndex + 1}` : `${state.selectedTrackIndex + 1}`;
-    const selName = selTrk ? selTrk.name : 'Bass';
+    const selGlobalIdx = state.selectedTrackIndex;
+    const selNum = (selGlobalIdx + 1 < 10) ? `0${selGlobalIdx + 1}` : `${selGlobalIdx + 1}`;
+    let selTrk = (state.tracks && state.tracks.length > 0)
+      ? state.tracks.find(t => t && t.index === selGlobalIdx)
+      : null;
+    let selRawName = (selTrk && selTrk.name) ? selTrk.name : (defaultTrackNames[selGlobalIdx % 16] ? defaultTrackNames[selGlobalIdx % 16].name : `Piste ${selGlobalIdx + 1}`);
+    const selCleanName = selRawName.replace(/^\d+[\s\-_:]+/, '');
     if (focusBadge) {
-      focusBadge.textContent = `— Piste #${selNum} : ${selName}`;
+      focusBadge.textContent = `— Piste #${selNum} : ${selCleanName}`;
     }
 
     const bankInd = document.getElementById('bank-indicator');
@@ -456,33 +460,41 @@
 
     for (let i = 0; i < 16; i++) {
       const globalIdx = (state.bankIndex * 16) + i;
-      const defaultInfo = defaultTrackNames[i] || { num: (i+1 < 10 ? '0'+(i+1) : ''+(i+1)), name: `Track ${i+1}`, color: '#2979ff', dark: false, db: '-6.0 dB', pan: 50, lvlL: 50, lvlR: 50, isGroup: false };
-      const trk = state.tracks[i] || {
-        index: globalIdx,
-        name: defaultInfo.name,
-        color: defaultInfo.color,
-        vol_str: defaultInfo.db,
-        pan_val: 0.0,
-        is_group: defaultInfo.isGroup
-      };
+      const defaultInfo = defaultTrackNames[i] || { name: `Track ${globalIdx + 1}`, color: '#2979ff', dark: false, db: '-6.0 dB', pan: 50, lvlL: 50, lvlR: 50, isGroup: false };
+      
+      // Recherche de la piste correspondante à cet emplacement global
+      let trk = null;
+      if (state.tracks && state.tracks.length > 0) {
+        trk = state.tracks.find(t => t && t.index === globalIdx);
+        if (!trk && state.tracks[i] && (state.tracks[i].index === undefined || state.tracks[i].index === globalIdx)) {
+          trk = state.tracks[i];
+        }
+      }
 
-      const isSelected = (trk.index === state.selectedTrackIndex);
-      const isGroup = Boolean(trk.is_group || defaultInfo.isGroup);
-      const color = trk.color || defaultInfo.color;
-      const isDark = defaultInfo.dark;
+      const trackIndex = (trk && trk.index !== undefined) ? trk.index : globalIdx;
+      const trackNumber = trackIndex + 1;
+      const trackNumStr = (trackNumber < 10) ? `0${trackNumber}` : `${trackNumber}`;
+
+      let trackRawName = (trk && trk.name) ? trk.name : (state.bankIndex === 0 ? defaultInfo.name : `Track ${trackNumber}`);
+      let trackCleanName = trackRawName.replace(/^\d+[\s\-_:]+/, '');
+
+      const isSelected = (trackIndex === state.selectedTrackIndex);
+      const isGroup = Boolean((trk && trk.is_group) || (state.bankIndex === 0 && defaultInfo.isGroup));
+      const color = (trk && trk.color) ? trk.color : defaultInfo.color;
+      const isDark = (color === '#ffd000' || color === '#76ff03' || color === '#00e5ff' || color === '#1de9b6');
       const textColor = isDark ? '#000000' : '#ffffff';
 
       const card = document.createElement('div');
       card.id = `track-card-${i}`;
       card.className = `track-card ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-track' : ''}`;
 
-      const panDotLeft = 50 + (trk.pan_val !== undefined ? trk.pan_val * 45 : 0);
+      const panDotLeft = 50 + (trk && trk.pan_val !== undefined ? trk.pan_val * 45 : 0);
       const grpBadge = isGroup ? `<span class="grp-tag-badge">GRP</span>` : '';
 
       card.innerHTML = `
         <div class="track-top-banner" style="background: ${color}; color: ${textColor};">
-          <span class="trk-num">${defaultInfo.num}</span>
-          <div class="trk-name">${grpBadge} <span>${trk.name}</span></div>
+          <span class="trk-num">${trackNumStr}</span>
+          <div class="trk-name">${grpBadge} <span>${trackCleanName}</span></div>
         </div>
         <div class="track-inner-body">
           <div class="meter-stereo-wrap">
@@ -500,7 +512,7 @@
               <span>+3</span>
             </div>
           </div>
-          <div class="track-db-readout">${trk.vol_str || defaultInfo.db}</div>
+          <div class="track-db-readout">${(trk && trk.vol_str) ? trk.vol_str : defaultInfo.db}</div>
           <div class="pan-line-wrap">
             <span>L</span>
             <div class="pan-track-line">
@@ -512,10 +524,10 @@
       `;
 
       card.addEventListener('click', () => {
-        state.selectedTrackIndex = trk.index;
+        state.selectedTrackIndex = trackIndex;
         renderTracks();
         renderSidebar();
-        sendAction('select_track', { track_index: trk.index });
+        sendAction('select_track', { track_index: trackIndex });
       });
 
       container.appendChild(card);
@@ -739,22 +751,25 @@
 
   // --- RENDER SIDEBAR ---
   function renderSidebar() {
-    // 1. Selected Track Info
-    const selTrk = state.tracks.find(t => t.index === state.selectedTrackIndex) || {
-      name: '02 - Bass',
-      color: '#ffd000'
-    };
+    // 1. Selected Track Info (Point 1 : Toujours numéro de piste + nom)
+    let selTrk = null;
+    if (state.tracks && state.tracks.length > 0) {
+      selTrk = state.tracks.find(t => t && t.index === state.selectedTrackIndex);
+    }
+    const selIdx = (selTrk && selTrk.index !== undefined) ? selTrk.index : state.selectedTrackIndex;
+    const selNum = (selIdx + 1 < 10) ? `0${selIdx + 1}` : `${selIdx + 1}`;
+    let trackRawName = (selTrk && selTrk.name) ? selTrk.name : (defaultTrackNames[selIdx % 16] ? defaultTrackNames[selIdx % 16].name : `Piste ${selIdx + 1}`);
+    const trackCleanName = trackRawName.replace(/^\d+[\s\-_:]+/, '');
+    const formattedTitle = `${selNum} - ${trackCleanName}`;
 
     const selName = document.getElementById('sel-track-name');
-    if (selName) selName.textContent = selTrk.name;
+    if (selName) selName.textContent = formattedTitle;
 
-    const swatch = document.getElementById('sel-swatch');
-    if (swatch) swatch.style.background = selTrk.color || '#ffd000';
-
+    const trackColor = (selTrk && selTrk.color) ? selTrk.color : '#ffd000';
     const bar = document.getElementById('sel-accent-bar');
     if (bar) {
-      bar.style.background = selTrk.color || '#ffd000';
-      bar.style.boxShadow = `0 0 6px ${selTrk.color || '#ffd000'}`;
+      bar.style.background = trackColor;
+      bar.style.boxShadow = `0 0 6px ${trackColor}`;
     }
 
     // 2. Devices / Plugins List
@@ -868,8 +883,15 @@
       btnBankPrev.addEventListener('click', () => {
         const newBank = (state.bankIndex - 1 + state.totalBanks) % state.totalBanks;
         state.bankIndex = newBank;
-        sendAction('switch_bank', { bank: newBank });
+        const bankStart = newBank * 16;
+        const bankEnd = bankStart + 16;
+        if (state.selectedTrackIndex < bankStart || state.selectedTrackIndex >= bankEnd) {
+          state.selectedTrackIndex = bankStart;
+        }
+        sendAction('switch_bank', { bank: newBank, bank_index: newBank });
+        sendAction('select_bank', { bank: newBank, bank_index: newBank });
         renderTracks();
+        renderSidebar();
       });
     }
 
@@ -878,8 +900,15 @@
       btnBankNext.addEventListener('click', () => {
         const newBank = (state.bankIndex + 1) % state.totalBanks;
         state.bankIndex = newBank;
-        sendAction('switch_bank', { bank: newBank });
+        const bankStart = newBank * 16;
+        const bankEnd = bankStart + 16;
+        if (state.selectedTrackIndex < bankStart || state.selectedTrackIndex >= bankEnd) {
+          state.selectedTrackIndex = bankStart;
+        }
+        sendAction('switch_bank', { bank: newBank, bank_index: newBank });
+        sendAction('select_bank', { bank: newBank, bank_index: newBank });
         renderTracks();
+        renderSidebar();
       });
     }
 
@@ -908,6 +937,21 @@
 
   // --- START APP ---
   document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('bank')) {
+        const b = parseInt(urlParams.get('bank'), 10);
+        state.bankIndex = Math.max(0, Math.min(state.totalBanks - 1, b));
+        state.selectedTrackIndex = state.bankIndex * 16;
+      }
+      if (urlParams.has('track')) {
+        state.selectedTrackIndex = parseInt(urlParams.get('track'), 10);
+        state.bankIndex = Math.floor(state.selectedTrackIndex / 16);
+      }
+    } catch (e) {
+      // ignore
+    }
+
     initListeners();
     renderTopBar();
     renderSceneBanner();
