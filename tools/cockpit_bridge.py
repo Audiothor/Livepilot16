@@ -256,7 +256,7 @@ def run_simulator(open_browser=False):
         "active_device_index": 1,
         "is_playing": True,
         "active_scene_index": 1,
-        "master_vol": 0.82
+        "master_vol": 0.825
     }
 
     def get_track_devices(track_idx):

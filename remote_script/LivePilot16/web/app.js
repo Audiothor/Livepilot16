@@ -555,7 +555,7 @@
       cell.className = 'knob-cell';
 
       cell.innerHTML = `
-        <span class="knob-index">#${i + 1}</span>
+        <span class="knob-index">${i + 1}</span>
         <div class="knob-svg-wrap">
           ${makeKnobSVG(p.value, color)}
         </div>
@@ -766,12 +766,25 @@
     const dbTag = document.getElementById('master-db-readout');
     const barL = document.getElementById('master-meter-l');
     const barR = document.getElementById('master-meter-r');
+    const markerL = document.getElementById('master-fader-marker-l');
+    const markerR = document.getElementById('master-fader-marker-r');
+    const legendTxt = document.getElementById('master-fader-legend-txt');
 
-    const vol = state.masterVolume || { value: 0.82, str: '-0.2 dB' };
-    if (dbTag) dbTag.innerHTML = `<span class="main-prefix">MAIN : </span>${vol.str || '-0.2 dB'}`;
-    const pct = Math.min(100, Math.round((vol.value || 0.82) * 100));
-    if (barL) barL.style.width = `${pct}%`;
-    if (barR) barR.style.width = `${Math.max(0, pct - 2)}%`;
+    const vol = state.masterVolume || { value: 0.825, str: '-0.2 dB' };
+    const str = vol.str || '-0.2 dB';
+    if (dbTag) dbTag.innerHTML = `<span class="main-prefix">MAIN : </span>${str}`;
+    if (legendTxt) legendTxt.textContent = `Fader : ${str}`;
+
+    // Ableton 0 dB nominal corresponds to normalized value 0.85 (85%)
+    // vol.value est entre 0.0 et 1.0 (0.85 = 0 dB, >0.85 = boost jusqu'à +6 dB)
+    const faderPos = Math.min(100, Math.max(0, Math.round((vol.value !== undefined ? vol.value : 0.825) * 100)));
+    if (markerL) markerL.style.left = `${faderPos}%`;
+    if (markerR) markerR.style.left = `${faderPos}%`;
+
+    // Niveaux audio instantanés (dynamiques ou simulés)
+    const meterPct = Math.min(100, Math.max(0, Math.round(((vol.value || 0.825) * 0.98) * 100)));
+    if (barL) barL.style.width = `${meterPct}%`;
+    if (barR) barR.style.width = `${Math.max(0, meterPct - 2)}%`;
   }
 
   // --- EVENT LISTENERS INITIALIZATION ---

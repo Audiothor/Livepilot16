@@ -44,13 +44,12 @@
       </div>
     </header>
 
-    <!-- 2. SCENE BANNER (HERO 3 CARDS - AÉRÉ SANS TEXTES INUTILES) -->
+    <!-- 2. SCENE BANNER (HERO 3 CARDS - SYMBOLES ET TITRES UNIQUEMENT) -->
     <section class="scene-hero-grid">
       <!-- Left Card: Previous Scene -->
       <div id="scene-prev-card" class="scene-card-side">
         <div id="btn-scene-prev" class="scene-arrow">◀</div>
         <div class="scene-content">
-          <div class="scene-subtag">SCÈNE PRÉCÉDENTE</div>
           <div id="scene-prev-title" class="scene-title-side">01 - Intro</div>
         </div>
       </div>
@@ -59,7 +58,6 @@
       <div id="scene-active-card" class="scene-card-active">
         <div id="scene-play-btn" class="scene-play-icon">▶</div>
         <div class="scene-active-content">
-          <div class="scene-active-tag">SCÈNE ACTUELLE</div>
           <div id="scene-active-title" class="scene-active-title">02 - Couplet</div>
         </div>
       </div>
@@ -67,7 +65,6 @@
       <!-- Right Card: Next Scene -->
       <div id="scene-next-card" class="scene-card-side">
         <div class="scene-content">
-          <div class="scene-subtag">SCÈNE SUIVANTE</div>
           <div id="scene-next-title" class="scene-title-side">03 - Refrain</div>
         </div>
         <div id="btn-scene-next" class="scene-arrow">▶</div>
@@ -175,7 +172,7 @@
           </div>
         </div>
 
-        <!-- ABLETON MASTER VU-METER DESIGN (REMPLACE LE TEXTE INUTILE) -->
+        <!-- ABLETON MASTER VU-METER DESIGN (CALIBRÉ AVEC REPÈRE 0 dB ET POSITION FADER) -->
         <div class="master-hud-panel">
           <div class="master-header-row">
             <div class="master-title">
@@ -190,27 +187,49 @@
           </div>
 
           <div class="master-meter-box">
+            <!-- Échelle de graduation supérieure alignée dB -->
+            <div class="master-scale-ruler">
+              <span class="m-tick-label" style="left: 0%;">−∞</span>
+              <span class="m-tick-label" style="left: 28%;">−24</span>
+              <span class="m-tick-label" style="left: 54%;">−12</span>
+              <span class="m-tick-label" style="left: 72%;">−6</span>
+              <span class="m-tick-label m-tick-label-zero" style="left: 85%;">0 dB</span>
+              <span class="m-tick-label m-tick-label-clip" style="left: 98%;">+6</span>
+            </div>
+
             <div class="master-channel-strip">
               <span class="master-ch-label">L</span>
               <div class="master-led-ladder-track">
-                <div id="master-meter-l" class="master-led-gradient-bar" style="width: 82%;"></div>
+                <div id="master-meter-l" class="master-led-gradient-bar" style="width: 80%;"></div>
+                <!-- Repère fixe 0 dB nominal (Jaune vif avec lueur) -->
+                <div class="master-zero-ref-line" style="left: 85%;" title="0 dB Nominal"></div>
+                <!-- Curseur dynamique de position Fader Master (-0.2 dB en Cyan vif) -->
+                <div id="master-fader-marker-l" class="master-fader-pos-marker" style="left: 82.5%;" title="Fader Master: -0.2 dB"></div>
               </div>
             </div>
+
             <div class="master-channel-strip">
               <span class="master-ch-label">R</span>
               <div class="master-led-ladder-track">
-                <div id="master-meter-r" class="master-led-gradient-bar" style="width: 80%;"></div>
+                <div id="master-meter-r" class="master-led-gradient-bar" style="width: 78%;"></div>
+                <!-- Repère fixe 0 dB nominal (Jaune vif avec lueur) -->
+                <div class="master-zero-ref-line" style="left: 85%;" title="0 dB Nominal"></div>
+                <!-- Curseur dynamique de position Fader Master (-0.2 dB en Cyan vif) -->
+                <div id="master-fader-marker-r" class="master-fader-pos-marker" style="left: 82.5%;" title="Fader Master: -0.2 dB"></div>
               </div>
             </div>
-          </div>
 
-          <div class="master-scale-ticks">
-            <span>-∞</span>
-            <span>-24</span>
-            <span>-12</span>
-            <span>-6</span>
-            <span>0</span>
-            <span>+3</span>
+            <!-- Légende pour situer instantanément la valeur par rapport au 0 dB -->
+            <div class="master-hud-legend">
+              <div class="m-legend-item">
+                <span class="m-legend-line zero-line-sample"></span>
+                <span>0 dB (Nominal)</span>
+              </div>
+              <div class="m-legend-item">
+                <span class="m-legend-line fader-line-sample"></span>
+                <span id="master-fader-legend-txt">Fader : -0.2 dB</span>
+              </div>
+            </div>
           </div>
         </div>
 
