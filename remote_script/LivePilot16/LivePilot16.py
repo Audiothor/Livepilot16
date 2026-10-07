@@ -41,6 +41,7 @@ class LivePilot16(ControlSurface):
 
         self._current_bank_index = 0
         self._current_track = None
+        self._observed_track = None
         self._assigned_devices = []
         self._current_device_idx = 0
         self._current_device = None
@@ -75,6 +76,7 @@ class LivePilot16(ControlSurface):
             self._web_server = None
         self._cleanup_listeners()
         self._detach_scene_listeners()
+        self._detach_track_devices_listener()
         self._remove_parameter_listeners()
         super(LivePilot16, self).disconnect()
 
@@ -119,6 +121,7 @@ class LivePilot16(ControlSurface):
             song.remove_scenes_listener(self._on_scenes_list_changed)
         if song.view.selected_scene_has_listener(self._on_scene_selection_changed):
             song.view.remove_selected_scene_listener(self._on_scene_selection_changed)
+        self._detach_track_devices_listener()
 
     def _attach_scene_listeners(self):
         self._detach_scene_listeners()
@@ -192,6 +195,7 @@ class LivePilot16(ControlSurface):
         self._current_track = self.song().view.selected_track
         # Aligne automatiquement la banque si la piste sélectionnée est hors de la banque courante
         self._auto_align_bank_for_track(self._current_track)
+        self._attach_track_devices_listener()
         self._refresh_assigned_devices()
         self._send_active_track_info()
         self._send_bank_colors()
@@ -210,13 +214,38 @@ class LivePilot16(ControlSurface):
                 self._send_bank_info()
                 self._send_bank_colors()
 
+    def _attach_track_devices_listener(self):
+        self._detach_track_devices_listener()
+        if self._current_track and hasattr(self._current_track, 'devices_has_listener'):
+            try:
+                if not self._current_track.devices_has_listener(self._on_track_devices_changed):
+                    self._current_track.add_devices_listener(self._on_track_devices_changed)
+                    self._observed_track = self._current_track
+            except Exception:
+                pass
+
+    def _detach_track_devices_listener(self):
+        if getattr(self, '_observed_track', None):
+            try:
+                if hasattr(self._observed_track, 'devices_has_listener') and self._observed_track.devices_has_listener(self._on_track_devices_changed):
+                    self._observed_track.remove_devices_listener(self._on_track_devices_changed)
+            except Exception:
+                pass
+            self._observed_track = None
+
+    def _on_track_devices_changed(self):
+        self._refresh_assigned_devices()
+        self._send_active_device_info()
+        self._send_parameters_info()
+        self._broadcast_selected_track()
+
     # =========================================================================
     # GESTION DES DEVICES & PARAMÈTRES
     # =========================================================================
     def _device_has_assignments(self, device):
         if not device:
             return False
-        return len(device.parameters) > 1
+        return len(device.parameters) >= 1
 
     def _track_has_assignments(self, track):
         if not track:
@@ -725,7 +754,17 @@ class LivePilot16(ControlSurface):
             t_idx = msg.get('track_index', 0)
             tracks = list(self.song().tracks)
             if 0 <= t_idx < len(tracks):
-                self.song().view.selected_track = tracks[t_idx]
+                target = tracks[t_idx]
+                self.song().view.selected_track = target
+                self._current_track = target
+                self._auto_align_bank_for_track(target)
+                self._attach_track_devices_listener()
+                self._refresh_assigned_devices()
+                self._send_active_track_info()
+                self._send_bank_colors()
+                self._send_active_device_info()
+                self._send_parameters_info()
+                self._broadcast_selected_track()
 
         elif action == 'select_device':
             d_idx = msg.get('device_index', 0)

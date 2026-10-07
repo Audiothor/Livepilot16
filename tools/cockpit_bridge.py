@@ -311,9 +311,18 @@ def run_simulator(open_browser=False):
         bank_tracks = get_bank_tracks(cur_bank)
         sel_idx = state["selected_track_index"]
         devs = get_track_devices(sel_idx)
-        d_idx = min(state["active_device_index"], len(devs) - 1)
-        cur_dev = devs[d_idx]
-        cur_params = build_params(cur_dev["name"])
+        if len(devs) > 0:
+            d_idx = min(state["active_device_index"], len(devs) - 1)
+            cur_dev = devs[d_idx]
+            cur_dev_name = cur_dev["name"]
+            cur_params = build_params(cur_dev_name)
+        else:
+            d_idx = 0
+            cur_dev_name = ""
+            cur_params = [
+                {"index": i, "name": "-", "value": 0.0, "str": "-", "is_assigned": False}
+                for i in range(24)
+            ]
 
         sc_idx = state["active_scene_index"]
         cur_sc = DEMO_SCENES[sc_idx]
@@ -345,7 +354,7 @@ def run_simulator(open_browser=False):
                 "tracks": bank_tracks,
                 "devices": devs,
                 "active_device_index": d_idx,
-                "active_device_name": cur_dev["name"],
+                "active_device_name": cur_dev_name,
                 "parameters": cur_params
             }
         })
@@ -371,8 +380,16 @@ def run_simulator(open_browser=False):
             state["bank_index"] = state["selected_track_index"] // 16
             devs = get_track_devices(state["selected_track_index"])
             state["active_device_index"] = 0
-            cur_dev = devs[0]
-            cur_params = build_params(cur_dev["name"])
+            if len(devs) > 0:
+                cur_dev = devs[0]
+                cur_dev_name = cur_dev["name"]
+                cur_params = build_params(cur_dev_name)
+            else:
+                cur_dev_name = ""
+                cur_params = [
+                    {"index": i, "name": "-", "value": 0.0, "str": "-", "is_assigned": False}
+                    for i in range(24)
+                ]
             bank_tracks = get_bank_tracks(state["bank_index"])
 
             server.broadcast({
@@ -382,7 +399,7 @@ def run_simulator(open_browser=False):
                     "bank_index": state["bank_index"],
                     "tracks": bank_tracks,
                     "devices": devs,
-                    "active_device_name": cur_dev["name"],
+                    "active_device_name": cur_dev_name,
                     "active_device_index": 0,
                     "parameters": cur_params
                 }

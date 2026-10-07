@@ -161,14 +161,15 @@
     totalBanks: 4,
     selectedTrackIndex: 1,
     tracks: [],
-    devices: defaultTrackDevices,
-    activeDeviceIndex: 1,
-    activeDeviceName: 'Serum',
+    devices: [],
+    activeDeviceIndex: 0,
+    activeDeviceName: '',
     parameters: Array.from({ length: 24 }, (_, i) => ({
       index: i,
-      name: defaultParamDefs[i].name,
-      value: defaultParamDefs[i].val,
-      str: `${Math.round(defaultParamDefs[i].val * 100)} %`
+      name: '-',
+      value: 0.0,
+      str: '-',
+      is_assigned: false
     }))
   };
 
@@ -288,7 +289,7 @@
     if (data.total_banks !== undefined) state.totalBanks = data.total_banks;
     if (data.tracks) state.tracks = data.tracks;
     if (data.selected_track_index !== undefined) state.selectedTrackIndex = data.selected_track_index;
-    if (data.devices) state.devices = data.devices;
+    if (data.devices !== undefined) state.devices = data.devices;
     if (data.active_device_index !== undefined) state.activeDeviceIndex = data.active_device_index;
     if (data.active_device_name !== undefined) state.activeDeviceName = data.active_device_name;
     if (data.active_device_maker) state.activeDeviceMaker = data.active_device_maker;
@@ -331,8 +332,8 @@
   function updateSelectedTrack(data) {
     state.selectedTrackIndex = data.track_index;
     if (data.tracks) state.tracks = data.tracks;
-    if (data.devices && data.devices.length > 0) state.devices = data.devices;
-    if (data.active_device_name) state.activeDeviceName = data.active_device_name;
+    if (data.devices !== undefined) state.devices = data.devices;
+    if (data.active_device_name !== undefined) state.activeDeviceName = data.active_device_name;
     if (data.active_device_index !== undefined) state.activeDeviceIndex = data.active_device_index;
     if (data.parameters) state.parameters = data.parameters;
 
@@ -536,21 +537,34 @@
     // Dynamic Plugin Header
     const plugTitle = document.getElementById('plugin-deck-title');
     if (plugTitle) {
-      const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
-      const totalDevs = devs.length;
-      const curDev = state.activeDeviceIndex + 1;
-      const curObj = devs[state.activeDeviceIndex];
-      const devName = (curObj && curObj.name) ? curObj.name : (state.activeDeviceName || 'Serum');
-      plugTitle.innerHTML = `PLUGIN &nbsp;—&nbsp; [${curDev}/${totalDevs}] ${devName}`;
+      if (!state.devices || state.devices.length === 0) {
+        plugTitle.innerHTML = `PLUGIN &nbsp;—&nbsp; [0/0] Aucun périphérique`;
+      } else {
+        const totalDevs = state.devices.length;
+        const curDev = Math.min(state.activeDeviceIndex + 1, totalDevs);
+        const curObj = state.devices[state.activeDeviceIndex] || state.devices[0];
+        const devName = (curObj && curObj.name) ? curObj.name : (state.activeDeviceName || 'Périphérique');
+        plugTitle.innerHTML = `PLUGIN &nbsp;—&nbsp; [${curDev}/${totalDevs}] ${devName}`;
+      }
     }
 
     const container = document.getElementById('knobs-container');
     if (!container) return;
     container.innerHTML = '';
 
+    const hasDevices = Boolean(state.devices && state.devices.length > 0);
+
     for (let i = 0; i < 24; i++) {
       const p = state.parameters[i];
-      const isAssigned = Boolean(p && p.name && p.name !== '-' && p.name.trim() !== '' && p.name !== 'None' && p.is_assigned !== false);
+      const isAssigned = Boolean(
+        hasDevices &&
+        p &&
+        p.name &&
+        p.name !== '-' &&
+        p.name.trim() !== '' &&
+        p.name !== 'None' &&
+        p.is_assigned !== false
+      );
 
       const cell = document.createElement('div');
       cell.id = `knob-cell-${i}`;
@@ -710,7 +724,19 @@
     if (!container) return;
     container.innerHTML = '';
 
-    const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+    const devs = state.devices || [];
+
+    if (devs.length === 0) {
+      const emptyBox = document.createElement('div');
+      emptyBox.className = 'empty-devs-box';
+      emptyBox.innerHTML = `
+        <span class="empty-devs-icon">∅</span>
+        <span class="empty-devs-txt">Aucun plugin sur cette piste</span>
+      `;
+      container.appendChild(emptyBox);
+      updateDeviceNavButtons();
+      return;
+    }
 
     devs.forEach((dev, idx) => {
       const isActive = (idx === state.activeDeviceIndex);
@@ -739,20 +765,20 @@
   }
 
   function updateDeviceNavButtons() {
-    const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+    const devs = state.devices || [];
     const btnPrev = document.getElementById('btn-device-prev');
     const btnNext = document.getElementById('btn-device-next');
 
     if (btnPrev) {
-      btnPrev.disabled = (state.activeDeviceIndex <= 0);
+      btnPrev.disabled = (devs.length <= 1 || state.activeDeviceIndex <= 0);
     }
     if (btnNext) {
-      btnNext.disabled = (state.activeDeviceIndex >= devs.length - 1);
+      btnNext.disabled = (devs.length <= 1 || state.activeDeviceIndex >= devs.length - 1);
     }
   }
 
   function selectDevice(index) {
-    const devs = (state.devices && state.devices.length > 0) ? state.devices : defaultTrackDevices;
+    const devs = state.devices || [];
     if (index < 0 || index >= devs.length) return;
 
     state.activeDeviceIndex = index;
@@ -784,10 +810,10 @@
     } else {
       state.parameters = Array.from({ length: 24 }, (_, i) => ({
         index: i,
-        name: `Param ${i + 1}`,
-        value: 0.50,
-        str: '50 %',
-        is_assigned: true
+        name: '-',
+        value: 0.0,
+        str: '-',
+        is_assigned: false
       }));
     }
 

@@ -936,6 +936,31 @@ html, body {
   color: #475569;
 }
 
+/* Placeholder quand aucun plugin sur la piste */
+.empty-devs-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 10px;
+  background: #080c14;
+  border: 1px dashed #1a253a;
+  border-radius: 6px;
+  color: #64748b;
+  user-select: none;
+}
+
+.empty-devs-icon {
+  font-size: 14px;
+  color: #475569;
+}
+
+.empty-devs-txt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
 /* Card 4: DESIGN ABLETON MASTER VU-METER (CALIBRÉ AVEC REPÈRE 0 dB ET POSITION FADER) */
 .master-hud-panel {
   background: #0a0e18;
