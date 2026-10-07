@@ -308,7 +308,7 @@
     if (!Array.isArray(meters)) return;
     meters.forEach((m, idx) => {
       const card = document.getElementById(`track-card-${idx}`);
-      if (!card) return;
+      if (!card || card.classList.contains('empty')) return;
       const barL = card.querySelector('.meter-gradient-fill.left');
       const barR = card.querySelector('.meter-gradient-fill.right');
       if (barL && m.left !== undefined) barL.style.width = `${Math.min(100, Math.round(m.left * 100))}%`;
@@ -407,10 +407,13 @@
     let selTrk = (state.tracks && state.tracks.length > 0)
       ? state.tracks.find(t => t && t.index === selGlobalIdx)
       : null;
-    let selRawName = (selTrk && selTrk.name) ? selTrk.name : (defaultTrackNames[selGlobalIdx % 16] ? defaultTrackNames[selGlobalIdx % 16].name : `Piste ${selGlobalIdx + 1}`);
-    const selCleanName = selRawName.replace(/^\d+[\s\-_:]+/, '');
     if (focusBadge) {
-      focusBadge.textContent = `— Piste #${selNum} : ${selCleanName}`;
+      if (selTrk && selTrk.name) {
+        let selCleanName = selTrk.name.replace(/^\d+[\s\-_:]+/, '').trim() || selTrk.name;
+        focusBadge.textContent = `— Piste #${selNum} : ${selCleanName}`;
+      } else {
+        focusBadge.textContent = `— Piste #${selNum}`;
+      }
     }
 
     const bankInd = document.getElementById('bank-indicator');
@@ -422,75 +425,107 @@
 
     for (let i = 0; i < 16; i++) {
       const globalIdx = (state.bankIndex * 16) + i;
-      const defaultInfo = defaultTrackNames[i] || { name: `Track ${globalIdx + 1}`, color: '#2979ff', dark: false, db: '-6.0 dB', pan: 50, lvlL: 50, lvlR: 50, isGroup: false };
-      
-      // Recherche de la piste correspondante à cet emplacement global
+      const trackNumber = globalIdx + 1;
+      const trackNumStr = (trackNumber < 10) ? `0${trackNumber}` : `${trackNumber}`;
+
+      // Recherche de la vraie piste à cet emplacement global
       let trk = null;
       if (state.tracks && state.tracks.length > 0) {
-        trk = state.tracks.find(t => t && t.index === globalIdx);
+        trk = state.tracks.find(t => t && t.index === globalIdx) || null;
         if (!trk && state.tracks[i] && (state.tracks[i].index === undefined || state.tracks[i].index === globalIdx)) {
           trk = state.tracks[i];
         }
       }
 
-      const trackIndex = (trk && trk.index !== undefined) ? trk.index : globalIdx;
-      const trackNumber = trackIndex + 1;
-      const trackNumStr = (trackNumber < 10) ? `0${trackNumber}` : `${trackNumber}`;
-
-      let trackRawName = (trk && trk.name) ? trk.name : (state.bankIndex === 0 ? defaultInfo.name : `Track ${trackNumber}`);
-      let trackCleanName = trackRawName.replace(/^\d+[\s\-_:]+/, '');
-
-      const isSelected = (trackIndex === state.selectedTrackIndex);
-      const isGroup = Boolean((trk && trk.is_group) || (state.bankIndex === 0 && defaultInfo.isGroup));
-      const color = (trk && trk.color) ? trk.color : defaultInfo.color;
-      const isDark = (color === '#ffd000' || color === '#76ff03' || color === '#00e5ff' || color === '#1de9b6');
-      const textColor = isDark ? '#000000' : '#ffffff';
-
       const card = document.createElement('div');
       card.id = `track-card-${i}`;
-      card.className = `track-card ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-track' : ''}`;
 
-      const panDotLeft = 50 + (trk && trk.pan_val !== undefined ? trk.pan_val * 45 : 0);
-      const grpBadge = isGroup ? `<span class="grp-tag-badge">GRP</span>` : '';
+      if (trk && trk.name) {
+        // PISTE RÉELLE EXISTANTE
+        const trackIndex = (trk.index !== undefined) ? trk.index : globalIdx;
+        let trackRawName = trk.name;
+        let trackCleanName = trackRawName.replace(/^\d+[\s\-_:]+/, '').trim() || trackRawName;
 
-      card.innerHTML = `
-        <div class="track-top-banner" style="background: ${color}; color: ${textColor};">
-          <span class="trk-num">${trackNumStr}</span>
-          <div class="trk-name">${grpBadge} <span>${trackCleanName}</span></div>
-        </div>
-        <div class="track-inner-body">
-          <div class="meter-stereo-wrap">
-            <div class="meter-channel-bar">
-              <div class="meter-gradient-fill left" style="width: ${defaultInfo.lvlL}%;"></div>
-              <div class="meter-tick-ref" style="left: 80%;"></div>
+        const isSelected = (trackIndex === state.selectedTrackIndex);
+        const isGroup = Boolean(trk.is_group);
+        const color = trk.color || '#2979ff';
+        const isDark = (color === '#ffd000' || color === '#76ff03' || color === '#00e5ff' || color === '#1de9b6');
+        const textColor = isDark ? '#000000' : '#ffffff';
+        const panDotLeft = 50 + (trk.pan_val !== undefined ? trk.pan_val * 45 : 0);
+        const grpBadge = isGroup ? `<span class="grp-tag-badge">GRP</span>` : '';
+
+        card.className = `track-card ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-track' : ''}`;
+        card.innerHTML = `
+          <div class="track-top-banner" style="background: ${color}; color: ${textColor};">
+            <span class="trk-num">${trackNumStr}</span>
+            <div class="trk-name">${grpBadge} <span>${trackCleanName}</span></div>
+          </div>
+          <div class="track-inner-body">
+            <div class="meter-stereo-wrap">
+              <div class="meter-channel-bar">
+                <div class="meter-gradient-fill left" style="width: 0%;"></div>
+                <div class="meter-tick-ref" style="left: 80%;"></div>
+              </div>
+              <div class="meter-channel-bar">
+                <div class="meter-gradient-fill right" style="width: 0%;"></div>
+                <div class="meter-tick-ref" style="left: 80%;"></div>
+              </div>
+              <div class="meter-scale-legend">
+                <span>-∞</span>
+                <span class="scale-ref-zero">0 dB</span>
+                <span>+3</span>
+              </div>
             </div>
-            <div class="meter-channel-bar">
-              <div class="meter-gradient-fill right" style="width: ${defaultInfo.lvlR}%;"></div>
-              <div class="meter-tick-ref" style="left: 80%;"></div>
-            </div>
-            <div class="meter-scale-legend">
-              <span>-∞</span>
-              <span class="scale-ref-zero">0 dB</span>
-              <span>+3</span>
+            <div class="track-db-readout">${trk.vol_str || '0.0 dB'}</div>
+            <div class="pan-line-wrap">
+              <span>L</span>
+              <div class="pan-track-line">
+                <div class="pan-track-dot" style="left: calc(${panDotLeft}% - 2px);"></div>
+              </div>
+              <span>R</span>
             </div>
           </div>
-          <div class="track-db-readout">${(trk && trk.vol_str) ? trk.vol_str : defaultInfo.db}</div>
-          <div class="pan-line-wrap">
-            <span>L</span>
-            <div class="pan-track-line">
-              <div class="pan-track-dot" style="left: calc(${panDotLeft}% - 2px);"></div>
-            </div>
-            <span>R</span>
-          </div>
-        </div>
-      `;
+        `;
 
-      card.addEventListener('click', () => {
-        state.selectedTrackIndex = trackIndex;
-        renderTracks();
-        renderSidebar();
-        sendAction('select_track', { track_index: trackIndex });
-      });
+        card.addEventListener('click', () => {
+          state.selectedTrackIndex = trackIndex;
+          renderTracks();
+          renderSidebar();
+          sendAction('select_track', { track_index: trackIndex });
+        });
+      } else {
+        // PISTE NON ASSIGNÉE / ABSENTE DANS ABLETON -> GRISÉE (Empty slot)
+        card.className = 'track-card empty';
+        card.innerHTML = `
+          <div class="track-top-banner">
+            <span class="trk-num">${trackNumStr}</span>
+            <div class="trk-name"><span>—</span></div>
+          </div>
+          <div class="track-inner-body">
+            <div class="meter-stereo-wrap">
+              <div class="meter-channel-bar">
+                <div class="meter-gradient-fill left" style="width: 0%;"></div>
+                <div class="meter-tick-ref" style="left: 80%;"></div>
+              </div>
+              <div class="meter-channel-bar">
+                <div class="meter-gradient-fill right" style="width: 0%;"></div>
+                <div class="meter-tick-ref" style="left: 80%;"></div>
+              </div>
+              <div class="meter-scale-legend">
+                <span>-∞</span>
+                <span class="scale-ref-zero">0 dB</span>
+                <span>+3</span>
+              </div>
+            </div>
+            <div class="track-db-readout">—</div>
+            <div class="pan-line-wrap">
+              <span>L</span>
+              <div class="pan-track-line"></div>
+              <span>R</span>
+            </div>
+          </div>
+        `;
+      }
 
       container.appendChild(card);
     }
@@ -772,14 +807,20 @@
     }
     const selIdx = (selTrk && selTrk.index !== undefined) ? selTrk.index : state.selectedTrackIndex;
     const selNum = (selIdx + 1 < 10) ? `0${selIdx + 1}` : `${selIdx + 1}`;
-    let trackRawName = (selTrk && selTrk.name) ? selTrk.name : (defaultTrackNames[selIdx % 16] ? defaultTrackNames[selIdx % 16].name : `Piste ${selIdx + 1}`);
-    const trackCleanName = trackRawName.replace(/^\d+[\s\-_:]+/, '');
+    let trackCleanName = '—';
+    let trackColor = '#ffd000';
+    if (selTrk && selTrk.name) {
+      trackCleanName = selTrk.name.replace(/^\d+[\s\-_:]+/, '').trim() || selTrk.name;
+      trackColor = selTrk.color || '#ffd000';
+    } else {
+      trackCleanName = `Piste ${selNum}`;
+      trackColor = '#64748b';
+    }
     const formattedTitle = `${selNum} - ${trackCleanName}`;
 
     const selName = document.getElementById('sel-track-name');
     if (selName) selName.textContent = formattedTitle;
 
-    const trackColor = (selTrk && selTrk.color) ? selTrk.color : '#ffd000';
     const bar = document.getElementById('sel-accent-bar');
     if (bar) {
       bar.style.background = trackColor;
@@ -837,7 +878,8 @@
       btnTrackNext.addEventListener('click', (e) => {
         e.stopPropagation();
         const curIdx = state.selectedTrackIndex;
-        const maxIdx = (state.tracks && state.tracks.length > 0) ? state.tracks.length - 1 : 15;
+        const realTracks = (state.tracks && state.tracks.length > 0) ? state.tracks.filter(t => t && t.name) : [];
+        const maxIdx = realTracks.length > 0 ? realTracks.length - 1 : 15;
         const targetIdx = Math.min(maxIdx, curIdx + 1);
         state.selectedTrackIndex = targetIdx;
         renderTracks();

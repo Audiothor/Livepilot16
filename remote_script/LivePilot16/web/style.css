@@ -369,6 +369,65 @@ html, body {
   background: linear-gradient(180deg, #18140c 0%, #0d121c 100%) !important;
 }
 
+/* Piste non assignée / absente dans Ableton : GRISÉE (Empty / Inactive Slot) */
+.track-card.empty {
+  background: #080c14 !important;
+  border: 1px dashed rgba(255, 255, 255, 0.07) !important;
+  opacity: 0.32;
+  cursor: default;
+  pointer-events: none;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.track-card.empty .track-top-banner {
+  background: #0f1522 !important;
+  color: #475569 !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.track-card.empty .trk-num {
+  color: #475569 !important;
+  text-shadow: none !important;
+  opacity: 0.85;
+}
+
+.track-card.empty .trk-name {
+  color: #334155 !important;
+  text-shadow: none !important;
+}
+
+.track-card.empty .meter-stereo-wrap {
+  background: #080b12 !important;
+  border-color: #0d131f !important;
+}
+
+.track-card.empty .meter-channel-bar {
+  background: #0a0e18 !important;
+}
+
+.track-card.empty .meter-gradient-fill {
+  width: 0% !important;
+  box-shadow: none !important;
+}
+
+.track-card.empty .meter-tick-ref {
+  opacity: 0.15;
+}
+
+.track-card.empty .track-db-readout {
+  color: #334155 !important;
+}
+
+.track-card.empty .pan-track-line {
+  background: #0f1422 !important;
+}
+
+.track-card.empty .pan-track-dot {
+  display: none !important;
+}
+
 /* Track Top Banner (AGRANDI pour une visibilité scénique maximale) */
 .track-top-banner {
   height: 52px;
@@ -404,7 +463,7 @@ html, body {
   line-height: 1.1;
   letter-spacing: 0.3px;
   max-width: 98%;
-  text-transform: uppercase;
+  text-transform: none;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
