@@ -323,7 +323,14 @@ def run_simulator(open_browser=False):
         "active_device_index": 1,
         "is_playing": True,
         "active_scene_index": 1,
-        "master_vol": 0.825
+        "master_vol": 0.825,
+        "midi_config": {
+            "preset": "livepilot",
+            "channel": 1,
+            "knobs": list(range(1, 25)),
+            "buttons": list(range(25, 41)),
+            "button_type": "cc"
+        }
     }
 
     def get_track_devices(track_idx):
@@ -379,7 +386,8 @@ def run_simulator(open_browser=False):
                 "devices": devs,
                 "active_device_index": d_idx,
                 "active_device_name": cur_dev_name,
-                "parameters": cur_params
+                "parameters": cur_params,
+                "midi_config": state.get("midi_config", {})
             }
         })
 
@@ -388,6 +396,12 @@ def run_simulator(open_browser=False):
 
         if action == "request_full_sync":
             broadcast_full_sync()
+
+        elif action == "save_midi_config":
+            cfg = msg.get("config", {})
+            if cfg:
+                state["midi_config"].update(cfg)
+                broadcast_full_sync()
 
         elif action in ("switch_bank", "select_bank"):
             b_idx = int(msg.get("bank", msg.get("bank_index", 0)))

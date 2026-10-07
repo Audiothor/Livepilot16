@@ -170,7 +170,14 @@
       value: 0.0,
       str: '-',
       is_assigned: false
-    }))
+    })),
+    midiConfig: {
+      preset: 'livepilot',
+      channel: 1,
+      knobs: Array.from({ length: 24 }, (_, i) => i + 1), // 1..24
+      buttons: Array.from({ length: 16 }, (_, i) => i + 25), // 25..40
+      button_type: 'cc'
+    }
   };
 
   let ws = null;
@@ -273,6 +280,9 @@
       case 'master_volume':
         updateMasterVolume(msg.data);
         break;
+      case 'midi_event':
+        handleMidiEvent(msg.data);
+        break;
       default:
         break;
     }
@@ -296,6 +306,10 @@
     if (data.auto_follow !== undefined) state.autoFollow = data.auto_follow;
     if (data.master_volume) state.masterVolume = data.master_volume;
     if (data.parameters) state.parameters = data.parameters;
+    if (data.midi_config) {
+      state.midiConfig = data.midi_config;
+      syncMidiSettingsUI();
+    }
 
     renderTopBar();
     renderSceneBanner();
@@ -1062,10 +1076,286 @@
         }
       });
     }
+
+    // --- PARAMÈTRES / CONFIGURATION MIDI (Menu Hamburger ☰) ---
+    const btnConfig = document.getElementById('btn-config');
+    if (btnConfig) {
+      btnConfig.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openSettingsModal();
+      });
+    }
+
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    if (btnCloseModal) {
+      btnCloseModal.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeSettingsModal();
+      });
+    }
+
+    const modalBackdrop = document.getElementById('settings-modal');
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) {
+          closeSettingsModal();
+        }
+      });
+    }
+
+    const btnPresetLivePilot = document.getElementById('preset-livepilot-btn');
+    if (btnPresetLivePilot) {
+      btnPresetLivePilot.addEventListener('click', () => applyPreset('livepilot'));
+    }
+
+    const btnPresetFactory = document.getElementById('preset-factory-btn');
+    if (btnPresetFactory) {
+      btnPresetFactory.addEventListener('click', () => applyPreset('factory'));
+    }
+
+    const chSelect = document.getElementById('midi-channel-select');
+    if (chSelect) {
+      chSelect.addEventListener('change', (e) => {
+        state.midiConfig.channel = parseInt(e.target.value, 10);
+      });
+    }
+
+    const btnSaveMidi = document.getElementById('btn-save-midi');
+    if (btnSaveMidi) {
+      btnSaveMidi.addEventListener('click', saveMidiSettings);
+    }
+
+    const btnResetMidi = document.getElementById('btn-reset-midi');
+    if (btnResetMidi) {
+      btnResetMidi.addEventListener('click', () => applyPreset('livepilot'));
+    }
+  }
+
+  // --- SETTINGS MODAL & MIDI LOGIC ---
+  function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (!modal) return;
+    renderMidiConfigGrids();
+    syncMidiSettingsUI();
+    modal.classList.remove('hidden');
+  }
+
+  function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function renderMidiConfigGrids() {
+    // 1. Grille des 24 Knobs
+    const knobsContainer = document.getElementById('knobs-mapping-grid');
+    if (knobsContainer) {
+      knobsContainer.innerHTML = '';
+      for (let i = 0; i < 24; i++) {
+        const ccVal = (state.midiConfig.knobs && state.midiConfig.knobs[i] !== undefined)
+          ? state.midiConfig.knobs[i]
+          : (i + 1);
+        const chip = document.createElement('div');
+        chip.className = 'midi-chip';
+        chip.id = `midi-chip-knob-${i}`;
+        chip.innerHTML = `
+          <span class="midi-chip-lbl">#${i + 1}</span>
+          <input type="number" min="0" max="127" class="midi-chip-val" id="input-knob-cc-${i}" value="${ccVal}" title="CC pour Knob ${i + 1}">
+        `;
+        const input = chip.querySelector('input');
+        input.addEventListener('change', (e) => {
+          const val = parseInt(e.target.value, 10);
+          if (!isNaN(val) && val >= 0 && val <= 127) {
+            state.midiConfig.knobs[i] = val;
+            state.midiConfig.preset = 'custom';
+            updatePresetButtonsUI();
+          }
+        });
+        knobsContainer.appendChild(chip);
+      }
+    }
+
+    // 2. Grille des 16 Boutons de Sélection
+    const buttonsContainer = document.getElementById('buttons-mapping-grid');
+    if (buttonsContainer) {
+      buttonsContainer.innerHTML = '';
+      for (let i = 0; i < 16; i++) {
+        const ccVal = (state.midiConfig.buttons && state.midiConfig.buttons[i] !== undefined)
+          ? state.midiConfig.buttons[i]
+          : (i + 25);
+        const chip = document.createElement('div');
+        chip.className = 'midi-chip';
+        chip.id = `midi-chip-btn-${i}`;
+        chip.innerHTML = `
+          <span class="midi-chip-lbl">TRK ${i + 1}</span>
+          <input type="number" min="0" max="127" class="midi-chip-val" id="input-btn-cc-${i}" value="${ccVal}" title="CC ou Note pour Bouton ${i + 1}">
+        `;
+        const input = chip.querySelector('input');
+        input.addEventListener('change', (e) => {
+          const val = parseInt(e.target.value, 10);
+          if (!isNaN(val) && val >= 0 && val <= 127) {
+            state.midiConfig.buttons[i] = val;
+            state.midiConfig.preset = 'custom';
+            updatePresetButtonsUI();
+          }
+        });
+        buttonsContainer.appendChild(chip);
+      }
+    }
+  }
+
+  function syncMidiSettingsUI() {
+    const chSelect = document.getElementById('midi-channel-select');
+    if (chSelect) {
+      chSelect.value = String(state.midiConfig.channel !== undefined ? state.midiConfig.channel : 1);
+    }
+    updatePresetButtonsUI();
+  }
+
+  function updatePresetButtonsUI() {
+    const btnLivePilot = document.getElementById('preset-livepilot-btn');
+    const btnFactory = document.getElementById('preset-factory-btn');
+    const preset = state.midiConfig.preset || 'livepilot';
+    if (btnLivePilot) btnLivePilot.classList.toggle('active', preset === 'livepilot');
+    if (btnFactory) btnFactory.classList.toggle('active', preset === 'factory');
+  }
+
+  function applyPreset(presetType) {
+    if (presetType === 'livepilot') {
+      state.midiConfig.preset = 'livepilot';
+      state.midiConfig.channel = 1;
+      state.midiConfig.knobs = Array.from({ length: 24 }, (_, i) => i + 1); // 1..24
+      state.midiConfig.buttons = Array.from({ length: 16 }, (_, i) => i + 25); // 25..40
+      state.midiConfig.button_type = 'cc';
+    } else if (presetType === 'factory') {
+      state.midiConfig.preset = 'factory';
+      state.midiConfig.channel = 1;
+      state.midiConfig.knobs = [
+        13, 14, 15, 16, 17, 18, 19, 20,
+        29, 30, 31, 32, 33, 34, 35, 36,
+        49, 50, 51, 52, 53, 54, 55, 56
+      ];
+      state.midiConfig.buttons = [
+        41, 42, 43, 44, 45, 46, 47, 48,
+        57, 58, 59, 60, 61, 62, 63, 64
+      ];
+      state.midiConfig.button_type = 'note';
+    }
+    renderMidiConfigGrids();
+    syncMidiSettingsUI();
+  }
+
+  let ledTimeout = null;
+  function handleMidiEvent(evt) {
+    if (!evt) return;
+
+    // 1. Clignotement de la diode verte de réception
+    const led = document.getElementById('midi-rx-led');
+    if (led) {
+      led.classList.add('active');
+      if (ledTimeout) clearTimeout(ledTimeout);
+      ledTimeout = setTimeout(() => {
+        led.classList.remove('active');
+      }, 160);
+    }
+
+    // 2. Texte détaillé du moniteur
+    const txt = document.getElementById('midi-monitor-txt');
+    if (txt) {
+      const typeStr = (evt.type === 'cc') ? 'CC' : (evt.type === 'note_on' ? 'Note On' : 'Note');
+      let targetName = '';
+      if (evt.type === 'cc') {
+        const kIdx = state.midiConfig.knobs.indexOf(evt.num);
+        if (kIdx >= 0) targetName = ` → Knob #${kIdx + 1}`;
+        const bIdx = state.midiConfig.buttons.indexOf(evt.num);
+        if (bIdx >= 0) targetName = ` → Piste #${bIdx + 1}`;
+      } else {
+        const bIdx = state.midiConfig.buttons.indexOf(evt.num);
+        if (bIdx >= 0) targetName = ` → Piste #${bIdx + 1}`;
+      }
+      txt.textContent = `Signal Reçu : Canal ${evt.channel} • ${typeStr} #${evt.num} • Valeur ${evt.val}${targetName}`;
+    }
+
+    // 3. Highlight chip dans le modal si ouvert
+    if (evt.type === 'cc') {
+      const kIdx = state.midiConfig.knobs.indexOf(evt.num);
+      if (kIdx >= 0) {
+        const chip = document.getElementById(`midi-chip-knob-${kIdx}`);
+        if (chip) {
+          chip.classList.add('active-rx');
+          setTimeout(() => chip.classList.remove('active-rx'), 200);
+        }
+      }
+      const bIdx = state.midiConfig.buttons.indexOf(evt.num);
+      if (bIdx >= 0) {
+        const chip = document.getElementById(`midi-chip-btn-${bIdx}`);
+        if (chip) {
+          chip.classList.add('active-rx');
+          setTimeout(() => chip.classList.remove('active-rx'), 200);
+        }
+      }
+    } else if (evt.type === 'note_on') {
+      const bIdx = state.midiConfig.buttons.indexOf(evt.num);
+      if (bIdx >= 0) {
+        const chip = document.getElementById(`midi-chip-btn-${bIdx}`);
+        if (chip) {
+          chip.classList.add('active-rx');
+          setTimeout(() => chip.classList.remove('active-rx'), 200);
+        }
+      }
+    }
+  }
+
+  function saveMidiSettings() {
+    const chSelect = document.getElementById('midi-channel-select');
+    if (chSelect) {
+      state.midiConfig.channel = parseInt(chSelect.value, 10);
+    }
+    for (let i = 0; i < 24; i++) {
+      const inp = document.getElementById(`input-knob-cc-${i}`);
+      if (inp) {
+        const val = parseInt(inp.value, 10);
+        if (!isNaN(val)) state.midiConfig.knobs[i] = val;
+      }
+    }
+    for (let i = 0; i < 16; i++) {
+      const inp = document.getElementById(`input-btn-cc-${i}`);
+      if (inp) {
+        const val = parseInt(inp.value, 10);
+        if (!isNaN(val)) state.midiConfig.buttons[i] = val;
+      }
+    }
+
+    try {
+      localStorage.setItem('livepilot_midi_config', JSON.stringify(state.midiConfig));
+    } catch (e) {}
+
+    sendAction('save_midi_config', { config: state.midiConfig });
+
+    const btn = document.getElementById('btn-save-midi');
+    if (btn) {
+      const oldTxt = btn.textContent;
+      btn.textContent = 'Enregistré avec succès ! ✓';
+      btn.style.background = '#00e676';
+      setTimeout(() => {
+        btn.textContent = oldTxt;
+        btn.style.background = '';
+        closeSettingsModal();
+      }, 700);
+    }
   }
 
   // --- START APP ---
   document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const savedMidi = localStorage.getItem('livepilot_midi_config');
+      if (savedMidi) {
+        const parsed = JSON.parse(savedMidi);
+        if (parsed && parsed.knobs && parsed.buttons) {
+          state.midiConfig = parsed;
+        }
+      }
+    } catch (e) {}
+
     try {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('bank')) {
@@ -1119,6 +1409,15 @@
     renderSidebar();
     renderMasterMeter();
     connectWebSocket();
+
+    // Export pour le débogage et l'inspection de test
+    window.LivePilot = {
+      state,
+      openSettingsModal,
+      closeSettingsModal,
+      applyPreset,
+      handleMidiEvent
+    };
   });
 
 })();

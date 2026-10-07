@@ -10,3 +10,23 @@ def create_instance(c_instance):
     lorsque la surface de contrôle 'LivePilot 16' est sélectionnée.
     """
     return LivePilot16(c_instance)
+
+def get_capabilities():
+    """
+    Déclare les capacités MIDI à Ableton Live pour permettre
+    la sélection des ports d'entrée et de sortie (Launch Control XL).
+    """
+    try:
+        from _Framework.Capabilities import (
+            CONTROLLER_DESCRIPTIONS, PORTS_KEY, NOTES_CC, SCRIPT, inport, outport
+        )
+        return {
+            CONTROLLER_DESCRIPTIONS: ["LivePilot 16 Control Surface"],
+            PORTS_KEY: [
+                inport(props=[NOTES_CC, SCRIPT]),
+                outport(props=[NOTES_CC, SCRIPT])
+            ]
+        }
+    except Exception:
+        return {}
+

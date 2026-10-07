@@ -9,6 +9,8 @@ from _Framework.ControlSurface import ControlSurface
 from .consts import (
     SYSEX_HEADER, CMD_BANK_INFO, CMD_TRACK_ACTIVE, CMD_BANK_COLORS,
     CMD_DEVICE_ACTIVE, CMD_PARAM_DATA, CMD_SCENE_INFO, CC_BASE_ENCODERS,
+    DEFAULT_KNOB_CCS, DEFAULT_BUTTON_CCS, DEFAULT_MIDI_CHANNEL,
+    FACTORY_KNOB_CCS, FACTORY_BUTTON_NOTES,
     CC_ENC17_JOG, CC_ENC17_PUSH, CC_NAV_LEFT, CC_NAV_RIGHT, CC_BTN_VALID,
     CC_NAV_TRACK_PREV, CC_NAV_TRACK_NEXT, CC_NAV_GROUP_PREV, CC_NAV_GROUP_NEXT,
     CC_NAV_DEV_PREV, CC_NAV_DEV_NEXT, CC_BASE_TRACK_SEL,
@@ -50,6 +52,15 @@ class LivePilot16(ControlSurface):
         self._observed_clip_tracks = []
         self._master_mode_bpm = True
         self._meter_polling_active = False
+
+        # Configuration MIDI du Launch Control XL (par défaut : LivePilot CC 1..24 & CC 25..40)
+        self._midi_config = {
+            'preset': 'livepilot',
+            'channel': DEFAULT_MIDI_CHANNEL,
+            'knobs': list(DEFAULT_KNOB_CCS),
+            'buttons': list(DEFAULT_BUTTON_CCS),
+            'button_type': 'cc'
+        }
 
         # Démarrage du serveur Web / WebSocket pour la tablette Android
         self._web_server = LivePilotWebServer(
@@ -360,6 +371,25 @@ class LivePilot16(ControlSurface):
     def _on_parameter_value_changed(self):
         self._send_parameters_info()
         self._broadcast_all_parameters()
+
+    def _set_encoder_value(self, encoder_idx, norm_val):
+        """Met à jour un paramètre absolu (0.0..1.0) depuis un potentiomètre physique du Launch Control XL"""
+        if not self._current_device or encoder_idx >= NUM_ENCODERS:
+            return
+        params = self._current_device.parameters[1:NUM_ENCODERS+1]
+        if encoder_idx < len(params):
+            p = params[encoder_idx]
+            v_range = max(0.0001, (p.max - p.min))
+            p.value = max(p.min, min(p.max, p.min + (norm_val * v_range)))
+            if self._web_server:
+                self._web_server.broadcast({
+                    'type': 'param_value',
+                    'data': {
+                        'index': encoder_idx,
+                        'value': norm_val,
+                        'str': str(p)[:12]
+                    }
+                })
 
     def _adjust_parameter(self, encoder_idx, rel_value):
         if not self._current_device or encoder_idx >= NUM_ENCODERS:
@@ -679,7 +709,8 @@ class LivePilot16(ControlSurface):
             'devices': devs_data,
             'active_device_index': self._current_device_idx,
             'active_device_name': active_dev_label,
-            'parameters': self._build_params_list()
+            'parameters': self._build_params_list(),
+            'midi_config': getattr(self, '_midi_config', {})
         }
         self._web_server.broadcast({'type': 'full_sync', 'data': payload})
 
@@ -954,19 +985,73 @@ class LivePilot16(ControlSurface):
                     t.arm = not t.arm
                 self._broadcast_selected_track()
 
+        elif action == 'save_midi_config':
+            cfg = msg.get('config', {})
+            if cfg and isinstance(cfg, dict):
+                self._midi_config.update(cfg)
+                self.log_message("LivePilot : Configuration MIDI mise a jour : %s" % str(self._midi_config))
+                self._broadcast_full_sync()
+
     # =========================================================================
-    # COMPATIBILITÉ MIDI / SYSEX (Matériel physique optionnel)
+    # COMPATIBILITÉ MIDI / SYSEX (Launch Control XL MK3 / MK2)
     # =========================================================================
     def receive_midi(self, midi_bytes):
         if len(midi_bytes) < 3:
             return
         status, data1, data2 = midi_bytes[0], midi_bytes[1], midi_bytes[2]
-        if (status & 0xF0) == 0xB0:
+        msg_type = status & 0xF0
+        channel = (status & 0x0F) + 1
+
+        # Diffusion du moniteur MIDI temps réel vers la tablette
+        if self._web_server:
+            try:
+                self._web_server.broadcast({
+                    'type': 'midi_event',
+                    'data': {
+                        'status': status,
+                        'channel': channel,
+                        'type': 'cc' if msg_type == 0xB0 else ('note_on' if (msg_type == 0x90 and data2 > 0) else 'note_off'),
+                        'num': data1,
+                        'val': data2
+                    }
+                })
+            except Exception:
+                pass
+
+        cfg = getattr(self, '_midi_config', {})
+        cfg_knobs = cfg.get('knobs', DEFAULT_KNOB_CCS)
+        cfg_buttons = cfg.get('buttons', DEFAULT_BUTTON_CCS)
+        btn_type = cfg.get('button_type', 'cc')
+
+        # --- GESTION DES MESSAGES CONTROL CHANGE (CC) ---
+        if msg_type == 0xB0:
             cc_num, cc_val = data1, data2
-            if CC_BASE_TRACK_SEL <= cc_num < CC_BASE_TRACK_SEL + NUM_TRACKS_PER_BANK:
-                if cc_val > 0:
-                    self._select_track_in_bank(cc_num - CC_BASE_TRACK_SEL)
+
+            # 1. 24 Knobs Potentiomètres (Valeur absolue 0..127 -> 0.0..1.0)
+            if cc_num in cfg_knobs:
+                knob_idx = cfg_knobs.index(cc_num)
+                if knob_idx < NUM_ENCODERS:
+                    norm_val = round(cc_val / 127.0, 3)
+                    self._set_encoder_value(knob_idx, norm_val)
                     return
+            elif cc_num in FACTORY_KNOB_CCS:
+                knob_idx = FACTORY_KNOB_CCS.index(cc_num)
+                if knob_idx < NUM_ENCODERS:
+                    norm_val = round(cc_val / 127.0, 3)
+                    self._set_encoder_value(knob_idx, norm_val)
+                    return
+
+            # 2. 16 Boutons de Sélection de Piste (Mode CC)
+            if cc_num in cfg_buttons and cc_val > 0:
+                btn_idx = cfg_buttons.index(cc_num)
+                if btn_idx < NUM_TRACKS_PER_BANK:
+                    self._select_track_in_bank(btn_idx)
+                    return
+            elif CC_BASE_TRACK_SEL <= cc_num < CC_BASE_TRACK_SEL + NUM_TRACKS_PER_BANK and cc_val > 0:
+                self._select_track_in_bank(cc_num - CC_BASE_TRACK_SEL)
+                return
+
+            # 3. Boutons de Navigation Système
             elif cc_num == CC_NAV_TRACK_PREV and cc_val > 0:
                 self._nav_bank_prev()
                 return
@@ -985,10 +1070,6 @@ class LivePilot16(ControlSurface):
             elif cc_num == CC_NAV_DEV_NEXT and cc_val > 0:
                 self._nav_device_next()
                 return
-            elif CC_BASE_ENCODERS <= cc_num < CC_BASE_ENCODERS + NUM_ENCODERS:
-                delta = cc_val if cc_val < 64 else (cc_val - 128)
-                self._adjust_parameter(cc_num - CC_BASE_ENCODERS, delta)
-                return
             elif cc_num == CC_ENC17_JOG:
                 delta = cc_val if cc_val < 64 else (cc_val - 128)
                 self._adjust_master_jog(delta)
@@ -1005,6 +1086,21 @@ class LivePilot16(ControlSurface):
             elif cc_num == CC_BTN_VALID and cc_val > 0:
                 self._on_btn_valid_pressed()
                 return
+
+        # --- GESTION DES MESSAGES NOTE ON (Launch Control XL Factory Buttons) ---
+        elif msg_type == 0x90 and data2 > 0:
+            note_num = data1
+            if note_num in FACTORY_BUTTON_NOTES:
+                btn_idx = FACTORY_BUTTON_NOTES.index(note_num)
+                if btn_idx < NUM_TRACKS_PER_BANK:
+                    self._select_track_in_bank(btn_idx)
+                    return
+            if btn_type == 'note' and note_num in cfg_buttons:
+                btn_idx = cfg_buttons.index(note_num)
+                if btn_idx < NUM_TRACKS_PER_BANK:
+                    self._select_track_in_bank(btn_idx)
+                    return
+
         super(LivePilot16, self).receive_midi(midi_bytes)
 
     def _full_resync(self):

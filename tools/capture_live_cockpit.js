@@ -72,6 +72,14 @@ async function main() {
   // Brief pause for render to stabilize
   await new Promise(r => setTimeout(r, 400));
 
+  // If modal mode requested, click hamburger menu
+  if (process.argv[3] === 'modal') {
+    await send('Runtime.evaluate', {
+      expression: 'document.getElementById("btn-config") && document.getElementById("btn-config").click();'
+    });
+    await new Promise(r => setTimeout(r, 400));
+  }
+
   // Capture screenshot
   const shot = await send('Page.captureScreenshot', { format: 'png' });
   const buffer = Buffer.from(shot.data, 'base64');

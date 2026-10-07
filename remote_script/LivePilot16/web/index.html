@@ -239,6 +239,93 @@
       </aside>
     </div>
 
+    <!-- 6. MODAL PARAMÈTRES / CONFIGURATION MIDI -->
+    <div id="settings-modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span class="modal-ico">⚙️</span>
+            <h3>PARAMÈTRES — Configuration MIDI Launch Control XL</h3>
+          </div>
+          <button id="btn-close-modal" class="modal-close-btn" title="Fermer">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Moniteur MIDI en direct -->
+          <div class="midi-monitor-box">
+            <div class="midi-monitor-header">
+              <span class="midi-led" id="midi-rx-led"></span>
+              <span class="midi-monitor-title">MONITEUR MIDI EN DIRECT (Launch Control XL)</span>
+            </div>
+            <div id="midi-monitor-txt" class="midi-monitor-txt">
+              Prêt. Tournez un bouton ou pressez un pad pour vérifier la communication...
+            </div>
+          </div>
+
+          <!-- Guide de configuration Ableton Live -->
+          <div class="settings-notice">
+            <div class="notice-title">💡 Branchement requis dans Ableton Live :</div>
+            <div class="notice-desc">
+              Dans <strong>Options > Préférences > Link, Tempo & MIDI</strong>, assurez-vous de configurer :<br>
+              • <strong>Surface de contrôle :</strong> <code>LivePilot 16</code><br>
+              • <strong>Entrée :</strong> <code>Launch Control XL</code> (indispensable pour recevoir les potentiomètres)<br>
+              • <strong>Sortie :</strong> <code>Launch Control XL</code> (ou <code>Aucun</code>)
+            </div>
+          </div>
+
+          <!-- Sélecteur de Presets Rapides -->
+          <div class="settings-section">
+            <label class="settings-section-label">Modèle d'Assignation :</label>
+            <div class="preset-buttons">
+              <button id="preset-livepilot-btn" class="preset-btn active">
+                <div class="preset-title">Preset LivePilot (Recommandé)</div>
+                <div class="preset-desc">Knobs 1 à 24 = CC 1 à 24 • Boutons 1 à 16 = CC 25 à 40 (Canal 1)</div>
+              </button>
+              <button id="preset-factory-btn" class="preset-btn">
+                <div class="preset-title">Preset Launch Control XL Factory</div>
+                <div class="preset-desc">Knobs = CC 13..20, 29..36, 49..56 • Boutons = Notes 41..48, 57..64</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Canal MIDI Global -->
+          <div class="settings-section channel-row">
+            <label class="settings-section-label" for="midi-channel-select">Canal MIDI de Réception :</label>
+            <select id="midi-channel-select" class="midi-channel-dropdown">
+              <option value="1">Canal 1 (Défaut Launch Control XL)</option>
+              <option value="2">Canal 2</option>
+              <option value="3">Canal 3</option>
+              <option value="4">Canal 4</option>
+              <option value="0">OMNI (Tous les canaux)</option>
+            </select>
+          </div>
+
+          <!-- Grille des 24 Knobs -->
+          <div class="settings-section">
+            <div class="section-title-wrap">
+              <h4>24 Potentiomètres / Knobs (Paramètres des Plugins)</h4>
+              <span class="section-badge">Valeur Absolue (0..127)</span>
+            </div>
+            <div id="knobs-mapping-grid" class="mapping-grid-24"></div>
+          </div>
+
+          <!-- Grille des 16 Boutons de Sélection -->
+          <div class="settings-section">
+            <div class="section-title-wrap">
+              <h4>16 Boutons de Sélection de Piste (Pistes 1 à 16)</h4>
+              <span class="section-badge">Sélection Directe</span>
+            </div>
+            <div id="buttons-mapping-grid" class="mapping-grid-16"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-reset-midi" class="btn-modal secondary">Réinitialiser par défaut</button>
+          <button id="btn-save-midi" class="btn-modal primary">Enregistrer et Appliquer</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script src="app.js"></script>
