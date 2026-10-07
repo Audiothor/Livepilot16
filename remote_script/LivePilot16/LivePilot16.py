@@ -47,6 +47,7 @@ class LivePilot16(ControlSurface):
         self._current_device = None
         self._observed_params = []
         self._observed_scenes = []
+        self._observed_clip_tracks = []
         self._master_mode_bpm = True
         self._meter_polling_active = False
 
@@ -77,6 +78,7 @@ class LivePilot16(ControlSurface):
         self._cleanup_listeners()
         self._detach_scene_listeners()
         self._detach_track_devices_listener()
+        self._detach_track_clip_listeners()
         self._remove_parameter_listeners()
         super(LivePilot16, self).disconnect()
 
@@ -102,6 +104,7 @@ class LivePilot16(ControlSurface):
             if not vol.value_has_listener(self._on_master_volume_changed):
                 vol.add_value_listener(self._on_master_volume_changed)
         self._attach_scene_listeners()
+        self._attach_track_clip_listeners()
 
     def _cleanup_listeners(self):
         song = self.song()
@@ -122,6 +125,7 @@ class LivePilot16(ControlSurface):
         if song.view.selected_scene_has_listener(self._on_scene_selection_changed):
             song.view.remove_selected_scene_listener(self._on_scene_selection_changed)
         self._detach_track_devices_listener()
+        self._detach_track_clip_listeners()
 
     def _attach_scene_listeners(self):
         self._detach_scene_listeners()
@@ -174,19 +178,59 @@ class LivePilot16(ControlSurface):
         self._attach_scene_listeners()
         self._send_scene_info()
         self._broadcast_active_scene()
+        self._broadcast_selected_track()
 
     def _on_scene_selection_changed(self):
         self._send_scene_info()
         self._broadcast_active_scene()
+        self._broadcast_selected_track()
 
     def _on_scene_status_changed(self):
         self._send_scene_info()
         self._broadcast_active_scene()
+        self._broadcast_selected_track()
 
     def _on_tracks_changed(self):
+        self._attach_track_clip_listeners()
         self._send_bank_info()
         self._send_bank_colors()
         self._broadcast_full_sync()
+
+    def _attach_track_clip_listeners(self):
+        self._detach_track_clip_listeners()
+        for t in self.song().tracks:
+            try:
+                if hasattr(t, 'playing_slot_index_has_listener') and not t.playing_slot_index_has_listener(self._on_track_clip_state_changed):
+                    t.add_playing_slot_index_listener(self._on_track_clip_state_changed)
+                    self._observed_clip_tracks.append(t)
+                if hasattr(t, 'fired_slot_index_has_listener') and not t.fired_slot_index_has_listener(self._on_track_clip_state_changed):
+                    t.add_fired_slot_index_listener(self._on_track_clip_state_changed)
+            except Exception:
+                pass
+
+    def _detach_track_clip_listeners(self):
+        for t in getattr(self, '_observed_clip_tracks', []):
+            try:
+                if hasattr(t, 'playing_slot_index_has_listener') and t.playing_slot_index_has_listener(self._on_track_clip_state_changed):
+                    t.remove_playing_slot_index_listener(self._on_track_clip_state_changed)
+                if hasattr(t, 'fired_slot_index_has_listener') and t.fired_slot_index_has_listener(self._on_track_clip_state_changed):
+                    t.remove_fired_slot_index_listener(self._on_track_clip_state_changed)
+            except Exception:
+                pass
+        self._observed_clip_tracks = []
+
+    def _on_track_clip_state_changed(self):
+        self._broadcast_selected_track()
+
+    def _get_active_scene_index(self):
+        song = self.song()
+        for idx, sc in enumerate(song.scenes):
+            if getattr(sc, 'is_playing', False):
+                return idx
+        try:
+            return list(song.scenes).index(song.view.selected_scene)
+        except Exception:
+            return 0
 
     def _on_selected_track_changed(self):
         # Auto-follow désactivé depuis la tablette : la piste/device contrôlé reste verrouillé
@@ -406,7 +450,7 @@ class LivePilot16(ControlSurface):
     # =========================================================================
     # DIFFUSION WEBSOCKET (Ableton -> Tablette Android)
     # =========================================================================
-    def _build_track_dict(self, track, global_index):
+    def _build_track_dict(self, track, global_index, active_scene_idx=None):
         if not track:
             return None
         vol_str = str(track.mixer_device.volume) if hasattr(track, 'mixer_device') else '0 dB'
@@ -416,6 +460,32 @@ class LivePilot16(ControlSurface):
         fold_state = bool(getattr(track, 'fold_state', False)) if is_group else False
         is_grouped = bool(getattr(track, 'is_grouped', False))
         group_name = track.group_track.name if (is_grouped and getattr(track, 'group_track', None)) else ""
+
+        if active_scene_idx is None:
+            active_scene_idx = self._get_active_scene_index()
+
+        has_clip = False
+        clip_name = ""
+        clip_color = ""
+        clip_is_playing = False
+        clip_is_triggered = False
+
+        if hasattr(track, 'clip_slots') and track.clip_slots:
+            clip_slots = track.clip_slots
+            if 0 <= active_scene_idx < len(clip_slots):
+                slot = clip_slots[active_scene_idx]
+                if getattr(slot, 'has_clip', False) and getattr(slot, 'clip', None):
+                    has_clip = True
+                    clip = slot.clip
+                    clip_name = str(getattr(clip, 'name', '') or '')
+                    clip_color = int_to_hex_color(getattr(clip, 'color', None))
+                    clip_is_playing = bool(getattr(clip, 'is_playing', False))
+                    clip_is_triggered = bool(getattr(clip, 'is_triggered', False))
+
+        playing_slot_idx = int(getattr(track, 'playing_slot_index', -1))
+        is_track_playing = (playing_slot_idx >= 0)
+        if is_track_playing and has_clip and playing_slot_idx == active_scene_idx:
+            clip_is_playing = True
 
         return {
             'index': global_index,
@@ -430,7 +500,13 @@ class LivePilot16(ControlSurface):
             'arm': bool(getattr(track, 'arm', False)),
             'vol_str': vol_str,
             'pan_str': pan_str,
-            'pan_val': pan_val
+            'pan_val': pan_val,
+            'has_clip': has_clip,
+            'clip_name': clip_name,
+            'clip_color': clip_color,
+            'clip_is_playing': clip_is_playing,
+            'clip_is_triggered': clip_is_triggered,
+            'is_track_playing': is_track_playing
         }
 
     def _build_params_list(self):
@@ -539,11 +615,12 @@ class LivePilot16(ControlSurface):
 
         # 16 pistes de la banque courante (miroir des 16 boutons du Launch Control XL)
         bank_tracks = []
+        active_sc_idx = self._get_active_scene_index()
         start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
         for i in range(NUM_TRACKS_PER_BANK):
             t_idx = start_idx + i
             if t_idx < total_tracks:
-                bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx))
+                bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx, active_sc_idx))
             else:
                 bank_tracks.append(None)
 
@@ -638,11 +715,12 @@ class LivePilot16(ControlSurface):
             sel_idx = 0
 
         bank_tracks = []
+        active_sc_idx = self._get_active_scene_index()
         start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
         for i in range(NUM_TRACKS_PER_BANK):
             t_idx = start_idx + i
             if t_idx < len(tracks):
-                bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx))
+                bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx, active_sc_idx))
             else:
                 bank_tracks.append(None)
 
@@ -801,6 +879,8 @@ class LivePilot16(ControlSurface):
             scenes = list(self.song().scenes)
             if 0 <= sc_idx < len(scenes):
                 scenes[sc_idx].fire()
+                self._broadcast_active_scene()
+                self._broadcast_selected_track()
 
         elif action == 'toggle_play':
             self.song().is_playing = not self.song().is_playing
@@ -858,6 +938,8 @@ class LivePilot16(ControlSurface):
             if 0 <= target < len(scenes):
                 scenes[target].fire()
                 self.song().view.selected_scene = scenes[target]
+                self._broadcast_active_scene()
+                self._broadcast_selected_track()
 
         elif action in ('toggle_mute', 'toggle_solo', 'toggle_arm'):
             t_idx = msg.get('track_index', 0)

@@ -225,12 +225,35 @@ ALL_DEMO_TRACKS = [
     {"index": 63, "name": "Tubular Bell", "color": "#ff4081", "is_group": False, "vol_str": "-11.5 dB", "pan_val": 0.05}
 ]
 
-def get_bank_tracks(bank_index):
+SCENE_TRACK_CLIPS = {
+    0: {0: "Drum Beat 1", 1: "Sub 808 Loop"},
+    1: {1: "Acid Bassline", 3: "Arp Lead 01"},
+    2: {2: "Chords Pad", 0: "Drum Fill 2", 1: "Slap Bass"},
+    3: {3: "Bridge Melody", 4: "Sweep Down"},
+    4: {0: "Full Beat", 1: "Bass Solo", 3: "Lead Solo"},
+    5: {2: "Ambient Drone", 4: "Outro Echo"}
+}
+
+def get_bank_tracks(bank_index, sc_idx=1):
     start_idx = max(0, min(3, bank_index)) * 16
     end_idx = start_idx + 16
-    return ALL_DEMO_TRACKS[start_idx:end_idx]
+    scene_clips = SCENE_TRACK_CLIPS.get(sc_idx, {1: "Demo Clip"})
+    result = []
+    for t in ALL_DEMO_TRACKS[start_idx:end_idx]:
+        t_copy = dict(t)
+        t_idx = t["index"]
+        if t_idx in scene_clips:
+            t_copy["has_clip"] = True
+            t_copy["clip_name"] = scene_clips[t_idx]
+            t_copy["clip_is_playing"] = True
+        else:
+            t_copy["has_clip"] = False
+            t_copy["clip_name"] = ""
+            t_copy["clip_is_playing"] = False
+        result.append(t_copy)
+    return result
 
-DEMO_TRACKS = ALL_DEMO_TRACKS[:16]
+DEMO_TRACKS = get_bank_tracks(0, 1)
 
 TRACK_DEVICES_MAP = {
     0: [{"index": 0, "name": "Drum Rack"}, {"index": 1, "name": "Glue Comp"}, {"index": 2, "name": "Saturator"}, {"index": 3, "name": "EQ Eight"}],
@@ -308,7 +331,8 @@ def run_simulator(open_browser=False):
 
     def broadcast_full_sync():
         cur_bank = state.get("bank_index", 0)
-        bank_tracks = get_bank_tracks(cur_bank)
+        sc_idx = state["active_scene_index"]
+        bank_tracks = get_bank_tracks(cur_bank, sc_idx)
         sel_idx = state["selected_track_index"]
         devs = get_track_devices(sel_idx)
         if len(devs) > 0:
@@ -390,7 +414,7 @@ def run_simulator(open_browser=False):
                     {"index": i, "name": "-", "value": 0.0, "str": "-", "is_assigned": False}
                     for i in range(24)
                 ]
-            bank_tracks = get_bank_tracks(state["bank_index"])
+            bank_tracks = get_bank_tracks(state["bank_index"], state["active_scene_index"])
 
             server.broadcast({
                 "type": "track_selected",

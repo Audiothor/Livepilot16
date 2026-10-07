@@ -363,6 +363,126 @@ html, body {
   z-index: 5;
 }
 
+/* =========================================================================
+   INDICATEUR DE CLIP SUR LA SCÈNE ACTIVE (Contour Lumineux + Badge + Nom)
+   ========================================================================= */
+
+/* Piste possédant un clip pour la scène active : ENTOURÉE EN VERT ÉMERAUDE */
+.track-card.has-clip {
+  border: 2px solid #00e676 !important;
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.48), inset 0 0 6px rgba(0, 230, 118, 0.12) !important;
+}
+
+/* Si le clip est en cours de lecture : Animation pulsante dynamique */
+.track-card.has-clip.clip-playing {
+  border: 2px solid #00ff88 !important;
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.7), inset 0 0 8px rgba(0, 255, 136, 0.22) !important;
+  animation: clipBorderPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes clipBorderPulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.45), inset 0 0 6px rgba(0, 255, 136, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(0, 255, 136, 0.85), inset 0 0 12px rgba(0, 255, 136, 0.35);
+  }
+}
+
+/* Piste sélectionnée ET avec clip : Cadre or console pro + lueur verte clip */
+.track-card.selected.has-clip {
+  border: 2.5px solid #ffd600 !important;
+  box-shadow: 0 0 16px rgba(255, 214, 0, 0.7), 0 0 22px rgba(0, 230, 118, 0.55), inset 0 0 8px rgba(0, 230, 118, 0.25) !important;
+}
+
+.track-card.selected.has-clip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd600 0%, #00e676 50%, #ffd600 100%);
+  box-shadow: 0 0 8px #00e676;
+  z-index: 5;
+}
+
+/* Badge CLIP dans le coin supérieur droit du bandeau de piste */
+.clip-flag-badge {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(4, 9, 20, 0.88);
+  color: #00ff88;
+  border: 1px solid #00e676;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  z-index: 4;
+}
+
+.clip-flag-badge.playing {
+  background: #00e676;
+  color: #040914;
+  font-weight: 900;
+  border-color: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 230, 118, 0.8);
+}
+
+.clip-flag-ico {
+  font-size: 7px;
+}
+
+/* Micro-barre du nom du clip au-dessus du VU-mètre */
+.track-clip-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(0, 230, 118, 0.12);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 8px;
+  font-weight: 800;
+  color: #00ff88;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.1;
+  margin-bottom: 1px;
+}
+
+.track-clip-row.playing {
+  background: rgba(0, 230, 118, 0.22);
+  border-color: #00e676;
+  color: #ffffff;
+  box-shadow: 0 0 6px rgba(0, 230, 118, 0.4);
+}
+
+.clip-row-ico {
+  font-size: 6.5px;
+  color: #00ff88;
+}
+
+.track-clip-row.playing .clip-row-ico {
+  color: #ffd600;
+}
+
+.clip-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Distinct Group Track Highlight */
 .track-card.is-group-track {
   border: 1.5px dashed #ffb703 !important;

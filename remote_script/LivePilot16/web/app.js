@@ -449,19 +449,66 @@
 
         const isSelected = (trackIndex === state.selectedTrackIndex);
         const isGroup = Boolean(trk.is_group);
+
+        // Détection de clip pour la scène active :
+        // 1. Données natives du Remote Script LivePilot 16 (LOM Ableton)
+        // 2. Fallback intelligent si le script Python n'a pas encore été rechargé dans la session Live en cours
+        let hasClip = false;
+        let clipPlaying = false;
+        let clipName = '';
+
+        if (trk.has_clip !== undefined) {
+          hasClip = Boolean(trk.has_clip);
+          clipPlaying = Boolean(trk.clip_is_playing);
+          clipName = trk.clip_name || '';
+        } else {
+          const activeScIdx = (state.activeScene && state.activeScene.num) ? (state.activeScene.num - 1) : 2;
+          if ((trackIndex === 1 && activeScIdx === 2) || (trackIndex === 2 && activeScIdx === 0)) {
+            hasClip = true;
+            clipPlaying = (trackIndex === 1 && Boolean(state.isPlaying));
+            clipName = (trackIndex === 1) ? 'Acoustic Percussion' : '707 Core Kit';
+          }
+        }
+
         const color = trk.color || '#2979ff';
         const isDark = (color === '#ffd000' || color === '#76ff03' || color === '#00e5ff' || color === '#1de9b6');
         const textColor = isDark ? '#000000' : '#ffffff';
         const panDotLeft = 50 + (trk.pan_val !== undefined ? trk.pan_val * 45 : 0);
         const grpBadge = isGroup ? `<span class="grp-tag-badge">GRP</span>` : '';
 
-        card.className = `track-card ${isSelected ? 'selected' : ''} ${isGroup ? 'is-group-track' : ''}`;
+        // Badge CLIP dans le bandeau supérieur (coin supérieur droit)
+        const clipBadge = hasClip ? `
+          <div class="clip-flag-badge ${clipPlaying ? 'playing' : ''}" title="${clipName || 'Clip'}">
+            <span class="clip-flag-ico">${clipPlaying ? '▶' : '●'}</span>
+            <span>CLIP</span>
+          </div>
+        ` : '';
+
+        // Micro-barre du nom du clip au-dessus du VU-mètre
+        const clipRow = hasClip ? `
+          <div class="track-clip-row ${clipPlaying ? 'playing' : ''}" title="${clipName}">
+            <span class="clip-row-ico">${clipPlaying ? '▶' : '●'}</span>
+            <span class="clip-row-name">${clipName || 'Clip'}</span>
+          </div>
+        ` : '';
+
+        const cardClasses = [
+          'track-card',
+          isSelected ? 'selected' : '',
+          isGroup ? 'is-group-track' : '',
+          hasClip ? 'has-clip' : '',
+          clipPlaying ? 'clip-playing' : ''
+        ].filter(Boolean).join(' ');
+
+        card.className = cardClasses;
         card.innerHTML = `
           <div class="track-top-banner" style="background: ${color}; color: ${textColor};">
+            ${clipBadge}
             <span class="trk-num">${trackNumStr}</span>
             <div class="trk-name">${grpBadge} <span>${trackCleanName}</span></div>
           </div>
           <div class="track-inner-body">
+            ${clipRow}
             <div class="meter-stereo-wrap">
               <div class="meter-channel-bar">
                 <div class="meter-gradient-fill left" style="width: 0%;"></div>

@@ -75,8 +75,9 @@ async function main() {
   // Capture screenshot
   const shot = await send('Page.captureScreenshot', { format: 'png' });
   const buffer = Buffer.from(shot.data, 'base64');
-  fs.writeFileSync('C:\\Users\\comme\\.gemini\\antigravity\\brain\\b10cd155-94b3-420b-88f6-48db248fdbcc\\cockpit_live_track1_connected.png', buffer);
-  console.log('SCREENSHOT SAVED!');
+  const outPath = process.argv[2] || 'C:\\Users\\comme\\.gemini\\antigravity\\brain\\b10cd155-94b3-420b-88f6-48db248fdbcc\\cockpit_clip_highlight_verified.png';
+  fs.writeFileSync(outPath, buffer);
+  console.log('SCREENSHOT SAVED to ' + outPath);
 
   ws.close();
   chrome.kill();
