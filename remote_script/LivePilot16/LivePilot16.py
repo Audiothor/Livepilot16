@@ -105,6 +105,10 @@ class LivePilot16(ControlSurface):
         self._remove_parameter_listeners()
         super(LivePilot16, self).disconnect()
 
+    def update(self):
+        super(LivePilot16, self).update()
+        self._update_pad_leds()
+
     # =========================================================================
     # ÉCOUTEURS DU LIVE OBJECT MODEL (LOM)
     # =========================================================================
@@ -493,6 +497,7 @@ class LivePilot16(ControlSurface):
             self._update_pad_leds()
         else:
             self.log_message("LivePilot : Piste demandee hors limites (index=%d, total=%d)" % (track_idx, len(tracks)))
+            self._update_pad_leds()
 
     # =========================================================================
     # DIFFUSION WEBSOCKET (Ableton -> Tablette Android)
@@ -1115,8 +1120,26 @@ class LivePilot16(ControlSurface):
         if msg_type == 0xB0:
             cc_num, cc_val = data1, data2
 
-            # 0. Pads appris via MIDI Learn interactif (priorité absolue à la configuration apprise)
+            # GESTION DU RELÂCHEMENT DES PADS (cc_val == 0) :
+            # Les pads physiques en mode "Momentary" renvoient 0 au relâchement.
+            # On renvoie immédiatement 127 au pad sélectionné pour maintenir sa LED ROUGE,
+            # et 0 aux autres pads pour qu'ils restent VERTS (éteints).
             btn_items = cfg.get('button_items', [])
+            btn_types = cfg.get('button_types', [])
+            is_button_cc = (cc_num in cfg_buttons) or \
+                           any(it.get('num') == cc_num for it in btn_items) or \
+                           (cc_num in LCXL_MODE16_BUTTON_CCS) or \
+                           (btn_types and any(btn_types[idx] == 'cc' and cfg_buttons[idx] == cc_num for idx in range(min(len(btn_types), len(cfg_buttons)))))
+            if is_button_cc and cc_val == 0:
+                self._update_pad_leds()
+                try:
+                    self.schedule_message(1, self._update_pad_leds)
+                    self.schedule_message(3, self._update_pad_leds)
+                except Exception:
+                    pass
+                return
+
+            # 0. Pads appris via MIDI Learn interactif (priorité absolue à la configuration apprise)
             if btn_items and cc_val > 0:
                 same_num_items = [it for it in btn_items if it.get('num') == cc_num and it.get('type') == 'cc']
                 for item in btn_items:
@@ -1284,6 +1307,25 @@ class LivePilot16(ControlSurface):
                 self._select_track_in_bank(note_num - 36)
                 return
 
+        # --- GESTION DU RELÂCHEMENT DES NOTES (Note Off 0x80 ou Note On vel 0) ---
+        elif msg_type == 0x80 or (msg_type == 0x90 and data2 == 0):
+            note_num = data1
+            btn_items = cfg.get('button_items', [])
+            btn_types = cfg.get('button_types', [])
+            is_button_note = (note_num in FACTORY_BUTTON_NOTES) or \
+                             (btn_type == 'note' and note_num in cfg_buttons) or \
+                             any(it.get('num') == note_num and it.get('type') == 'note' for it in btn_items) or \
+                             (btn_types and any(btn_types[idx] == 'note' and cfg_buttons[idx] == note_num for idx in range(min(len(btn_types), len(cfg_buttons))))) or \
+                             (36 <= note_num <= 51)
+            if is_button_note:
+                self._update_pad_leds()
+                try:
+                    self.schedule_message(1, self._update_pad_leds)
+                    self.schedule_message(3, self._update_pad_leds)
+                except Exception:
+                    pass
+                return
+
         super(LivePilot16, self).receive_midi(midi_bytes)
 
     def handle_sysex(self, midi_bytes):
@@ -1355,7 +1397,7 @@ class LivePilot16(ControlSurface):
                             matched_item = it
                             break
 
-                if matched_item:
+                if matched_item and matched_item.get('num') != CC_NOVATION_MODE_SELECT:
                     b_num = matched_item.get('num')
                     b_type = matched_item.get('type', 'cc')
                     b_ch = matched_item.get('channel', default_ch)
