@@ -269,6 +269,7 @@ class LivePilot16(ControlSurface):
         self._send_active_device_info()
         self._send_parameters_info()
         self._broadcast_selected_track()
+        self._update_pad_leds()
 
     def _auto_align_bank_for_track(self, track):
         """Ajuste automatiquement la banque visible de 8 pistes si nécessaire"""
@@ -489,6 +490,7 @@ class LivePilot16(ControlSurface):
                     pass
             else:
                 self.song().view.selected_track = target_track
+            self._update_pad_leds()
         else:
             self.log_message("LivePilot : Piste demandee hors limites (index=%d, total=%d)" % (track_idx, len(tracks)))
 
@@ -889,6 +891,7 @@ class LivePilot16(ControlSurface):
                 self._send_active_device_info()
                 self._send_parameters_info()
                 self._broadcast_selected_track()
+                self._update_pad_leds()
 
         elif action == 'select_device':
             d_idx = msg.get('device_index', 0)
@@ -1006,6 +1009,7 @@ class LivePilot16(ControlSurface):
                 self._midi_config.update(cfg)
                 self.log_message("LivePilot : Configuration MIDI mise a jour : %s" % str(self._midi_config))
                 self._broadcast_full_sync()
+                self._update_pad_leds()
 
     # =========================================================================
     # COMPATIBILITÉ MIDI / SYSEX (Launch Control XL MK3 / MK2)
@@ -1314,11 +1318,81 @@ class LivePilot16(ControlSurface):
         except Exception:
             pass
 
+    def _update_pad_leds(self):
+        """Met a jour l'etat lumineux des 16 pads physiques du Launch Control XL.
+        Le pad correspondant a la piste active dans la banque courante recoit la valeur 127 (LED Rouge / Active),
+        tandis que tous les autres pads recoivent la valeur 0 (LED Eteinte).
+        """
+        try:
+            selected_track = self.song().view.selected_track
+            tracks = list(self.song().tracks)
+            active_pad_idx = -1
+            if selected_track in tracks:
+                track_idx = tracks.index(selected_track)
+                start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
+                if start_idx <= track_idx < start_idx + NUM_TRACKS_PER_BANK:
+                    active_pad_idx = track_idx - start_idx
+
+            cfg = getattr(self, '_midi_config', {})
+            cfg_buttons = cfg.get('buttons', DEFAULT_BUTTON_CCS)
+            btn_types = cfg.get('button_types', [])
+            btn_channels = cfg.get('button_channels', [])
+            btn_items = cfg.get('button_items', [])
+            default_ch = cfg.get('channel', DEFAULT_MIDI_CHANNEL)
+
+            for i in range(NUM_TRACKS_PER_BANK):
+                val = 127 if (i == active_pad_idx) else 0
+
+                b_num = None
+                b_type = 'cc'
+                b_ch = default_ch
+
+                # 1. Verifier si un item appris existe pour ce pad
+                matched_item = None
+                if btn_items:
+                    for it in btn_items:
+                        if it.get('index') == i:
+                            matched_item = it
+                            break
+
+                if matched_item:
+                    b_num = matched_item.get('num')
+                    b_type = matched_item.get('type', 'cc')
+                    b_ch = matched_item.get('channel', default_ch)
+                else:
+                    if i < len(cfg_buttons):
+                        b_num = cfg_buttons[i]
+                    else:
+                        b_num = 33 + i
+                    if btn_types and i < len(btn_types):
+                        b_type = btn_types[i]
+                    else:
+                        b_type = cfg.get('button_type', 'cc')
+                    if btn_channels and i < len(btn_channels):
+                        b_ch = btn_channels[i]
+                    else:
+                        b_ch = default_ch
+
+                if b_num is None:
+                    continue
+
+                ch_idx = max(0, min(15, (b_ch - 1) if (b_ch and b_ch > 0) else 0))
+
+                if b_type == 'cc':
+                    status_byte = 0xB0 | ch_idx
+                else:
+                    status_byte = 0x90 | ch_idx
+
+                self._send_midi((status_byte, b_num, val))
+        except Exception as e:
+            self.log_message("LivePilot : Erreur dans _update_pad_leds : %s" % str(e))
+
     def _send_bank_info(self):
         total_tracks = len(self.song().tracks)
         total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
         sysex_msg = list(SYSEX_HEADER) + [CMD_BANK_INFO, self._current_bank_index, total_banks, total_tracks, 0xF7]
         self._send_midi(tuple(sysex_msg))
+        self._update_pad_leds()
 
     def _send_bank_colors(self):
         colors_payload = []

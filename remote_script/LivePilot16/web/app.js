@@ -358,6 +358,7 @@
     renderTracks();
     renderKnobs();
     renderSidebar();
+    sendMidiLedFeedback(data.track_index % 16);
   }
 
   function updateSelectedDevice(data) {
@@ -1152,21 +1153,57 @@
         (midi) => {
           webMidiAccess = midi;
           webMidiInitialized = true;
-          setupWebMidiInputs(midi);
-          midi.onstatechange = () => setupWebMidiInputs(midi);
+          setupWebMidiPorts(midi);
+          midi.onstatechange = () => setupWebMidiPorts(midi);
         },
         () => {
           navigator.requestMIDIAccess({ sysex: false }).then(
             (midi) => {
               webMidiAccess = midi;
               webMidiInitialized = true;
-              setupWebMidiInputs(midi);
-              midi.onstatechange = () => setupWebMidiInputs(midi);
+              setupWebMidiPorts(midi);
+              midi.onstatechange = () => setupWebMidiPorts(midi);
             },
             () => {}
           );
         }
       ).catch(() => {});
+    }
+  }
+
+  let webMidiOutputs = [];
+
+  function setupWebMidiPorts(midi) {
+    if (!midi) return;
+    try {
+      webMidiOutputs = Array.from(midi.outputs.values());
+    } catch (e) {
+      webMidiOutputs = [];
+    }
+    setupWebMidiInputs(midi);
+    if (state.selectedTrackIndex !== undefined) {
+      sendMidiLedFeedback(state.selectedTrackIndex % 16);
+    }
+  }
+
+  function sendMidiLedFeedback(padIndex) {
+    if (!webMidiOutputs || webMidiOutputs.length === 0) return;
+    const cfg = state.midiConfig || {};
+    const defaultCh = cfg.channel || 1;
+
+    for (let i = 0; i < 16; i++) {
+      const val = (i === padIndex) ? 127 : 0;
+      let num = (cfg.buttons && cfg.buttons[i] !== undefined) ? cfg.buttons[i] : (33 + i);
+      let type = (cfg.button_types && cfg.button_types[i]) ? cfg.button_types[i] : (cfg.button_type || 'cc');
+      let ch = (cfg.button_channels && cfg.button_channels[i]) ? cfg.button_channels[i] : defaultCh;
+      let targetChIdx = Math.max(0, Math.min(15, ch - 1));
+
+      const status = (type === 'cc') ? (0xB0 | targetChIdx) : (0x90 | targetChIdx);
+      for (const out of webMidiOutputs) {
+        try {
+          out.send([status, num, val]);
+        } catch (e) {}
+      }
     }
   }
 
