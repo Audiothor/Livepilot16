@@ -1133,8 +1133,23 @@ class LivePilot16(ControlSurface):
                         self._select_track_in_bank(target_idx)
                         return
 
-            # 1. NOVATION SURFACE MODE SELECT (CC 30, ex: Canal 7) si non mappé par bouton personnalisé
-            # Détecte l'appui sur le bouton [MODE] + bouton 1..16 pressé sur le Launch Control XL 3
+            # 1. 16 Boutons de Sélection de Piste (Priorité absolue aux boutons configurés : CC 33..48 par défaut)
+            btn_types = cfg.get('button_types', [])
+            if btn_types and len(btn_types) == NUM_TRACKS_PER_BANK and cc_val > 0:
+                for idx, b_num in enumerate(cfg_buttons[:NUM_TRACKS_PER_BANK]):
+                    if btn_types[idx] == 'cc' and cc_num == b_num:
+                        self.log_message("LivePilot : Pad TRK %d CC %d detecte -> Selection Piste %d" % (idx + 1, cc_num, idx + 1))
+                        self._select_track_in_bank(idx)
+                        return
+
+            if cc_num in cfg_buttons and cc_val > 0:
+                btn_idx = cfg_buttons.index(cc_num)
+                if btn_idx < NUM_TRACKS_PER_BANK:
+                    self.log_message("LivePilot : Pad TRK %d CC %d detecte -> Selection Piste %d" % (btn_idx + 1, cc_num, btn_idx + 1))
+                    self._select_track_in_bank(btn_idx)
+                    return
+
+            # 2. NOVATION SURFACE MODE SELECT (CC 30, ex: Canal 7) si non mappé par bouton personnalisé
             if cc_num == CC_NOVATION_MODE_SELECT:
                 target_trk = None
                 if cc_val in NOVATION_MODE_TO_TRACK:
@@ -1149,24 +1164,18 @@ class LivePilot16(ControlSurface):
                     self._select_track_in_bank(target_trk)
                     return
 
-            # 2. 24 Knobs Potentiomètres (Valeur absolue 0..127 -> 0.0..1.0)
+            # 3. 24 Knobs Potentiomètres configurés (CC 1..24 par défaut)
             if cc_num in cfg_knobs:
                 knob_idx = cfg_knobs.index(cc_num)
                 if knob_idx < NUM_ENCODERS:
                     norm_val = round(cc_val / 127.0, 3)
                     self._set_encoder_value(knob_idx, norm_val)
                     return
-            elif cc_num in FACTORY_KNOB_CCS:
-                knob_idx = FACTORY_KNOB_CCS.index(cc_num)
-                if knob_idx < NUM_ENCODERS:
-                    norm_val = round(cc_val / 127.0, 3)
-                    self._set_encoder_value(knob_idx, norm_val)
-                    return
 
-            # 3. 8 Faders physiques du Launch Control XL (CC 25 à 32) -> Volume des Pistes 1 à 8
+            # 4. 8 Faders physiques du Launch Control XL (CC 25 à 32) -> Volume des Pistes 1 à 8
             if cc_num in DEFAULT_FADER_CCS:
                 fader_idx = DEFAULT_FADER_CCS.index(cc_num)
-                trk_idx = self._bank_index * NUM_TRACKS_PER_BANK + fader_idx
+                trk_idx = self._current_bank_index * NUM_TRACKS_PER_BANK + fader_idx
                 tracks = list(self.song().tracks)
                 if trk_idx < len(tracks):
                     try:
@@ -1175,28 +1184,20 @@ class LivePilot16(ControlSurface):
                         pass
                 return
 
-            # 3. 16 Boutons de Sélection de Piste (Fallback templates d'usine)
-            btn_types = cfg.get('button_types', [])
-            if btn_types and len(btn_types) == NUM_TRACKS_PER_BANK and cc_val > 0:
-                for idx, b_num in enumerate(cfg_buttons[:NUM_TRACKS_PER_BANK]):
-                    if btn_types[idx] == 'cc' and cc_num == b_num:
-                        self.log_message("LivePilot : Pad TRK %d CC %d detecte -> Selection Piste %d" % (idx + 1, cc_num, idx + 1))
-                        self._select_track_in_bank(idx)
-                        return
-
-            # Configuration personnalisée / LivePilot (par défaut CC 25..40)
-            if cc_num in cfg_buttons and cc_val > 0:
-                btn_idx = cfg_buttons.index(cc_num)
-                if btn_idx < NUM_TRACKS_PER_BANK:
-                    self._select_track_in_bank(btn_idx)
+            # 5. Knobs Factory (uniquement si le preset est 'factory' pour éviter d'intercepter CC 33..36)
+            if cfg.get('preset') == 'factory' and cc_num in FACTORY_KNOB_CCS:
+                knob_idx = FACTORY_KNOB_CCS.index(cc_num)
+                if knob_idx < NUM_ENCODERS:
+                    norm_val = round(cc_val / 127.0, 3)
+                    self._set_encoder_value(knob_idx, norm_val)
                     return
-            # Mode 16 Factory Template du Launch Control XL (Boutons 1..16 = CC 37 à 52)
+
+            # 6. Fallback templates d'usine additionnels
             elif cc_num in LCXL_MODE16_BUTTON_CCS and cc_val > 0:
                 btn_idx = LCXL_MODE16_BUTTON_CCS.index(cc_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
-            # D. Plage alternative CC 64..79
             elif CC_BASE_TRACK_SEL <= cc_num < CC_BASE_TRACK_SEL + NUM_TRACKS_PER_BANK and cc_val > 0:
                 self._select_track_in_bank(cc_num - CC_BASE_TRACK_SEL)
                 return
