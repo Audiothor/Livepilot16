@@ -77,6 +77,10 @@ class LivePilot16(ControlSurface):
         with self.component_guard():
             self._setup_listeners()
             self._full_resync()
+            try:
+                self.request_rebuild_midi_map()
+            except Exception:
+                pass
 
         # Démarrage de la boucle de polling des VU-mètres
         self._schedule_meter_poll()
@@ -477,6 +481,7 @@ class LivePilot16(ControlSurface):
         tracks = self.song().tracks
         if 0 <= track_idx < len(tracks):
             target_track = tracks[track_idx]
+            self.log_message("LivePilot : Selection de la piste %d (%s)" % (track_idx + 1, target_track.name))
             if target_track == self.song().view.selected_track and getattr(target_track, 'is_foldable', False):
                 try:
                     target_track.fold_state = not target_track.fold_state
@@ -484,6 +489,8 @@ class LivePilot16(ControlSurface):
                     pass
             else:
                 self.song().view.selected_track = target_track
+        else:
+            self.log_message("LivePilot : Piste demandee hors limites (index=%d, total=%d)" % (track_idx, len(tracks)))
 
     # =========================================================================
     # DIFFUSION WEBSOCKET (Ableton -> Tablette Android)
@@ -1003,6 +1010,37 @@ class LivePilot16(ControlSurface):
     # =========================================================================
     # COMPATIBILITÉ MIDI / SYSEX (Launch Control XL MK3 / MK2)
     # =========================================================================
+    def build_midi_map(self, midi_map_handle):
+        """
+        Enregistre auprès du moteur C++ d'Ableton Live le forwarding de TOUS les CCs et Notes.
+        Sans cette méthode, Ableton filtre et bloque tous les messages CC et Note en interne
+        et n'appelle JAMAIS receive_midi() !
+        """
+        super(LivePilot16, self).build_midi_map(midi_map_handle)
+        if not hasattr(self, '_c_instance') or not self._c_instance:
+            return
+
+        handle = self._c_instance.handle()
+        self.log_message("LivePilot : Construction du MIDI Map - Forwarding universel...")
+
+        # Enregistrement du forwarding pour TOUS les canaux (0 à 15, soit Canaux 1 à 16)
+        for channel in range(16):
+            # Forwarder tous les CCs (0..127) : potentiomètres, faders, boutons CC, CC 30 Novation Mode Select
+            for cc in range(128):
+                try:
+                    Live.MidiMap.forward_midi_cc(handle, midi_map_handle, channel, cc)
+                except Exception:
+                    pass
+
+            # Forwarder toutes les Notes (0..127) : pads, boutons de sélection Note
+            for note in range(128):
+                try:
+                    Live.MidiMap.forward_midi_note(handle, midi_map_handle, channel, note)
+                except Exception:
+                    pass
+
+        self.log_message("LivePilot : MIDI Map active (Forwarding CC & Notes 100% connecte) !")
+
     def receive_midi(self, midi_bytes):
         if not midi_bytes:
             return
@@ -1011,6 +1049,8 @@ class LivePilot16(ControlSurface):
         channel = (status & 0x0F) + 1
         data1 = midi_bytes[1] if len(midi_bytes) > 1 else 0
         data2 = midi_bytes[2] if len(midi_bytes) > 2 else 0
+
+        self.log_message("LivePilot MIDI IN: status=0x%02X ch=%d data1=%d data2=%d" % (status, channel, data1, data2))
 
         # --- GESTION DES PROGRAM CHANGES (0xC0) ---
         # Certains templates ou modes Novation émettent un Program Change
@@ -1205,6 +1245,10 @@ class LivePilot16(ControlSurface):
         self._send_scene_info()
         self._on_selected_track_changed()
         self._broadcast_full_sync()
+        try:
+            self.request_rebuild_midi_map()
+        except Exception:
+            pass
 
     def _send_bank_info(self):
         total_tracks = len(self.song().tracks)
