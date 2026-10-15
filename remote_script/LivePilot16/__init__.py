@@ -14,18 +14,24 @@ def create_instance(c_instance):
 def get_capabilities():
     """
     Déclare les capacités MIDI à Ableton Live pour permettre
-    la sélection des ports d'entrée et de sortie (Launch Control XL).
+    la sélection des ports d'entrée et de sortie (Launch Control XL / LCXL3).
     """
     try:
         from _Framework.Capabilities import (
-            CONTROLLER_DESCRIPTIONS, PORTS_KEY, NOTES_CC, SCRIPT, inport, outport
+            CONTROLLER_DESCRIPTIONS, PORTS_KEY, NOTES_CC, SCRIPT, GENERIC_SCRIPT_KEY, inport, outport
         )
         return {
-            CONTROLLER_DESCRIPTIONS: ["LivePilot 16 Control Surface"],
+            CONTROLLER_DESCRIPTIONS: [
+                "Launch Control XL",
+                "Launch_Control_XL_3",
+                "LCXL3",
+                "LivePilot 16"
+            ],
             PORTS_KEY: [
                 inport(props=[NOTES_CC, SCRIPT]),
                 outport(props=[NOTES_CC, SCRIPT])
-            ]
+            ],
+            GENERIC_SCRIPT_KEY: True
         }
     except Exception:
         return {}
