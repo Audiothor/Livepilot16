@@ -1433,6 +1433,13 @@ class LivePilot16(ControlSurface):
                     self._send_midi((status_byte, b_num, val))
                 else:
                     # PISTE INEXISTANTE DANS ABLETON -> AUCUNE COULEUR (ÉTEINTE)
+                    if b_type == 'cc':
+                        status_byte = 0xB0 | ch_idx
+                    else:
+                        status_byte = 0x90 | ch_idx
+                    # Envoi de la valeur 0 (Off) au matériel
+                    self._send_midi((status_byte, b_num, 0))
+
                     # 1. Extinction SysEx RGB Novation Launch Control XL 3 (MK3)
                     try:
                         sysex_mk3_off_num = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, b_num, 0, 0, 0, 0xF7)
