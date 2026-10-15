@@ -32,8 +32,40 @@ FACTORY_BUTTON_NOTES = [
     57, 58, 59, 60, 61, 62, 63, 64   # Rangée Control 9 à 16
 ]
 
-CC_ENC17_JOG       = 40  # CC 40 (Master Jog / BPM)
-CC_ENC17_PUSH      = 41  # CC 41 (Clic poussoir Master)
+# Mode 16 Factory Template du Launch Control XL (Boutons 1..16 émettent CC 37..52)
+LCXL_MODE16_BUTTON_CCS = list(range(37, 53))
+
+# Novation Launch Control XL 3 / Launchkey / DAW Surface Mode Select (CC 30 sur Canal 7 ou tout canal)
+CC_NOVATION_MODE_SELECT = 30
+# Mapping des codes de modes Novation vers l'index de piste dans la banque (0..15)
+NOVATION_MODE_TO_TRACK = {
+    1: 0, 6: 0,        # Mode 1 -> Piste 1 (index 0)
+    2: 1, 7: 1,        # Mode 2 -> Piste 2 (index 1)
+    8: 2,              # Mode 3 -> Piste 3 (index 2)
+    9: 3,              # Mode 4 -> Piste 4 (index 3) - "Mode Select Mode 4"
+    18: 4, 10: 4,      # Mode 5 -> Piste 5 (index 4)
+    19: 5, 11: 5,      # Mode 6 -> Piste 6 (index 5)
+    20: 6, 12: 6,      # Mode 7 -> Piste 7 (index 6)
+    21: 7, 13: 7,      # Mode 8 -> Piste 8 (index 7)
+    22: 8, 14: 8,      # Mode 9 -> Piste 9 (index 8)
+    23: 9, 15: 9,      # Mode 10 -> Piste 10 (index 9)
+    24: 10, 16: 10,    # Mode 11 -> Piste 11 (index 10)
+    25: 11,            # Mode 12 -> Piste 12 (index 11)
+    26: 12,            # Mode 13 -> Piste 13 (index 12)
+    27: 13,            # Mode 14 -> Piste 14 (index 13)
+    28: 14,            # Mode 15 -> Piste 15 (index 14)
+    29: 15,            # Mode 16 -> Piste 16 (index 15)
+}
+
+# Handshake DAW Mode Novation Launch Control XL 3
+NOVATION_DAW_MODE_ON_SYSEX = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x02, 0x7F, 0xF7)
+NOVATION_DAW_MODE_OFF_SYSEX = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x02, 0x00, 0xF7)
+NOVATION_DAW_MODE_ON_NOTE = (0x9F, 0x0C, 0x7F)
+NOVATION_DAW_MODE_OFF_NOTE = (0x9F, 0x0C, 0x00)
+
+# CC Virtuels Jog / Poussoir Master (déplacés pour éviter tout conflit avec boutons CC 40/41)
+CC_ENC17_JOG       = 104  # CC 104 (Master Jog / BPM virtuel)
+CC_ENC17_PUSH      = 105  # CC 105 (Clic poussoir Master virtuel)
 
 # Boutons de Navigation Système
 CC_NAV_LEFT        = 54  # Flèche Gauche ◄

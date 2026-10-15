@@ -1261,13 +1261,20 @@
     // 2. Texte détaillé du moniteur
     const txt = document.getElementById('midi-monitor-txt');
     if (txt) {
-      const typeStr = (evt.type === 'cc') ? 'CC' : (evt.type === 'note_on' ? 'Note On' : 'Note');
+      let typeStr = (evt.type === 'cc') ? 'CC' : (evt.type === 'note_on' ? 'Note On' : (evt.type === 'prog_change' ? 'Program Change' : 'Note'));
       let targetName = '';
       if (evt.type === 'cc') {
-        const kIdx = state.midiConfig.knobs.indexOf(evt.num);
-        if (kIdx >= 0) targetName = ` → Knob #${kIdx + 1}`;
-        const bIdx = state.midiConfig.buttons.indexOf(evt.num);
-        if (bIdx >= 0) targetName = ` → Piste #${bIdx + 1}`;
+        if (evt.num === 30) {
+          targetName = ` → Novation Mode Select (Mode ${evt.val})`;
+        } else {
+          const kIdx = state.midiConfig.knobs.indexOf(evt.num);
+          if (kIdx >= 0) targetName = ` → Knob #${kIdx + 1}`;
+          const bIdx = state.midiConfig.buttons.indexOf(evt.num);
+          if (bIdx >= 0) targetName = ` → Piste #${bIdx + 1}`;
+          else if (evt.num >= 37 && evt.num <= 52) targetName = ` → Piste #${evt.num - 36}`;
+        }
+      } else if (evt.type === 'prog_change') {
+        targetName = ` → Sélection Piste #${evt.num + 1}`;
       } else {
         const bIdx = state.midiConfig.buttons.indexOf(evt.num);
         if (bIdx >= 0) targetName = ` → Piste #${bIdx + 1}`;

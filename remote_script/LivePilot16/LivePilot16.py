@@ -10,7 +10,10 @@ from .consts import (
     SYSEX_HEADER, CMD_BANK_INFO, CMD_TRACK_ACTIVE, CMD_BANK_COLORS,
     CMD_DEVICE_ACTIVE, CMD_PARAM_DATA, CMD_SCENE_INFO, CC_BASE_ENCODERS,
     DEFAULT_KNOB_CCS, DEFAULT_BUTTON_CCS, DEFAULT_MIDI_CHANNEL,
-    FACTORY_KNOB_CCS, FACTORY_BUTTON_NOTES,
+    FACTORY_KNOB_CCS, FACTORY_BUTTON_NOTES, LCXL_MODE16_BUTTON_CCS,
+    CC_NOVATION_MODE_SELECT, NOVATION_MODE_TO_TRACK,
+    NOVATION_DAW_MODE_ON_SYSEX, NOVATION_DAW_MODE_OFF_SYSEX,
+    NOVATION_DAW_MODE_ON_NOTE, NOVATION_DAW_MODE_OFF_NOTE,
     CC_ENC17_JOG, CC_ENC17_PUSH, CC_NAV_LEFT, CC_NAV_RIGHT, CC_BTN_VALID,
     CC_NAV_TRACK_PREV, CC_NAV_TRACK_NEXT, CC_NAV_GROUP_PREV, CC_NAV_GROUP_NEXT,
     CC_NAV_DEV_PREV, CC_NAV_DEV_NEXT, CC_BASE_TRACK_SEL,
@@ -83,6 +86,11 @@ class LivePilot16(ControlSurface):
     def disconnect(self):
         """Nettoyage lors de la fermeture d'Ableton Live"""
         self.log_message("LivePilot : Deconnexion de la surface de controle.")
+        try:
+            self._send_midi(NOVATION_DAW_MODE_OFF_SYSEX)
+            self._send_midi(NOVATION_DAW_MODE_OFF_NOTE)
+        except Exception:
+            pass
         if self._web_server:
             self._web_server.stop()
             self._web_server = None
@@ -996,11 +1004,47 @@ class LivePilot16(ControlSurface):
     # COMPATIBILITÉ MIDI / SYSEX (Launch Control XL MK3 / MK2)
     # =========================================================================
     def receive_midi(self, midi_bytes):
-        if len(midi_bytes) < 3:
+        if not midi_bytes:
             return
-        status, data1, data2 = midi_bytes[0], midi_bytes[1], midi_bytes[2]
+        status = midi_bytes[0]
         msg_type = status & 0xF0
         channel = (status & 0x0F) + 1
+        data1 = midi_bytes[1] if len(midi_bytes) > 1 else 0
+        data2 = midi_bytes[2] if len(midi_bytes) > 2 else 0
+
+        # --- GESTION DES PROGRAM CHANGES (0xC0) ---
+        # Certains templates ou modes Novation émettent un Program Change
+        if msg_type == 0xC0:
+            prog_num = data1
+            if self._web_server:
+                try:
+                    self._web_server.broadcast({
+                        'type': 'midi_event',
+                        'data': {
+                            'status': status,
+                            'channel': channel,
+                            'type': 'prog_change',
+                            'num': prog_num,
+                            'val': prog_num
+                        }
+                    })
+                except Exception:
+                    pass
+            if 0 <= prog_num < NUM_TRACKS_PER_BANK:
+                self.log_message("LivePilot : Program Change %d recu -> Selection Piste %d" % (prog_num, prog_num + 1))
+                self._select_track_in_bank(prog_num)
+                return
+            elif 1 <= prog_num <= NUM_TRACKS_PER_BANK:
+                self.log_message("LivePilot : Program Change %d recu -> Selection Piste %d" % (prog_num, prog_num))
+                self._select_track_in_bank(prog_num - 1)
+                return
+            super(LivePilot16, self).receive_midi(midi_bytes)
+            return
+
+        # S'il manque le 3e octet pour un CC ou Note, passer à la classe parente
+        if len(midi_bytes) < 3:
+            super(LivePilot16, self).receive_midi(midi_bytes)
+            return
 
         # Diffusion du moniteur MIDI temps réel vers la tablette
         if self._web_server:
@@ -1027,6 +1071,23 @@ class LivePilot16(ControlSurface):
         if msg_type == 0xB0:
             cc_num, cc_val = data1, data2
 
+            # 0. NOVATION SURFACE MODE SELECT (CC 30, quel que soit le canal MIDI - ex: Canal 7, 16 ou 1)
+            # Détecte l'appui sur le bouton [MODE] + bouton 1..16 pressé sur le Launch Control XL 3
+            # (Exemple : "Mode Select Mode 4" qui envoie CC 30 val 9 sur Canal 7)
+            if cc_num == CC_NOVATION_MODE_SELECT:
+                target_trk = None
+                if cc_val in NOVATION_MODE_TO_TRACK:
+                    target_trk = NOVATION_MODE_TO_TRACK[cc_val]
+                elif 1 <= cc_val <= NUM_TRACKS_PER_BANK:
+                    target_trk = cc_val - 1
+                elif 0 <= cc_val < NUM_TRACKS_PER_BANK:
+                    target_trk = cc_val
+
+                if target_trk is not None:
+                    self.log_message("LivePilot : Novation Mode Select detecte (val=%d) -> Selection Piste %d" % (cc_val, target_trk + 1))
+                    self._select_track_in_bank(target_trk)
+                    return
+
             # 1. 24 Knobs Potentiomètres (Valeur absolue 0..127 -> 0.0..1.0)
             if cc_num in cfg_knobs:
                 knob_idx = cfg_knobs.index(cc_num)
@@ -1041,12 +1102,20 @@ class LivePilot16(ControlSurface):
                     self._set_encoder_value(knob_idx, norm_val)
                     return
 
-            # 2. 16 Boutons de Sélection de Piste (Mode CC)
+            # 2. 16 Boutons de Sélection de Piste (Boutons physiques sous les faders)
+            # A. Configuration personnalisée / LivePilot (par défaut CC 25..40)
             if cc_num in cfg_buttons and cc_val > 0:
                 btn_idx = cfg_buttons.index(cc_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
+            # B. Mode 16 Factory Template du Launch Control XL (Boutons 1..16 = CC 37 à 52)
+            elif cc_num in LCXL_MODE16_BUTTON_CCS and cc_val > 0:
+                btn_idx = LCXL_MODE16_BUTTON_CCS.index(cc_num)
+                if btn_idx < NUM_TRACKS_PER_BANK:
+                    self._select_track_in_bank(btn_idx)
+                    return
+            # C. Plage alternative CC 64..79
             elif CC_BASE_TRACK_SEL <= cc_num < CC_BASE_TRACK_SEL + NUM_TRACKS_PER_BANK and cc_val > 0:
                 self._select_track_in_bank(cc_num - CC_BASE_TRACK_SEL)
                 return
@@ -1090,20 +1159,47 @@ class LivePilot16(ControlSurface):
         # --- GESTION DES MESSAGES NOTE ON (Launch Control XL Factory Buttons) ---
         elif msg_type == 0x90 and data2 > 0:
             note_num = data1
+            # A. Launch Control XL Factory Notes (Notes 41..48 et 57..64)
             if note_num in FACTORY_BUTTON_NOTES:
                 btn_idx = FACTORY_BUTTON_NOTES.index(note_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
+            # B. Configuration personnalisée Note
             if btn_type == 'note' and note_num in cfg_buttons:
                 btn_idx = cfg_buttons.index(note_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
+            # C. Notes Drum Rack standard (Notes 36..51 pour boutons 1..16)
+            if 36 <= note_num <= 51:
+                self._select_track_in_bank(note_num - 36)
+                return
 
         super(LivePilot16, self).receive_midi(midi_bytes)
 
+    def handle_sysex(self, midi_bytes):
+        """Interception des trames SysEx Novation (changement de template / mode)"""
+        if len(midi_bytes) >= 6 and midi_bytes[1:4] == (0x00, 0x20, 0x29):
+            mode_byte = midi_bytes[-2] if midi_bytes[-1] == 0xF7 else midi_bytes[-1]
+            if mode_byte in NOVATION_MODE_TO_TRACK:
+                target_trk = NOVATION_MODE_TO_TRACK[mode_byte]
+                self.log_message("LivePilot : SysEx Novation Mode recu (%d) -> Selection Piste %d" % (mode_byte, target_trk + 1))
+                self._select_track_in_bank(target_trk)
+                return
+            elif 0 <= mode_byte < NUM_TRACKS_PER_BANK:
+                self._select_track_in_bank(mode_byte)
+                return
+        super(LivePilot16, self).handle_sysex(midi_bytes)
+
     def _full_resync(self):
+        # Activation native du DAW Mode Novation Launch Control XL
+        try:
+            self._send_midi(NOVATION_DAW_MODE_ON_SYSEX)
+            self._send_midi(NOVATION_DAW_MODE_ON_NOTE)
+        except Exception:
+            pass
+
         self._send_bank_info()
         self._send_bank_colors()
         self._send_scene_info()
