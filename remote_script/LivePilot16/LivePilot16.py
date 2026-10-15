@@ -1143,19 +1143,37 @@ class LivePilot16(ControlSurface):
                     return
 
             # 2. 16 Boutons de Sélection de Piste (Boutons physiques sous les faders)
-            # A. Configuration personnalisée / LivePilot (par défaut CC 25..40)
+            # A. Pads appris via MIDI Learn interactif (button_items ou button_types)
+            btn_items = cfg.get('button_items', [])
+            if btn_items and cc_val > 0:
+                for item in btn_items:
+                    if item.get('type') == 'cc' and item.get('num') == cc_num:
+                        target_idx = item.get('index', 0)
+                        self.log_message("LivePilot : Pad appris TRK %d detecte (CC %d) -> Selection Piste %d" % (target_idx + 1, cc_num, target_idx + 1))
+                        self._select_track_in_bank(target_idx)
+                        return
+
+            btn_types = cfg.get('button_types', [])
+            if btn_types and len(btn_types) == NUM_TRACKS_PER_BANK and cc_val > 0:
+                for idx, b_num in enumerate(cfg_buttons[:NUM_TRACKS_PER_BANK]):
+                    if btn_types[idx] == 'cc' and cc_num == b_num:
+                        self.log_message("LivePilot : Pad TRK %d CC %d detecte -> Selection Piste %d" % (idx + 1, cc_num, idx + 1))
+                        self._select_track_in_bank(idx)
+                        return
+
+            # B. Configuration personnalisée / LivePilot (par défaut CC 25..40)
             if cc_num in cfg_buttons and cc_val > 0:
                 btn_idx = cfg_buttons.index(cc_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
-            # B. Mode 16 Factory Template du Launch Control XL (Boutons 1..16 = CC 37 à 52)
+            # C. Mode 16 Factory Template du Launch Control XL (Boutons 1..16 = CC 37 à 52)
             elif cc_num in LCXL_MODE16_BUTTON_CCS and cc_val > 0:
                 btn_idx = LCXL_MODE16_BUTTON_CCS.index(cc_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
-            # C. Plage alternative CC 64..79
+            # D. Plage alternative CC 64..79
             elif CC_BASE_TRACK_SEL <= cc_num < CC_BASE_TRACK_SEL + NUM_TRACKS_PER_BANK and cc_val > 0:
                 self._select_track_in_bank(cc_num - CC_BASE_TRACK_SEL)
                 return
@@ -1199,19 +1217,38 @@ class LivePilot16(ControlSurface):
         # --- GESTION DES MESSAGES NOTE ON (Launch Control XL Factory Buttons) ---
         elif msg_type == 0x90 and data2 > 0:
             note_num = data1
-            # A. Launch Control XL Factory Notes (Notes 41..48 et 57..64)
+
+            # A. Pads appris via MIDI Learn interactif (button_items ou button_types)
+            btn_items = cfg.get('button_items', [])
+            if btn_items:
+                for item in btn_items:
+                    if item.get('type') == 'note' and item.get('num') == note_num:
+                        target_idx = item.get('index', 0)
+                        self.log_message("LivePilot : Pad appris TRK %d detecte (Note %d) -> Selection Piste %d" % (target_idx + 1, note_num, target_idx + 1))
+                        self._select_track_in_bank(target_idx)
+                        return
+
+            btn_types = cfg.get('button_types', [])
+            if btn_types and len(btn_types) == NUM_TRACKS_PER_BANK:
+                for idx, b_num in enumerate(cfg_buttons[:NUM_TRACKS_PER_BANK]):
+                    if btn_types[idx] == 'note' and note_num == b_num:
+                        self.log_message("LivePilot : Pad TRK %d Note %d detecte -> Selection Piste %d" % (idx + 1, note_num, idx + 1))
+                        self._select_track_in_bank(idx)
+                        return
+
+            # B. Launch Control XL Factory Notes (Notes 41..48 et 57..64)
             if note_num in FACTORY_BUTTON_NOTES:
                 btn_idx = FACTORY_BUTTON_NOTES.index(note_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
-            # B. Configuration personnalisée Note
+            # C. Configuration personnalisée Note
             if btn_type == 'note' and note_num in cfg_buttons:
                 btn_idx = cfg_buttons.index(note_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
-            # C. Notes Drum Rack standard (Notes 36..51 pour boutons 1..16)
+            # D. Notes Drum Rack standard (Notes 36..51 pour boutons 1..16)
             if 36 <= note_num <= 51:
                 self._select_track_in_bank(note_num - 36)
                 return

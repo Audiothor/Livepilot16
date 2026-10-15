@@ -1642,3 +1642,113 @@ html, body {
   background: #33f3ff;
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.65);
 }
+
+/* ==========================================================================
+   BANNIÈRE & ANIMATIONS DU MODE MIDI LEARN INTERACTIF
+   ========================================================================== */
+.midi-learn-banner {
+  background: rgba(255, 145, 0, 0.08);
+  border: 1.5px solid rgba(255, 145, 0, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.midi-learn-banner.active-learning {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: #00f0ff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+}
+
+.learn-banner-icon {
+  font-size: 20px;
+}
+
+.learn-banner-content {
+  flex: 1;
+}
+
+.learn-banner-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ff9100;
+  margin-bottom: 2px;
+}
+
+.midi-learn-banner.active-learning .learn-banner-title {
+  color: #00f0ff;
+}
+
+.learn-banner-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.learn-banner-btn {
+  background: #201407;
+  border: 1px solid #ff9100;
+  color: #ff9100;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.learn-banner-btn:hover {
+  background: #ff9100;
+  color: #000;
+}
+
+/* Styles pour les chips en mode LEARN */
+.midi-chip {
+  cursor: pointer;
+  user-select: none;
+}
+
+.midi-chip:hover {
+  border-color: #3b82f6;
+  background: #0f1624;
+}
+
+.midi-chip.is-learning {
+  border: 1.5px solid #ff9100 !important;
+  background: #241405 !important;
+  box-shadow: 0 0 14px rgba(255, 145, 0, 0.7) !important;
+  animation: pulse-learning 1.1s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-learning {
+  0% { border-color: #ff9100; box-shadow: 0 0 8px rgba(255, 145, 0, 0.4); transform: scale(1.0); }
+  100% { border-color: #00f0ff; box-shadow: 0 0 16px rgba(0, 240, 255, 0.85); transform: scale(1.04); }
+}
+
+.midi-chip.learn-success {
+  border-color: #00e676 !important;
+  background: #0b2214 !important;
+  box-shadow: 0 0 16px rgba(0, 230, 118, 0.8) !important;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
+.midi-chip-type-tag {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #ffd600;
+  background: rgba(255, 214, 0, 0.12);
+  border-radius: 3px;
+  padding: 1px 4px;
+  letter-spacing: 0.3px;
+}
+
+.midi-chip.is-learning .midi-chip-type-tag {
+  color: #ff9100;
+  background: rgba(255, 145, 0, 0.2);
+}
+

@@ -262,14 +262,24 @@
             </div>
           </div>
 
+          <!-- Bannière Interactive MIDI LEARN -->
+          <div id="midi-learn-banner" class="midi-learn-banner">
+            <div class="learn-banner-icon">🎯</div>
+            <div class="learn-banner-content">
+              <div id="learn-banner-title" class="learn-banner-title">Mode MIDI Learn Actif</div>
+              <div id="learn-banner-desc" class="learn-banner-desc">Cliquez avec votre souris sur un pad (ex: TRK 1), puis appuyez sur le pad physique de votre Launch Control XL.</div>
+            </div>
+            <button id="btn-cancel-learn" class="learn-banner-btn" style="display: none;">Arrêter l'écoute</button>
+          </div>
+
           <!-- Guide de configuration Ableton Live -->
           <div class="settings-notice">
             <div class="notice-title">💡 Branchement requis dans Ableton Live :</div>
             <div class="notice-desc">
               Dans <strong>Options > Préférences > Link, Tempo & MIDI</strong>, assurez-vous de configurer :<br>
               • <strong>Surface de contrôle :</strong> <code>LivePilot 16</code><br>
-              • <strong>Entrée :</strong> <code>Launch Control XL</code> (indispensable pour recevoir les potentiomètres)<br>
-              • <strong>Sortie :</strong> <code>Launch Control XL</code> (ou <code>Aucun</code>)
+              • <strong>Entrée :</strong> <code>LCXL3 1 MIDI</code> ou <code>Launch Control XL</code><br>
+              • <strong>Sortie :</strong> <code>LCXL3 1 MIDI</code> ou <code>Launch Control XL</code>
             </div>
           </div>
 
@@ -313,7 +323,7 @@
           <div class="settings-section">
             <div class="section-title-wrap">
               <h4>16 Boutons de Sélection de Piste (Pistes 1 à 16)</h4>
-              <span class="section-badge">Sélection Directe</span>
+              <span class="section-badge" id="learn-status-badge">Mode MIDI Learn Disponible</span>
             </div>
             <div id="buttons-mapping-grid" class="mapping-grid-16"></div>
           </div>
