@@ -175,8 +175,12 @@
       preset: 'livepilot',
       channel: 1,
       knobs: Array.from({ length: 24 }, (_, i) => i + 1), // 1..24
-      buttons: Array.from({ length: 16 }, (_, i) => i + 25), // 25..40
-      button_type: 'cc'
+      buttons: Array.from({ length: 16 }, (_, i) => i + 33), // CC 33..48 (Pistes 1..16)
+      button_type: 'cc',
+      button_types: Array.from({ length: 16 }, () => 'cc'),
+      button_channels: Array.from({ length: 16 }, () => 1),
+      button_values: Array.from({ length: 16 }, () => 127),
+      button_items: []
     }
   };
 
@@ -1222,6 +1226,10 @@
   }
 
   function cancelLearnTarget() {
+    if (learnDebounceTimer) {
+      clearTimeout(learnDebounceTimer);
+      learnDebounceTimer = null;
+    }
     activeLearnTarget = null;
     document.querySelectorAll('.midi-chip').forEach(c => c.classList.remove('is-learning'));
 
@@ -1294,12 +1302,19 @@
     if (buttonsContainer) {
       buttonsContainer.innerHTML = '';
       for (let i = 0; i < 16; i++) {
-        const val = (state.midiConfig.buttons && state.midiConfig.buttons[i] !== undefined)
+        const num = (state.midiConfig.buttons && state.midiConfig.buttons[i] !== undefined)
           ? state.midiConfig.buttons[i]
-          : (i + 25);
+          : (i + 33);
         const bType = (state.midiConfig.button_types && state.midiConfig.button_types[i])
           ? state.midiConfig.button_types[i].toUpperCase()
           : ((state.midiConfig.button_type === 'note' || state.midiConfig.preset === 'factory') ? 'NOTE' : 'CC');
+        const bVal = (state.midiConfig.button_values && state.midiConfig.button_values[i] !== undefined)
+          ? state.midiConfig.button_values[i]
+          : null;
+
+        const valTagHtml = (bVal !== null)
+          ? `<span class="midi-chip-val-tag" id="tag-val-${i}">v${bVal}</span>`
+          : `<span class="midi-chip-val-tag" id="tag-val-${i}" style="display:none;"></span>`;
 
         const chip = document.createElement('div');
         chip.className = 'midi-chip';
@@ -1307,8 +1322,11 @@
         chip.title = `Cliquer avec la souris pour programmer le pad de la Piste ${i + 1}`;
         chip.innerHTML = `
           <span class="midi-chip-lbl">TRK ${i + 1}</span>
-          <input type="number" min="0" max="127" class="midi-chip-val" id="input-btn-cc-${i}" value="${val}" title="Valeur MIDI pour TRK ${i + 1}">
-          <span class="midi-chip-type-tag" id="tag-btn-${i}">${bType}</span>
+          <input type="number" min="0" max="127" class="midi-chip-val" id="input-btn-cc-${i}" value="${num}" title="Numéro CC ou Note pour TRK ${i + 1}">
+          <div class="midi-chip-meta">
+            <span class="midi-chip-type-tag" id="tag-btn-${i}">${bType}</span>
+            ${valTagHtml}
+          </div>
         `;
         chip.addEventListener('click', (e) => {
           if (e.target && e.target.tagName === 'INPUT') return;
@@ -1350,10 +1368,12 @@
       state.midiConfig.preset = 'livepilot';
       state.midiConfig.channel = 1;
       state.midiConfig.knobs = Array.from({ length: 24 }, (_, i) => i + 1); // 1..24
-      state.midiConfig.buttons = Array.from({ length: 16 }, (_, i) => i + 25); // 25..40
+      state.midiConfig.buttons = Array.from({ length: 16 }, (_, i) => i + 33); // CC 33..48 (Pistes 1..16)
       state.midiConfig.button_type = 'cc';
       state.midiConfig.button_types = Array.from({ length: 16 }, () => 'cc');
       state.midiConfig.button_channels = Array.from({ length: 16 }, () => 1);
+      state.midiConfig.button_values = Array.from({ length: 16 }, () => 127);
+      state.midiConfig.button_items = [];
     } else if (presetType === 'factory') {
       state.midiConfig.preset = 'factory';
       state.midiConfig.channel = 1;
@@ -1369,10 +1389,14 @@
       state.midiConfig.button_type = 'note';
       state.midiConfig.button_types = Array.from({ length: 16 }, () => 'note');
       state.midiConfig.button_channels = Array.from({ length: 16 }, () => 1);
+      state.midiConfig.button_values = Array.from({ length: 16 }, () => 127);
+      state.midiConfig.button_items = [];
     }
     renderMidiConfigGrids();
     syncMidiSettingsUI();
   }
+
+  let learnDebounceTimer = null;
 
   function handleIncomingMidi(evt) {
     if (!evt) return;
@@ -1382,8 +1406,11 @@
 
     // 2. Traitement du Mode MIDI Learn Actif
     if (activeLearnTarget) {
+      // Ignorer si en cours de debounce (évite les rebonds ou capture lors du relâchement)
+      if (learnDebounceTimer) return;
+
       const isNoteOn = (evt.type === 'note_on' && evt.val > 0);
-      const isCC = (evt.type === 'cc');
+      const isCC = (evt.type === 'cc' && evt.val > 0); // Strictement val > 0
 
       if (isNoteOn || isCC) {
         const targetType = activeLearnTarget.type;
@@ -1393,10 +1420,12 @@
           if (!state.midiConfig.buttons) state.midiConfig.buttons = [];
           if (!state.midiConfig.button_types) state.midiConfig.button_types = [];
           if (!state.midiConfig.button_channels) state.midiConfig.button_channels = [];
+          if (!state.midiConfig.button_values) state.midiConfig.button_values = [];
 
           state.midiConfig.buttons[targetIdx] = evt.num;
           state.midiConfig.button_types[targetIdx] = isCC ? 'cc' : 'note';
           state.midiConfig.button_channels[targetIdx] = evt.channel;
+          state.midiConfig.button_values[targetIdx] = evt.val;
           state.midiConfig.preset = 'custom';
 
           const chip = document.getElementById(`midi-chip-btn-${targetIdx}`);
@@ -1407,23 +1436,32 @@
             if (input) input.value = evt.num;
             const tag = chip.querySelector('.midi-chip-type-tag');
             if (tag) tag.textContent = isCC ? 'CC' : 'NOTE';
-            setTimeout(() => chip.classList.remove('learn-success'), 500);
+            const valTag = chip.querySelector('.midi-chip-val-tag');
+            if (valTag) {
+              valTag.textContent = `v${evt.val}`;
+              valTag.style.display = 'inline-block';
+            }
+            setTimeout(() => chip.classList.remove('learn-success'), 400);
           }
 
-          // Auto-advance vers le pad suivant
-          if (targetIdx < 15) {
-            armLearnTarget('button', targetIdx + 1);
-            const bTitle = document.getElementById('learn-banner-title');
-            const bDesc = document.getElementById('learn-banner-desc');
-            if (bTitle) bTitle.textContent = `✓ TRK ${targetIdx + 1} assigné ! 🎯 Écoute : TRK ${targetIdx + 2}...`;
-            if (bDesc) bDesc.textContent = `Appuyez sur le pad correspondant pour TRK ${targetIdx + 2} (ou cliquez sur un autre pad).`;
-          } else {
-            cancelLearnTarget();
-            const bTitle = document.getElementById('learn-banner-title');
-            const bDesc = document.getElementById('learn-banner-desc');
-            if (bTitle) bTitle.textContent = `🎉 Tous les 16 pads sont assignés avec succès !`;
-            if (bDesc) bDesc.textContent = `Cliquez sur 'Enregistrer et Appliquer' pour mémoriser votre contrôleur dans Ableton.`;
-          }
+          // Debounce de 350ms pour laisser le temps de relâcher le pad physique
+          learnDebounceTimer = setTimeout(() => {
+            learnDebounceTimer = null;
+            // Auto-advance vers le pad suivant
+            if (targetIdx < 15) {
+              armLearnTarget('button', targetIdx + 1);
+              const bTitle = document.getElementById('learn-banner-title');
+              const bDesc = document.getElementById('learn-banner-desc');
+              if (bTitle) bTitle.textContent = `✓ TRK ${targetIdx + 1} assigné (${isCC ? 'CC' : 'Note'} ${evt.num} • Val ${evt.val}) ! 🎯 Écoute : TRK ${targetIdx + 2}...`;
+              if (bDesc) bDesc.textContent = `Appuyez sur le pad correspondant pour TRK ${targetIdx + 2} (ou cliquez sur un autre pad).`;
+            } else {
+              cancelLearnTarget();
+              const bTitle = document.getElementById('learn-banner-title');
+              const bDesc = document.getElementById('learn-banner-desc');
+              if (bTitle) bTitle.textContent = `🎉 Tous les 16 pads sont assignés avec succès !`;
+              if (bDesc) bDesc.textContent = `Cliquez sur 'Enregistrer et Appliquer' pour mémoriser votre contrôleur dans Ableton.`;
+            }
+          }, 350);
         } else if (targetType === 'knob') {
           state.midiConfig.knobs[targetIdx] = evt.num;
           state.midiConfig.preset = 'custom';
@@ -1433,13 +1471,16 @@
             chip.classList.add('learn-success');
             const input = chip.querySelector('input');
             if (input) input.value = evt.num;
-            setTimeout(() => chip.classList.remove('learn-success'), 500);
+            setTimeout(() => chip.classList.remove('learn-success'), 400);
           }
-          if (targetIdx < 23) {
-            armLearnTarget('knob', targetIdx + 1);
-          } else {
-            cancelLearnTarget();
-          }
+          learnDebounceTimer = setTimeout(() => {
+            learnDebounceTimer = null;
+            if (targetIdx < 23) {
+              armLearnTarget('knob', targetIdx + 1);
+            } else {
+              cancelLearnTarget();
+            }
+          }, 350);
         }
       }
     }
@@ -1543,6 +1584,9 @@
         index: i,
         track: i + 1,
         num: state.midiConfig.buttons[i],
+        val: (state.midiConfig.button_values && state.midiConfig.button_values[i] !== undefined)
+          ? state.midiConfig.button_values[i]
+          : null,
         type: (state.midiConfig.button_types && state.midiConfig.button_types[i]) ? state.midiConfig.button_types[i] : 'cc',
         channel: (state.midiConfig.button_channels && state.midiConfig.button_channels[i]) ? state.midiConfig.button_channels[i] : 0
       });
@@ -1575,6 +1619,15 @@
         const parsed = JSON.parse(savedMidi);
         if (parsed && parsed.knobs && parsed.buttons) {
           state.midiConfig = parsed;
+          if (!state.midiConfig.button_values) {
+            state.midiConfig.button_values = Array.from({ length: 16 }, () => 127);
+          }
+          if (!state.midiConfig.button_types) {
+            state.midiConfig.button_types = Array.from({ length: 16 }, () => (state.midiConfig.button_type || 'cc'));
+          }
+          if (!state.midiConfig.button_channels) {
+            state.midiConfig.button_channels = Array.from({ length: 16 }, () => (state.midiConfig.channel || 1));
+          }
         }
       }
     } catch (e) {}

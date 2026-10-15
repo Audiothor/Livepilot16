@@ -1752,3 +1752,22 @@ html, body {
   background: rgba(255, 145, 0, 0.2);
 }
 
+.midi-chip-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.midi-chip-val-tag {
+  font-size: 8px;
+  font-weight: 800;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 3px;
+  padding: 1px 4px;
+  letter-spacing: 0.2px;
+}
+

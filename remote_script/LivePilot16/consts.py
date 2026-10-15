@@ -15,10 +15,11 @@ CMD_PARAM_DATA    = 0x05
 CMD_SCENE_INFO    = 0x06
 CMD_FULL_SYNC_REQ = 0x0F
 
-# Numéros de Control Change (CC) par défaut (Preset LivePilot : CC 1..24 & CC 25..40)
+# Numéros de Control Change (CC) par défaut (Preset LivePilot 16 Novation Components)
 CC_BASE_ENCODERS   = 1   # CC 1 à 24 (Knob 1 = CC1, Knob 2 = CC2 ... Knob 24 = CC24)
-DEFAULT_KNOB_CCS   = list(range(1, 25))    # CC 1 à 24
-DEFAULT_BUTTON_CCS = list(range(25, 41))   # CC 25 à 40 (16 boutons sous faders)
+DEFAULT_KNOB_CCS   = list(range(1, 25))    # CC 1 à 24 (Knobs 1 à 24)
+DEFAULT_FADER_CCS  = list(range(25, 33))   # CC 25 à 32 (8 Faders de volume)
+DEFAULT_BUTTON_CCS = list(range(33, 49))   # CC 33 à 48 (16 Boutons : Rangée 1 = CC 33..40, Rangée 2 = CC 41..48)
 DEFAULT_MIDI_CHANNEL = 1                   # Canal 1 (1-based)
 
 # Preset Novation Launch Control XL Factory (D'usine sans remapping)

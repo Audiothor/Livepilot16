@@ -9,7 +9,7 @@ from _Framework.ControlSurface import ControlSurface
 from .consts import (
     SYSEX_HEADER, CMD_BANK_INFO, CMD_TRACK_ACTIVE, CMD_BANK_COLORS,
     CMD_DEVICE_ACTIVE, CMD_PARAM_DATA, CMD_SCENE_INFO, CC_BASE_ENCODERS,
-    DEFAULT_KNOB_CCS, DEFAULT_BUTTON_CCS, DEFAULT_MIDI_CHANNEL,
+    DEFAULT_KNOB_CCS, DEFAULT_FADER_CCS, DEFAULT_BUTTON_CCS, DEFAULT_MIDI_CHANNEL,
     FACTORY_KNOB_CCS, FACTORY_BUTTON_NOTES, LCXL_MODE16_BUTTON_CCS,
     CC_NOVATION_MODE_SELECT, NOVATION_MODE_TO_TRACK,
     NOVATION_DAW_MODE_ON_SYSEX, NOVATION_DAW_MODE_OFF_SYSEX,
@@ -1111,9 +1111,30 @@ class LivePilot16(ControlSurface):
         if msg_type == 0xB0:
             cc_num, cc_val = data1, data2
 
-            # 0. NOVATION SURFACE MODE SELECT (CC 30, quel que soit le canal MIDI - ex: Canal 7, 16 ou 1)
+            # 0. Pads appris via MIDI Learn interactif (priorité absolue à la configuration apprise)
+            btn_items = cfg.get('button_items', [])
+            if btn_items and cc_val > 0:
+                same_num_items = [it for it in btn_items if it.get('num') == cc_num and it.get('type') == 'cc']
+                for item in btn_items:
+                    if item.get('type') == 'cc' and item.get('num') == cc_num:
+                        it_ch = item.get('channel')
+                        if it_ch and it_ch > 0 and (channel + 1) != it_ch:
+                            continue
+
+                        # Si plusieurs pads partagent le même CC (ex: CC 30 Novation Mode Select),
+                        # la valeur CC (data2 / mode) permet de distinguer les 16 boutons
+                        exp_val = item.get('val')
+                        if len(same_num_items) > 1 and exp_val is not None:
+                            if cc_val != exp_val:
+                                continue
+
+                        target_idx = item.get('index', 0)
+                        self.log_message("LivePilot : Pad appris TRK %d detecte (CC %d, val %d, ch %d) -> Selection Piste %d" % (target_idx + 1, cc_num, cc_val, channel + 1, target_idx + 1))
+                        self._select_track_in_bank(target_idx)
+                        return
+
+            # 1. NOVATION SURFACE MODE SELECT (CC 30, ex: Canal 7) si non mappé par bouton personnalisé
             # Détecte l'appui sur le bouton [MODE] + bouton 1..16 pressé sur le Launch Control XL 3
-            # (Exemple : "Mode Select Mode 4" qui envoie CC 30 val 9 sur Canal 7)
             if cc_num == CC_NOVATION_MODE_SELECT:
                 target_trk = None
                 if cc_val in NOVATION_MODE_TO_TRACK:
@@ -1128,7 +1149,7 @@ class LivePilot16(ControlSurface):
                     self._select_track_in_bank(target_trk)
                     return
 
-            # 1. 24 Knobs Potentiomètres (Valeur absolue 0..127 -> 0.0..1.0)
+            # 2. 24 Knobs Potentiomètres (Valeur absolue 0..127 -> 0.0..1.0)
             if cc_num in cfg_knobs:
                 knob_idx = cfg_knobs.index(cc_num)
                 if knob_idx < NUM_ENCODERS:
@@ -1142,17 +1163,19 @@ class LivePilot16(ControlSurface):
                     self._set_encoder_value(knob_idx, norm_val)
                     return
 
-            # 2. 16 Boutons de Sélection de Piste (Boutons physiques sous les faders)
-            # A. Pads appris via MIDI Learn interactif (button_items ou button_types)
-            btn_items = cfg.get('button_items', [])
-            if btn_items and cc_val > 0:
-                for item in btn_items:
-                    if item.get('type') == 'cc' and item.get('num') == cc_num:
-                        target_idx = item.get('index', 0)
-                        self.log_message("LivePilot : Pad appris TRK %d detecte (CC %d) -> Selection Piste %d" % (target_idx + 1, cc_num, target_idx + 1))
-                        self._select_track_in_bank(target_idx)
-                        return
+            # 3. 8 Faders physiques du Launch Control XL (CC 25 à 32) -> Volume des Pistes 1 à 8
+            if cc_num in DEFAULT_FADER_CCS:
+                fader_idx = DEFAULT_FADER_CCS.index(cc_num)
+                trk_idx = self._bank_index * NUM_TRACKS_PER_BANK + fader_idx
+                tracks = list(self.song().tracks)
+                if trk_idx < len(tracks):
+                    try:
+                        tracks[trk_idx].mixer_device.volume.value = cc_val / 127.0
+                    except Exception:
+                        pass
+                return
 
+            # 3. 16 Boutons de Sélection de Piste (Fallback templates d'usine)
             btn_types = cfg.get('button_types', [])
             if btn_types and len(btn_types) == NUM_TRACKS_PER_BANK and cc_val > 0:
                 for idx, b_num in enumerate(cfg_buttons[:NUM_TRACKS_PER_BANK]):
@@ -1161,13 +1184,13 @@ class LivePilot16(ControlSurface):
                         self._select_track_in_bank(idx)
                         return
 
-            # B. Configuration personnalisée / LivePilot (par défaut CC 25..40)
+            # Configuration personnalisée / LivePilot (par défaut CC 25..40)
             if cc_num in cfg_buttons and cc_val > 0:
                 btn_idx = cfg_buttons.index(cc_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
                     self._select_track_in_bank(btn_idx)
                     return
-            # C. Mode 16 Factory Template du Launch Control XL (Boutons 1..16 = CC 37 à 52)
+            # Mode 16 Factory Template du Launch Control XL (Boutons 1..16 = CC 37 à 52)
             elif cc_num in LCXL_MODE16_BUTTON_CCS and cc_val > 0:
                 btn_idx = LCXL_MODE16_BUTTON_CCS.index(cc_num)
                 if btn_idx < NUM_TRACKS_PER_BANK:
@@ -1223,8 +1246,11 @@ class LivePilot16(ControlSurface):
             if btn_items:
                 for item in btn_items:
                     if item.get('type') == 'note' and item.get('num') == note_num:
+                        it_ch = item.get('channel')
+                        if it_ch and it_ch > 0 and (channel + 1) != it_ch:
+                            continue
                         target_idx = item.get('index', 0)
-                        self.log_message("LivePilot : Pad appris TRK %d detecte (Note %d) -> Selection Piste %d" % (target_idx + 1, note_num, target_idx + 1))
+                        self.log_message("LivePilot : Pad appris TRK %d detecte (Note %d, ch %d) -> Selection Piste %d" % (target_idx + 1, note_num, channel + 1, target_idx + 1))
                         self._select_track_in_bank(target_idx)
                         return
 
