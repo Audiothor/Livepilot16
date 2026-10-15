@@ -1362,16 +1362,18 @@ class LivePilot16(ControlSurface):
 
     def _update_pad_leds(self):
         """Met a jour l'etat lumineux des 16 pads physiques du Launch Control XL.
-        Le pad correspondant a la piste active dans la banque courante recoit la valeur 127 (LED Rouge / Active),
-        tandis que tous les autres pads recoivent la valeur 0 (LED Eteinte).
+        - Piste active selectionnee : Valeur 127 (LED Rouge / Active).
+        - Pistes existantes non selectionnees : Valeur 0 (LED Inactive / Verte).
+        - Pistes inexistantes dans le projet Ableton : Eteint / Aucune couleur (Black).
         """
         try:
             selected_track = self.song().view.selected_track
             tracks = list(self.song().tracks)
+            total_tracks = len(tracks)
+            start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
             active_pad_idx = -1
             if selected_track in tracks:
                 track_idx = tracks.index(selected_track)
-                start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
                 if start_idx <= track_idx < start_idx + NUM_TRACKS_PER_BANK:
                     active_pad_idx = track_idx - start_idx
 
@@ -1383,7 +1385,8 @@ class LivePilot16(ControlSurface):
             default_ch = cfg.get('channel', DEFAULT_MIDI_CHANNEL)
 
             for i in range(NUM_TRACKS_PER_BANK):
-                val = 127 if (i == active_pad_idx) else 0
+                global_trk_idx = start_idx + i
+                track_exists = (global_trk_idx < total_tracks)
 
                 b_num = None
                 b_type = 'cc'
@@ -1420,12 +1423,34 @@ class LivePilot16(ControlSurface):
 
                 ch_idx = max(0, min(15, (b_ch - 1) if (b_ch and b_ch > 0) else 0))
 
-                if b_type == 'cc':
-                    status_byte = 0xB0 | ch_idx
+                if track_exists:
+                    # PISTE EXISTANTE DANS ABLETON
+                    val = 127 if (i == active_pad_idx) else 0
+                    if b_type == 'cc':
+                        status_byte = 0xB0 | ch_idx
+                    else:
+                        status_byte = 0x90 | ch_idx
+                    self._send_midi((status_byte, b_num, val))
                 else:
-                    status_byte = 0x90 | ch_idx
-
-                self._send_midi((status_byte, b_num, val))
+                    # PISTE INEXISTANTE DANS ABLETON -> AUCUNE COULEUR (ÉTEINTE)
+                    # 1. Extinction SysEx RGB Novation Launch Control XL 3 (MK3)
+                    try:
+                        sysex_mk3_off_num = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, b_num, 0, 0, 0, 0xF7)
+                        self._send_midi(sysex_mk3_off_num)
+                        sysex_mk3_off_idx = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, i, 0, 0, 0, 0xF7)
+                        self._send_midi(sysex_mk3_off_idx)
+                    except Exception:
+                        pass
+                    # 2. Extinction SysEx Novation Launch Control XL MK1/MK2
+                    try:
+                        for tmpl in (0x00, 0x08):
+                            sysex_mk2_off = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x11, 0x78, tmpl, i, 0, 0xF7)
+                            self._send_midi(sysex_mk2_off)
+                    except Exception:
+                        pass
+                    # 3. Note Off si bouton en mode note
+                    if b_type == 'note':
+                        self._send_midi((0x80 | ch_idx, b_num, 0))
         except Exception as e:
             self.log_message("LivePilot : Erreur dans _update_pad_leds : %s" % str(e))
 

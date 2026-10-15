@@ -1190,19 +1190,37 @@
     if (!webMidiOutputs || webMidiOutputs.length === 0) return;
     const cfg = state.midiConfig || {};
     const defaultCh = cfg.channel || 1;
+    const totalTracks = state.tracks ? state.tracks.length : 0;
+    const startIdx = (state.bankIndex || 0) * 16;
 
     for (let i = 0; i < 16; i++) {
-      const val = (i === padIndex) ? 127 : 0;
+      const globalTrkIdx = startIdx + i;
+      const trackExists = (totalTracks === 0) || (globalTrkIdx < totalTracks);
+
       let num = (cfg.buttons && cfg.buttons[i] !== undefined) ? cfg.buttons[i] : (33 + i);
       let type = (cfg.button_types && cfg.button_types[i]) ? cfg.button_types[i] : (cfg.button_type || 'cc');
       let ch = (cfg.button_channels && cfg.button_channels[i]) ? cfg.button_channels[i] : defaultCh;
       let targetChIdx = Math.max(0, Math.min(15, ch - 1));
 
-      const status = (type === 'cc') ? (0xB0 | targetChIdx) : (0x90 | targetChIdx);
-      for (const out of webMidiOutputs) {
-        try {
-          out.send([status, num, val]);
-        } catch (e) {}
+      if (trackExists) {
+        const val = (i === padIndex) ? 127 : 0;
+        const status = (type === 'cc') ? (0xB0 | targetChIdx) : (0x90 | targetChIdx);
+        for (const out of webMidiOutputs) {
+          try {
+            out.send([status, num, val]);
+          } catch (e) {}
+        }
+      } else {
+        // Piste inexistante : extinction SysEx
+        for (const out of webMidiOutputs) {
+          try {
+            out.send([0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, num, 0, 0, 0, 0xF7]);
+            out.send([0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, i, 0, 0, 0, 0xF7]);
+            if (type === 'note') {
+              out.send([0x80 | targetChIdx, num, 0]);
+            }
+          } catch (e) {}
+        }
       }
     }
   }
