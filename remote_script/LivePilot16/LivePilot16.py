@@ -17,7 +17,8 @@ from .consts import (
     CC_ENC17_JOG, CC_ENC17_PUSH, CC_NAV_LEFT, CC_NAV_RIGHT, CC_BTN_VALID,
     CC_NAV_TRACK_PREV, CC_NAV_TRACK_NEXT, CC_NAV_GROUP_PREV, CC_NAV_GROUP_NEXT,
     CC_NAV_DEV_PREV, CC_NAV_DEV_NEXT, CC_BASE_TRACK_SEL,
-    NUM_TRACKS_PER_BANK, NUM_ENCODERS, DEFAULT_HTTP_PORT
+    NUM_TRACKS_PER_BANK, NUM_ENCODERS, DEFAULT_HTTP_PORT,
+    NOVATION_FEATURE_CONTROLS_ON_NOTE, LCXL3_BUTTON_INDICES, LCXL3_RGB_SYSEX_HEADER
 )
 from .web_server import LivePilotWebServer
 
@@ -1343,10 +1344,11 @@ class LivePilot16(ControlSurface):
         super(LivePilot16, self).handle_sysex(midi_bytes)
 
     def _full_resync(self):
-        # Activation native du DAW Mode Novation Launch Control XL
+        # Activation native du DAW Mode Novation Launch Control XL 3 (Page 8 & 16 du Guide Officiel)
         try:
             self._send_midi(NOVATION_DAW_MODE_ON_SYSEX)
             self._send_midi(NOVATION_DAW_MODE_ON_NOTE)
+            self._send_midi(NOVATION_FEATURE_CONTROLS_ON_NOTE)
         except Exception:
             pass
 
@@ -1423,39 +1425,47 @@ class LivePilot16(ControlSurface):
 
                 ch_idx = max(0, min(15, (b_ch - 1) if (b_ch and b_ch > 0) else 0))
 
+                ctrl_idx = LCXL3_BUTTON_INDICES[i] if (i < len(LCXL3_BUTTON_INDICES)) else (37 + i)
+
                 if track_exists:
                     # PISTE EXISTANTE DANS ABLETON
-                    val = 127 if (i == active_pad_idx) else 0
+                    if i == active_pad_idx:
+                        # 1. Piste active sélectionnée -> ROUGE VIF
+                        val = 127
+                        # SysEx RGB natif Novation LCXL3 (Page 12: F0 00 20 29 02 15 01 53 <ctrl_idx> 127 0 0 F7)
+                        self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 127, 0, 0, 0xF7))
+                        # Palette CC (Page 11: B0h <ctrl_idx> 5 = Rouge)
+                        self._send_midi((0xB0, ctrl_idx, 5))
+                    else:
+                        # 2. Piste existante inactive -> VERT
+                        val = 0
+                        # SysEx RGB natif Novation LCXL3 (Page 12: F0 00 20 29 02 15 01 53 <ctrl_idx> 0 127 0 F7)
+                        self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 127, 0, 0xF7))
+                        # Palette CC (Page 11: B0h <ctrl_idx> 60 = Vert)
+                        self._send_midi((0xB0, ctrl_idx, 60))
+
                     if b_type == 'cc':
                         status_byte = 0xB0 | ch_idx
                     else:
                         status_byte = 0x90 | ch_idx
                     self._send_midi((status_byte, b_num, val))
                 else:
-                    # PISTE INEXISTANTE DANS ABLETON -> AUCUNE COULEUR (ÉTEINTE)
+                    # PISTE INEXISTANTE DANS ABLETON -> AUCUNE COULEUR (ÉTEINT / NOIR TOTAL)
+                    # 1. SysEx RGB natif Novation LCXL3 (Page 12: F0 00 20 29 02 15 01 53 <ctrl_idx> 0 0 0 F7)
+                    self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
+                    try:
+                        self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, b_num, 0, 0, 0, 0xF7))
+                    except Exception:
+                        pass
+                    # 2. Palette CC (Page 11: B0h <ctrl_idx> 0 = Black / Off)
+                    self._send_midi((0xB0, ctrl_idx, 0))
+                    # 3. Fallback Custom Mode CC (valeur 0)
                     if b_type == 'cc':
                         status_byte = 0xB0 | ch_idx
                     else:
                         status_byte = 0x90 | ch_idx
-                    # Envoi de la valeur 0 (Off) au matériel
                     self._send_midi((status_byte, b_num, 0))
-
-                    # 1. Extinction SysEx RGB Novation Launch Control XL 3 (MK3)
-                    try:
-                        sysex_mk3_off_num = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, b_num, 0, 0, 0, 0xF7)
-                        self._send_midi(sysex_mk3_off_num)
-                        sysex_mk3_off_idx = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, i, 0, 0, 0, 0xF7)
-                        self._send_midi(sysex_mk3_off_idx)
-                    except Exception:
-                        pass
-                    # 2. Extinction SysEx Novation Launch Control XL MK1/MK2
-                    try:
-                        for tmpl in (0x00, 0x08):
-                            sysex_mk2_off = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x11, 0x78, tmpl, i, 0, 0xF7)
-                            self._send_midi(sysex_mk2_off)
-                    except Exception:
-                        pass
-                    # 3. Note Off si bouton en mode note
+                    # 4. Note Off si bouton en mode note
                     if b_type == 'note':
                         self._send_midi((0x80 | ch_idx, b_num, 0))
         except Exception as e:

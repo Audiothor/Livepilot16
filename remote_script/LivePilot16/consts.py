@@ -58,11 +58,22 @@ NOVATION_MODE_TO_TRACK = {
     29: 15,            # Mode 16 -> Piste 16 (index 15)
 }
 
-# Handshake DAW Mode Novation Launch Control XL 3
+# Handshake DAW Mode Novation Launch Control XL 3 (Programmer's Reference Guide Version 1.0)
 NOVATION_DAW_MODE_ON_SYSEX = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x02, 0x7F, 0xF7)
 NOVATION_DAW_MODE_OFF_SYSEX = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x02, 0x00, 0xF7)
 NOVATION_DAW_MODE_ON_NOTE = (0x9F, 0x0C, 0x7F)
 NOVATION_DAW_MODE_OFF_NOTE = (0x9F, 0x0C, 0x00)
+NOVATION_FEATURE_CONTROLS_ON_NOTE = (0x9F, 0x0B, 0x7F)
+NOVATION_FEATURE_CONTROLS_OFF_NOTE = (0x9F, 0x0B, 0x00)
+
+# Indices matériels officiels des 16 boutons (Guide Développeur Page 9)
+# Rangée 1 (Pistes 1..8) : 37..44 (25h..2Ch)
+# Rangée 2 (Pistes 9..16): 45..52 (2Dh..34h)
+LCXL3_BUTTON_INDICES = [
+    37, 38, 39, 40, 41, 42, 43, 44,
+    45, 46, 47, 48, 49, 50, 51, 52
+]
+LCXL3_RGB_SYSEX_HEADER = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53)
 
 # CC Virtuels Jog / Poussoir Master (déplacés pour éviter tout conflit avec boutons CC 40/41)
 CC_ENC17_JOG       = 104  # CC 104 (Master Jog / BPM virtuel)
