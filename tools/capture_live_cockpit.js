@@ -78,6 +78,15 @@ async function main() {
       expression: 'document.getElementById("btn-config") && document.getElementById("btn-config").click();'
     });
     await new Promise(r => setTimeout(r, 400));
+  } else if (process.argv[3] === 'guide') {
+    await send('Runtime.evaluate', {
+      expression: 'document.getElementById("btn-config") && document.getElementById("btn-config").click();'
+    });
+    await new Promise(r => setTimeout(r, 300));
+    await send('Runtime.evaluate', {
+      expression: 'document.getElementById("btn-header-ableton-guide") && document.getElementById("btn-header-ableton-guide").click();'
+    });
+    await new Promise(r => setTimeout(r, 400));
   }
 
   // Capture screenshot
