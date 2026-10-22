@@ -4,6 +4,9 @@
 # "Ne regardez plus l'écran, pilotez votre son."
 
 from __future__ import absolute_import, print_function, unicode_literals
+import os
+import json
+import copy
 import Live
 from _Framework.ControlSurface import ControlSurface
 from .consts import (
@@ -21,7 +24,10 @@ from .consts import (
     NOVATION_FEATURE_CONTROLS_ON_NOTE, LCXL3_BUTTON_INDICES, LCXL3_RGB_SYSEX_HEADER,
     CC_NAV_TRACK_LEFT, CC_NAV_TRACK_RIGHT, CC_NAV_PAGE_UP, CC_NAV_PAGE_DOWN,
     DAW_FADER_CCS, DAW_KNOB_CCS, DAW_BUTTON_CCS,
-    CC_HW_PLAY, CC_HW_RECORD, CC_HW_SOLO_ARM, CC_HW_MUTE_SELECT, CC_HW_CLIP_STOP
+    CC_HW_PLAY, CC_HW_RECORD, CC_HW_SOLO_ARM, CC_HW_MUTE_SELECT, CC_HW_CLIP_STOP,
+    NOVATION_SURFACE_DAW_MIXER, NOVATION_SURFACE_DAW_CONTROL,
+    NOVATION_ENCODER_ROW1_ABS, NOVATION_ENCODER_ROW2_ABS, NOVATION_ENCODER_ROW3_ABS,
+    DEFAULT_NAV_BUTTONS
 )
 from .web_server import LivePilotWebServer
 
@@ -59,6 +65,7 @@ class LivePilot16(ControlSurface):
         self._observed_clip_tracks = []
         self._master_mode_bpm = True
         self._meter_polling_active = False
+        self._lcxl3_surface_mode = 'daw'
 
         # Configuration MIDI du Launch Control XL (par défaut : LivePilot CC 1..24 & CC 25..40)
         self._midi_config = {
@@ -66,8 +73,10 @@ class LivePilot16(ControlSurface):
             'channel': DEFAULT_MIDI_CHANNEL,
             'knobs': list(DEFAULT_KNOB_CCS),
             'buttons': list(DEFAULT_BUTTON_CCS),
-            'button_type': 'cc'
+            'button_type': 'cc',
+            'nav_buttons': copy.deepcopy(DEFAULT_NAV_BUTTONS)
         }
+        self._load_midi_config_from_disk()
 
         # Démarrage du serveur Web / WebSocket UNIQUEMENT sur l'instance Master
         if self._is_master:
@@ -1092,9 +1101,99 @@ class LivePilot16(ControlSurface):
             cfg = msg.get('config', {})
             if cfg and isinstance(cfg, dict):
                 self._midi_config.update(cfg)
+                if 'nav_buttons' not in self._midi_config or not isinstance(self._midi_config['nav_buttons'], dict):
+                    self._midi_config['nav_buttons'] = copy.deepcopy(DEFAULT_NAV_BUTTONS)
+                self._save_midi_config_to_disk()
                 self.log_message("LivePilot : Configuration MIDI mise a jour : %s" % str(self._midi_config))
                 self._broadcast_full_sync()
                 self._update_pad_leds()
+                self._update_nav_leds()
+
+    def _get_midi_config_path(self):
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'midi_config.json')
+
+    def _load_midi_config_from_disk(self):
+        try:
+            cfg_path = self._get_midi_config_path()
+            if os.path.exists(cfg_path):
+                with open(cfg_path, 'r', encoding='utf-8') as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    self._midi_config.update(loaded)
+                    if 'nav_buttons' not in self._midi_config or not isinstance(self._midi_config['nav_buttons'], dict):
+                        self._midi_config['nav_buttons'] = copy.deepcopy(DEFAULT_NAV_BUTTONS)
+                    else:
+                        for k, v in DEFAULT_NAV_BUTTONS.items():
+                            if k not in self._midi_config['nav_buttons']:
+                                self._midi_config['nav_buttons'][k] = copy.deepcopy(v)
+                    self.log_message("LivePilot : Configuration MIDI chargee depuis midi_config.json")
+        except Exception as e:
+            self.log_message("LivePilot : Erreur chargement midi_config.json : %s" % str(e))
+
+    def _save_midi_config_to_disk(self):
+        try:
+            cfg_path = self._get_midi_config_path()
+            with open(cfg_path, 'w', encoding='utf-8') as f:
+                json.dump(self._midi_config, f, indent=2)
+        except Exception as e:
+            self.log_message("LivePilot : Erreur sauvegarde midi_config.json : %s" % str(e))
+
+    def _execute_nav_action(self, action_name, btn_label=""):
+        """Exécute l'action configurée par l'utilisateur pour un bouton Page ▲/▼ ou Track ◄/►"""
+        self.log_message("LivePilot : Execution action '%s' (bouton %s)" % (action_name, btn_label))
+        if action_name == 'track_prev':
+            self._select_prev_track()
+        elif action_name == 'track_next':
+            self._select_next_track()
+        elif action_name == 'bank_prev':
+            self._nav_bank_prev()
+        elif action_name == 'bank_next':
+            self._nav_bank_next()
+        elif action_name == 'device_prev':
+            self._nav_device_prev()
+        elif action_name == 'device_next':
+            self._nav_device_next()
+        elif action_name == 'scene_prev':
+            self._nav_screen_left()
+        elif action_name == 'scene_next':
+            self._nav_screen_right()
+        elif action_name == 'scene_fire_selected':
+            self._on_btn_valid_pressed()
+        elif action_name in ('scene_fire_next', 'scene_fire_prev'):
+            delta = 1 if action_name == 'scene_fire_next' else -1
+            info = self._get_active_scene_info()
+            scenes = list(self.song().scenes)
+            target = (info.get('num', 1) - 1) + delta
+            if 0 <= target < len(scenes):
+                scenes[target].fire()
+                self.song().view.selected_scene = scenes[target]
+                self._send_scene_info()
+                self._broadcast_active_scene()
+                self._broadcast_selected_track()
+        elif action_name == 'group_prev':
+            self._nav_group_prev()
+        elif action_name == 'group_next':
+            self._nav_group_next()
+        elif action_name == 'play_toggle':
+            self.song().is_playing = not self.song().is_playing
+            self._update_nav_leds()
+            self._broadcast_transport()
+        elif action_name == 'mute_selected':
+            if self._current_track and hasattr(self._current_track, 'mute'):
+                self._current_track.mute = not self._current_track.mute
+                self._broadcast_selected_track()
+        elif action_name == 'solo_selected':
+            if self._current_track and hasattr(self._current_track, 'solo'):
+                self._current_track.solo = not self._current_track.solo
+                self._broadcast_selected_track()
+        elif action_name == 'arm_selected':
+            if self._current_track and hasattr(self._current_track, 'arm'):
+                try:
+                    self._current_track.arm = not self._current_track.arm
+                    self._broadcast_selected_track()
+                except Exception:
+                    pass
+        self._update_nav_leds()
 
     # =========================================================================
     # COMPATIBILITÉ MIDI / SYSEX (Launch Control XL MK3 / MK2)
@@ -1206,31 +1305,75 @@ class LivePilot16(ControlSurface):
         if msg_type == 0xB0:
             cc_num, cc_val = data1, data2
 
-            # 1. NAVIGATION MATÉRIELLE LAUNCH CONTROL XL 3 (Track ◄/►, Page ▲/▼)
-            if (cc_num in (CC_NAV_TRACK_LEFT, CC_NAV_TRACK_PREV, 103)) and cc_val > 0:
-                self.log_message("LivePilot : Track Left (◄) detecte (CC %d) -> Piste precedente" % cc_num)
-                self._select_prev_track()
+            # 0. GESTION DU MODE DE SURFACE LAUNCH CONTROL XL 3 (Canal 7, CC 30 : 0xB6 0x1E <mode>)
+            # En Custom Mode (val >= 6), le firmware Novation désactive matériellement Page ▲/▼ et Track ◄/►.
+            # On bascule donc automatiquement la surface en mode DAW Control (02h) où Page, Track, Pads, Knobs et LEDs sont 100% actifs.
+            if channel == 7 and cc_num == CC_NOVATION_MODE_SELECT:
+                if cc_val in (1, 2):
+                    self._lcxl3_surface_mode = 'daw'
+                    self.log_message("LivePilot : Surface Launch Control XL 3 en mode DAW (%d) -> Touches Page & Track actives !" % cc_val)
+                    self._update_pad_leds()
+                    self._update_knob_leds()
+                    self._update_nav_leds()
+                    self._update_screen_display()
+                else:
+                    self.log_message("LivePilot : Mode Custom (%d) detecte sur Canal 7 CC 30 -> Bascule auto en DAW Control (02h) pour activer Page & Track !" % cc_val)
+                    self._enforce_daw_control_mode()
+                    try:
+                        self.schedule_message(1, self._enforce_daw_control_mode)
+                        self.schedule_message(2, self._update_pad_leds)
+                        self.schedule_message(2, self._update_knob_leds)
+                        self.schedule_message(2, self._update_nav_leds)
+                        self.schedule_message(2, self._update_screen_display)
+                    except Exception:
+                        pass
                 return
-            elif (cc_num in (CC_NAV_TRACK_RIGHT, CC_NAV_TRACK_NEXT, 102)) and cc_val > 0:
-                self.log_message("LivePilot : Track Right (►) detecte (CC %d) -> Piste suivante" % cc_num)
-                self._select_next_track()
-                return
-            elif (cc_num in (CC_NAV_PAGE_UP, 106)) and cc_val > 0:
-                self.log_message("LivePilot : Page Up (▲) detecte (CC %d) -> Banque precedente" % cc_num)
-                self._nav_bank_prev()
-                return
-            elif (cc_num in (CC_NAV_PAGE_DOWN, 107)) and cc_val > 0:
-                self.log_message("LivePilot : Page Down (▼) detecte (CC %d) -> Banque suivante" % cc_num)
-                self._nav_bank_next()
+
+            # 1. NAVIGATION MATÉRIELLE CONFIGURABLE (Page ▲/▼, Track ◄/►)
+            nav_cfg = cfg.get('nav_buttons', DEFAULT_NAV_BUTTONS)
+            matched_nav_key = None
+            matched_nav_action = None
+            if isinstance(nav_cfg, dict):
+                for n_key, n_info in nav_cfg.items():
+                    if isinstance(n_info, dict) and n_info.get('type', 'cc') == 'cc' and n_info.get('cc') == cc_num:
+                        matched_nav_key = n_key
+                        matched_nav_action = n_info.get('action')
+                        break
+
+            if not matched_nav_key:
+                if cc_num in (CC_NAV_PAGE_UP, 106):
+                    matched_nav_key = 'page_up'
+                    matched_nav_action = nav_cfg.get('page_up', {}).get('action', 'bank_prev') if isinstance(nav_cfg, dict) else 'bank_prev'
+                elif cc_num in (CC_NAV_PAGE_DOWN, 107):
+                    matched_nav_key = 'page_down'
+                    matched_nav_action = nav_cfg.get('page_down', {}).get('action', 'bank_next') if isinstance(nav_cfg, dict) else 'bank_next'
+                elif cc_num in (CC_NAV_TRACK_LEFT, CC_NAV_TRACK_PREV, 103):
+                    matched_nav_key = 'track_left'
+                    matched_nav_action = nav_cfg.get('track_left', {}).get('action', 'track_prev') if isinstance(nav_cfg, dict) else 'track_prev'
+                elif cc_num in (CC_NAV_TRACK_RIGHT, CC_NAV_TRACK_NEXT, 102):
+                    matched_nav_key = 'track_right'
+                    matched_nav_action = nav_cfg.get('track_right', {}).get('action', 'track_next') if isinstance(nav_cfg, dict) else 'track_next'
+
+            if matched_nav_key:
+                if cc_val > 0 and matched_nav_action and matched_nav_action != 'none':
+                    self._execute_nav_action(matched_nav_action, matched_nav_key)
+                else:
+                    self._update_nav_leds()
+                    try:
+                        self.schedule_message(1, self._update_nav_leds)
+                    except Exception:
+                        pass
                 return
 
             # Transport matériel Launch Control XL 3
-            elif cc_num == CC_HW_PLAY and cc_val > 0:
-                self.song().is_playing = not self.song().is_playing
+            if cc_num == CC_HW_PLAY:
+                if cc_val > 0:
+                    self.song().is_playing = not self.song().is_playing
                 self._update_nav_leds()
                 return
-            elif cc_num == CC_HW_RECORD and cc_val > 0:
-                self.song().record_mode = not self.song().record_mode
+            elif cc_num == CC_HW_RECORD:
+                if cc_val > 0:
+                    self.song().record_mode = not self.song().record_mode
                 self._update_nav_leds()
                 return
             elif cc_num == CC_HW_SOLO_ARM and cc_val > 0:
@@ -1462,15 +1605,28 @@ class LivePilot16(ControlSurface):
                 return
         super(LivePilot16, self).handle_sysex(midi_bytes)
 
-    def _full_resync(self):
-        # Activation native du DAW Mode Novation Launch Control XL 3 (Page 8 & 16 du Guide Officiel)
-        # pour déverrouiller Track ◄/►, Page ▲/▼, les LEDs RGB des 24 knobs et des 16 pads, et l'écran OLED
+    def _enforce_daw_control_mode(self):
+        """Force le Launch Control XL 3 en mode DAW Control (02h) avec encodeurs absolus (0..127).
+        Cela garantit que Page ▲/▼ (CC 106/107) et Track ◄/► (CC 103/102) sont 100% actifs matériellement,
+        ainsi que les 16 Pads, les 24 Knobs, les 8 Faders et toutes les LEDs RGB."""
         try:
+            self._lcxl3_surface_mode = 'daw'
             self._send_midi_all(NOVATION_DAW_MODE_ON_SYSEX)
             self._send_midi_all(NOVATION_DAW_MODE_ON_NOTE)
             self._send_midi_all(NOVATION_FEATURE_CONTROLS_ON_NOTE)
+            # Bascule explicite de la surface en mode DAW Control (Canal 7, CC 30, valeur 2)
+            self._send_midi_all(NOVATION_SURFACE_DAW_CONTROL)
+            # Désactivation du mode relatif sur les 3 rangées d'encodeurs (mode absolu 0..127)
+            self._send_midi_all(NOVATION_ENCODER_ROW1_ABS)
+            self._send_midi_all(NOVATION_ENCODER_ROW2_ABS)
+            self._send_midi_all(NOVATION_ENCODER_ROW3_ABS)
         except Exception:
             pass
+
+    def _full_resync(self):
+        # Activation native du DAW Mode Novation Launch Control XL 3 (Page 8, 10 & 16 du Guide Officiel)
+        # pour déverrouiller Track ◄/►, Page ▲/▼, les LEDs RGB des 24 knobs et des 16 pads, et l'écran OLED
+        self._enforce_daw_control_mode()
 
         self._send_bank_info()
         self._send_bank_colors()
@@ -1631,23 +1787,29 @@ class LivePilot16(ControlSurface):
     def _update_nav_leds(self):
         """Met a jour les LEDs des touches matérielles (Track ◄/►, Page ▲/▼, Play, Record)"""
         try:
-            selected_track = self.song().view.selected_track
-            tracks = list(self.song().tracks)
-            total_tracks = len(tracks)
-            track_idx = tracks.index(selected_track) if selected_track in tracks else 0
+            cfg = getattr(self, '_midi_config', {})
+            nav_cfg = cfg.get('nav_buttons', DEFAULT_NAV_BUTTONS) if isinstance(cfg, dict) else DEFAULT_NAV_BUTTONS
 
-            # Touches Track ◄ (103) et Track ► (102) : Vert si déplacement possible
-            has_prev_track = (track_idx > 0)
-            has_next_track = (track_idx < total_tracks - 1)
-            self._send_midi_all((0xB0, CC_NAV_TRACK_LEFT, 60 if has_prev_track else 0))
-            self._send_midi_all((0xB0, CC_NAV_TRACK_RIGHT, 60 if has_next_track else 0))
+            tl_act = nav_cfg.get('track_left', {}).get('action', 'track_prev') if isinstance(nav_cfg, dict) else 'track_prev'
+            tr_act = nav_cfg.get('track_right', {}).get('action', 'track_next') if isinstance(nav_cfg, dict) else 'track_next'
+            pu_act = nav_cfg.get('page_up', {}).get('action', 'bank_prev') if isinstance(nav_cfg, dict) else 'bank_prev'
+            pd_act = nav_cfg.get('page_down', {}).get('action', 'bank_next') if isinstance(nav_cfg, dict) else 'bank_next'
 
-            # Touches Page ▲ (106) et Page ▼ (107) : Cyan si changement de banque possible
-            total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
-            has_prev_bank = (self._current_bank_index > 0)
-            has_next_bank = (self._current_bank_index < total_banks - 1)
-            self._send_midi_all((0xB0, CC_NAV_PAGE_UP, 37 if has_prev_bank else 0))
-            self._send_midi_all((0xB0, CC_NAV_PAGE_DOWN, 37 if has_next_bank else 0))
+            # Touches Track ◄ (103) et Track ► (102) : Allumées en Vert vif (60) si une action est assignée
+            tl_col = 60 if (tl_act and tl_act != 'none') else 0
+            tr_col = 60 if (tr_act and tr_act != 'none') else 0
+            self._send_midi_all((0xB0, CC_NAV_TRACK_LEFT, tl_col))
+            self._send_midi_all((0xB0, CC_NAV_TRACK_RIGHT, tr_col))
+            self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, CC_NAV_TRACK_LEFT, 0, 127 if tl_col else 0, 0, 0xF7))
+            self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, CC_NAV_TRACK_RIGHT, 0, 127 if tr_col else 0, 0, 0xF7))
+
+            # Touches Page ▲ (106) et Page ▼ (107) : Allumées en Cyan vif (37) si une action est assignée
+            pu_col = 37 if (pu_act and pu_act != 'none') else 0
+            pd_col = 37 if (pd_act and pd_act != 'none') else 0
+            self._send_midi_all((0xB0, CC_NAV_PAGE_UP, pu_col))
+            self._send_midi_all((0xB0, CC_NAV_PAGE_DOWN, pd_col))
+            self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, CC_NAV_PAGE_UP, 0, 127 if pu_col else 0, 127 if pu_col else 0, 0xF7))
+            self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, CC_NAV_PAGE_DOWN, 0, 127 if pd_col else 0, 127 if pd_col else 0, 0xF7))
 
             # Touche Play (116) : Vert vif si en lecture, Vert tamisé si à l'arrêt
             is_playing = self.song().is_playing

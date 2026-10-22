@@ -1617,6 +1617,140 @@ html, body {
   gap: 6px;
 }
 
+/* Grille des 4 Boutons de Navigation (Page ▲/▼ & Track ◄/►) */
+.nav-actions-section {
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.section-badge.nav-badge {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.35);
+}
+
+.mapping-grid-nav-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.nav-action-card {
+  background: #080d17;
+  border: 1px solid #1b2b44;
+  border-radius: 7px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.nav-action-card.active-rx {
+  border-color: #00e676;
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.45);
+  background: #0c1f24;
+}
+
+.nav-action-card.is-learning {
+  border-color: #ffd600;
+  box-shadow: 0 0 12px rgba(255, 214, 0, 0.45);
+  background: #1f1b0c;
+}
+
+.nav-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.nav-card-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nav-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: #112238;
+  border: 1px solid #243e63;
+  color: #00f0ff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.nav-cc-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-cc-lbl {
+  font-size: 9px;
+  font-weight: 800;
+  color: #7e91ad;
+}
+
+.nav-cc-input {
+  width: 42px;
+  background: #05080f;
+  border: 1px solid #1e2e48;
+  border-radius: 4px;
+  color: #00f0ff;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  padding: 2px 2px;
+}
+
+.nav-learn-btn {
+  background: #122036;
+  border: 1px solid #263e63;
+  color: #cbd5e1;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nav-learn-btn:hover {
+  background: #1a3050;
+  color: #00f0ff;
+  border-color: #00f0ff;
+}
+
+.nav-action-select {
+  width: 100%;
+  background: #0c1524;
+  border: 1px solid #223552;
+  border-radius: 5px;
+  color: #00e676;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.nav-action-select:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.35);
+}
+
 .midi-chip {
   background: #090e18;
   border: 1px solid #182336;

@@ -66,6 +66,24 @@ NOVATION_DAW_MODE_OFF_NOTE = (0x9F, 0x0C, 0x00)
 NOVATION_FEATURE_CONTROLS_ON_NOTE = (0x9F, 0x0B, 0x7F)
 NOVATION_FEATURE_CONTROLS_OFF_NOTE = (0x9F, 0x0B, 0x00)
 
+# Sélection du mode de surface DAW (Guide Développeur Page 10 & 17 : B6h 1Eh <mode>)
+# 01h = DAW Mixer, 02h = DAW Control (active Page ▲/▼, Track ◄/►, 16 Pads, 24 Knobs, 8 Faders et toutes les LEDs)
+NOVATION_SURFACE_DAW_MIXER = (0xB6, 0x1E, 0x01)
+NOVATION_SURFACE_DAW_CONTROL = (0xB6, 0x1E, 0x02)
+
+# Forcer les 3 rangées d'encodeurs en mode Absolu 0..127 (Guide Développeur Page 10)
+NOVATION_ENCODER_ROW1_ABS = (0xB6, 0x45, 0x00)
+NOVATION_ENCODER_ROW2_ABS = (0xB6, 0x48, 0x00)
+NOVATION_ENCODER_ROW3_ABS = (0xB6, 0x49, 0x00)
+
+# Configuration par défaut des 4 boutons de navigation matériels (Page ▲/▼ et Track ◄/►)
+DEFAULT_NAV_BUTTONS = {
+    'page_up':     {'cc': 106, 'type': 'cc', 'channel': 1, 'action': 'bank_prev'},
+    'page_down':   {'cc': 107, 'type': 'cc', 'channel': 1, 'action': 'bank_next'},
+    'track_left':  {'cc': 103, 'type': 'cc', 'channel': 1, 'action': 'track_prev'},
+    'track_right': {'cc': 102, 'type': 'cc', 'channel': 1, 'action': 'track_next'}
+}
+
 # Indices matériels officiels des 16 boutons (Guide Développeur Page 9)
 # Rangée 1 (Pistes 1..8) : 37..44 (25h..2Ch)
 # Rangée 2 (Pistes 9..16): 45..52 (2Dh..34h)

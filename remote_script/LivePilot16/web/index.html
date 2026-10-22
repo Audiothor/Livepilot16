@@ -280,17 +280,25 @@
           <!-- Guide de configuration Ableton Live -->
           <div class="settings-notice">
             <div class="notice-header-row">
-              <div class="notice-title">💡 Branchement requis dans Ableton Live :</div>
+              <div class="notice-title">💡 Branchement Launch Control XL 3 dans Ableton Live :</div>
               <button id="btn-body-ableton-guide" class="btn-notice-guide-btn">
                 <span>📘</span> Guide illustré pas-à-pas Ableton Live
               </button>
             </div>
             <div class="notice-desc">
-              Dans <strong>Options > Préférences > Link, Tempo & MIDI</strong>, assurez-vous de configurer :<br>
-              • <strong>Surface de contrôle :</strong> <code>LivePilot 16</code><br>
-              • <strong>Entrée :</strong> <code>LCXL3 1 MIDI</code> ou <code>Launch Control XL</code><br>
-              • <strong>Sortie :</strong> <code>LCXL3 1 MIDI</code> ou <code>Launch Control XL</code>
+              Dans <strong>Options > Préférences > Link, Tempo & MIDI</strong>, configurez les 2 lignes pour activer les pads, les knobs ET les boutons <strong>Page ▲/▼ & Track ◄/►</strong> :<br>
+              • <strong>Ligne 1 :</strong> Surface <code>LivePilot16</code> | Entrée <code>LCXL3 1 MIDI</code> | Sortie <code>LCXL3 1 MIDI</code><br>
+              • <strong>Ligne 2 :</strong> Surface <code>LivePilot16</code> | Entrée <code>LCXL3 1 MIDI (Port 2)</code> | Sortie <code>LCXL3 1 MIDI (Port 2)</code>
             </div>
+          </div>
+
+          <!-- ASSIGNATION D'ACTIONS AUX 4 BOUTONS PAGE ▲/▼ ET TRACK ◄/► -->
+          <div class="settings-section nav-actions-section">
+            <div class="section-title-wrap">
+              <h4>🧭 4 Boutons Matériels Page ▲/▼ &amp; Track ◄/► (Assignation d'Actions)</h4>
+              <span class="section-badge nav-badge">Actions Personnalisables + MIDI Learn</span>
+            </div>
+            <div id="nav-buttons-mapping-grid" class="mapping-grid-nav-4"></div>
           </div>
 
           <!-- Sélecteur de Presets Rapides -->
@@ -394,14 +402,19 @@
                 </div>
                 <div class="table-sim-row active-row">
                   <div class="sim-col"><span class="sim-select highlight">LivePilot 16</span></div>
-                  <div class="sim-col"><span class="sim-select highlight">Launch Control XL</span></div>
-                  <div class="sim-col"><span class="sim-select highlight">Launch Control XL</span></div>
+                  <div class="sim-col"><span class="sim-select highlight">LCXL3 1 MIDI</span></div>
+                  <div class="sim-col"><span class="sim-select highlight">LCXL3 1 MIDI</span></div>
+                </div>
+                <div class="table-sim-row active-row">
+                  <div class="sim-col"><span class="sim-select highlight">LivePilot 16</span></div>
+                  <div class="sim-col"><span class="sim-select highlight">LCXL3 1 MIDI (Port 2)</span></div>
+                  <div class="sim-col"><span class="sim-select highlight">LCXL3 1 MIDI (Port 2)</span></div>
                 </div>
               </div>
 
               <div class="step-tip">
                 <span class="tip-ico">💡</span>
-                <span><strong>Nom sous Windows :</strong> Selon vos pilotes USB, le port peut apparaître sous le nom <code>Launch Control XL</code> ou <code>LCXL3 1 MIDI</code>. Sélectionnez impérativement le même nom dans les colonnes <em>Entrée</em> et <em>Sortie</em>.</span>
+                <span><strong>Pourquoi les 2 lignes ?</strong> Sur le Launch Control XL 3, la ligne 1 (<code>LCXL3 1 MIDI</code>) gère le port principal, et la ligne 2 (<code>LCXL3 1 MIDI (Port 2)</code>) active nativement les touches <strong>Page ▲/▼</strong>, <strong>Track ◄/►</strong>, l'écran OLED et l'éclairage RGB complet sous les knobs et les pads !</span>
               </div>
             </div>
           </div>

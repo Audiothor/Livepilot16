@@ -180,7 +180,13 @@
       button_types: Array.from({ length: 16 }, () => 'cc'),
       button_channels: Array.from({ length: 16 }, () => 1),
       button_values: Array.from({ length: 16 }, () => 127),
-      button_items: []
+      button_items: [],
+      nav_buttons: {
+        page_up:     { cc: 106, type: 'cc', channel: 1, action: 'bank_prev' },
+        page_down:   { cc: 107, type: 'cc', channel: 1, action: 'bank_next' },
+        track_left:  { cc: 103, type: 'cc', channel: 1, action: 'track_prev' },
+        track_right: { cc: 102, type: 'cc', channel: 1, action: 'track_next' }
+      }
     }
   };
 
@@ -311,7 +317,16 @@
     if (data.master_volume) state.masterVolume = data.master_volume;
     if (data.parameters) state.parameters = data.parameters;
     if (data.midi_config) {
-      state.midiConfig = data.midi_config;
+      state.midiConfig = {
+        ...state.midiConfig,
+        ...data.midi_config,
+        nav_buttons: {
+          page_up:     { cc: 106, type: 'cc', channel: 1, action: 'bank_prev', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.page_up ? data.midi_config.nav_buttons.page_up : {}) },
+          page_down:   { cc: 107, type: 'cc', channel: 1, action: 'bank_next', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.page_down ? data.midi_config.nav_buttons.page_down : {}) },
+          track_left:  { cc: 103, type: 'cc', channel: 1, action: 'track_prev', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.track_left ? data.midi_config.nav_buttons.track_left : {}) },
+          track_right: { cc: 102, type: 'cc', channel: 1, action: 'track_next', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.track_right ? data.midi_config.nav_buttons.track_right : {}) }
+        }
+      };
       syncMidiSettingsUI();
     }
 
@@ -1219,12 +1234,6 @@
     if (!midi) return;
     try {
       webMidiOutputs = Array.from(midi.outputs.values());
-      for (const out of webMidiOutputs) {
-        try {
-          // Déverrouiller les touches de fonction Track < > et Page < > en mode Custom (Guide p.16)
-          out.send([0x9F, 0x0B, 0x7F]);
-        } catch (e) {}
-      }
     } catch (e) {
       webMidiOutputs = [];
     }
@@ -1297,6 +1306,50 @@
     }
   }
 
+  const NAV_BUTTON_DEFS = [
+    { key: 'page_up',     icon: '▲', label: 'Page ▲ (Haut)',    defaultCc: 106, defaultAction: 'bank_prev' },
+    { key: 'page_down',   icon: '▼', label: 'Page ▼ (Bas)',     defaultCc: 107, defaultAction: 'bank_next' },
+    { key: 'track_left',  icon: '◄', label: 'Track ◄ (Gauche)', defaultCc: 103, defaultAction: 'track_prev' },
+    { key: 'track_right', icon: '►', label: 'Track ► (Droite)', defaultCc: 102, defaultAction: 'track_next' }
+  ];
+
+  const NAV_ACTION_OPTIONS = [
+    { value: 'track_prev',          label: '◄ Piste précédente (-1)' },
+    { value: 'track_next',          label: '► Piste suivante (+1)' },
+    { value: 'bank_prev',           label: '▲ Banque 16 pistes précédente (-16)' },
+    { value: 'bank_next',           label: '▼ Banque 16 pistes suivante (+16)' },
+    { value: 'device_prev',         label: '◄ Plugin / Effet précédent' },
+    { value: 'device_next',         label: '► Plugin / Effet suivant' },
+    { value: 'scene_prev',          label: '▲ Sélectionner scène précédente' },
+    { value: 'scene_next',          label: '▼ Sélectionner scène suivante' },
+    { value: 'scene_fire_next',     label: '▶ Lancer scène suivante' },
+    { value: 'scene_fire_prev',     label: '◀ Lancer scène précédente' },
+    { value: 'scene_fire_selected', label: '▶ Lancer la scène sélectionnée' },
+    { value: 'group_prev',          label: '◄ Groupe de pistes précédent' },
+    { value: 'group_next',          label: '► Groupe de pistes suivant' },
+    { value: 'play_toggle',         label: '⏯ Lecture / Stop Ableton' },
+    { value: 'mute_selected',       label: '🔇 Mute / Unmute piste active' },
+    { value: 'solo_selected',       label: '🎧 Solo / Unsolo piste active' },
+    { value: 'arm_selected',        label: '🔴 Armer / Désarmer piste active' },
+    { value: 'none',                label: '— Aucune action (Désactivé)' }
+  ];
+
+  function ensureNavButtonsConfig() {
+    if (!state.midiConfig.nav_buttons || typeof state.midiConfig.nav_buttons !== 'object') {
+      state.midiConfig.nav_buttons = {};
+    }
+    for (const def of NAV_BUTTON_DEFS) {
+      if (!state.midiConfig.nav_buttons[def.key] || typeof state.midiConfig.nav_buttons[def.key] !== 'object') {
+        state.midiConfig.nav_buttons[def.key] = {
+          cc: def.defaultCc,
+          type: 'cc',
+          channel: 1,
+          action: def.defaultAction
+        };
+      }
+    }
+  }
+
   function armLearnTarget(type, index) {
     // Si on clique sur la cible déjà active, on annule l'écoute
     if (activeLearnTarget && activeLearnTarget.type === type && activeLearnTarget.index === index) {
@@ -1304,10 +1357,14 @@
       return;
     }
 
-    document.querySelectorAll('.midi-chip').forEach(c => c.classList.remove('is-learning'));
+    document.querySelectorAll('.midi-chip, .nav-action-card').forEach(c => c.classList.remove('is-learning'));
 
     activeLearnTarget = { type, index };
-    const chipId = (type === 'button') ? `midi-chip-btn-${index}` : `midi-chip-knob-${index}`;
+    let chipId = '';
+    if (type === 'button') chipId = `midi-chip-btn-${index}`;
+    else if (type === 'knob') chipId = `midi-chip-knob-${index}`;
+    else if (type === 'nav') chipId = `midi-chip-nav-${index}`;
+
     const chip = document.getElementById(chipId);
     if (chip) {
       chip.classList.add('is-learning');
@@ -1322,9 +1379,16 @@
     if (banner) banner.classList.add('active-learning');
     if (bCancel) bCancel.style.display = 'block';
 
-    const targetLabel = (type === 'button') ? `TRK ${index + 1} (Piste ${index + 1})` : `Knob #${index + 1}`;
+    let targetLabel = '';
+    if (type === 'button') targetLabel = `TRK ${index + 1} (Piste ${index + 1})`;
+    else if (type === 'knob') targetLabel = `Knob #${index + 1}`;
+    else if (type === 'nav') {
+      const def = NAV_BUTTON_DEFS.find(d => d.key === index);
+      targetLabel = def ? def.label : `Bouton ${index}`;
+    }
+
     if (bTitle) bTitle.textContent = `🎯 Écoute en cours : ${targetLabel}`;
-    if (bDesc) bDesc.textContent = `Appuyez sur le pad physique correspondant de votre Launch Control XL pour assigner sa note/CC.`;
+    if (bDesc) bDesc.textContent = `Appuyez sur le bouton physique correspondant de votre Launch Control XL pour capturer son CC.`;
     if (statusBadge) statusBadge.textContent = `En écoute : ${targetLabel}...`;
   }
 
@@ -1334,7 +1398,7 @@
       learnDebounceTimer = null;
     }
     activeLearnTarget = null;
-    document.querySelectorAll('.midi-chip').forEach(c => c.classList.remove('is-learning'));
+    document.querySelectorAll('.midi-chip, .nav-action-card').forEach(c => c.classList.remove('is-learning'));
 
     const banner = document.getElementById('midi-learn-banner');
     const bTitle = document.getElementById('learn-banner-title');
@@ -1345,7 +1409,7 @@
     if (banner) banner.classList.remove('active-learning');
     if (bCancel) bCancel.style.display = 'none';
     if (bTitle) bTitle.textContent = `Mode MIDI Learn Actif`;
-    if (bDesc) bDesc.textContent = `Cliquez avec votre souris sur un pad (ex: TRK 1), puis appuyez sur le pad physique de votre Launch Control XL.`;
+    if (bDesc) bDesc.textContent = `Cliquez sur un bouton Page ▲/▼, Track ◄/►, un pad ou un knob, ou choisissez l'action à exécuter.`;
     if (statusBadge) statusBadge.textContent = `Mode MIDI Learn Disponible`;
   }
 
@@ -1353,6 +1417,7 @@
     const modal = document.getElementById('settings-modal');
     if (!modal) return;
     initWebMidi();
+    ensureNavButtonsConfig();
     renderMidiConfigGrids();
     syncMidiSettingsUI();
     cancelLearnTarget();
@@ -1380,6 +1445,72 @@
   }
 
   function renderMidiConfigGrids() {
+    ensureNavButtonsConfig();
+
+    // 0. Grille des 4 Boutons de Navigation (Page ▲/▼ & Track ◄/►)
+    const navContainer = document.getElementById('nav-buttons-mapping-grid');
+    if (navContainer) {
+      navContainer.innerHTML = '';
+      for (const def of NAV_BUTTON_DEFS) {
+        const navCfg = state.midiConfig.nav_buttons[def.key] || { cc: def.defaultCc, type: 'cc', channel: 1, action: def.defaultAction };
+        const card = document.createElement('div');
+        card.className = 'nav-action-card';
+        card.id = `midi-chip-nav-${def.key}`;
+
+        const optionsHtml = NAV_ACTION_OPTIONS.map(opt =>
+          `<option value="${opt.value}" ${navCfg.action === opt.value ? 'selected' : ''}>${opt.label}</option>`
+        ).join('');
+
+        card.innerHTML = `
+          <div class="nav-card-top">
+            <div class="nav-card-title">
+              <span class="nav-card-icon">${def.icon}</span>
+              <span>${def.label}</span>
+            </div>
+            <div class="nav-cc-group">
+              <span class="nav-cc-lbl">CC</span>
+              <input type="number" min="0" max="127" class="nav-cc-input" id="input-nav-cc-${def.key}" value="${navCfg.cc}" title="Numéro CC matériel (${def.label})">
+              <button type="button" class="nav-learn-btn" id="btn-learn-nav-${def.key}" title="Cliquer puis appuyer sur le bouton physique ${def.label}">🎯</button>
+            </div>
+          </div>
+          <select class="nav-action-select" id="select-nav-action-${def.key}" title="Action exécutée dans Ableton Live quand vous appuyez sur ${def.label}">
+            ${optionsHtml}
+          </select>
+        `;
+
+        const learnBtn = card.querySelector(`#btn-learn-nav-${def.key}`);
+        if (learnBtn) {
+          learnBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            armLearnTarget('nav', def.key);
+          });
+        }
+
+        const ccInput = card.querySelector(`#input-nav-cc-${def.key}`);
+        if (ccInput) {
+          ccInput.addEventListener('change', (e) => {
+            const val = parseInt(e.target.value, 10);
+            if (!isNaN(val) && val >= 0 && val <= 127) {
+              state.midiConfig.nav_buttons[def.key].cc = val;
+              try { localStorage.setItem('livepilot_midi_config', JSON.stringify(state.midiConfig)); } catch (err) {}
+              sendAction('save_midi_config', { config: state.midiConfig });
+            }
+          });
+        }
+
+        const actionSelect = card.querySelector(`#select-nav-action-${def.key}`);
+        if (actionSelect) {
+          actionSelect.addEventListener('change', (e) => {
+            state.midiConfig.nav_buttons[def.key].action = e.target.value;
+            try { localStorage.setItem('livepilot_midi_config', JSON.stringify(state.midiConfig)); } catch (err) {}
+            sendAction('save_midi_config', { config: state.midiConfig });
+          });
+        }
+
+        navContainer.appendChild(card);
+      }
+    }
+
     // 1. Grille des 24 Knobs
     const knobsContainer = document.getElementById('knobs-mapping-grid');
     if (knobsContainer) {
@@ -1481,6 +1612,12 @@
 
   function applyPreset(presetType) {
     cancelLearnTarget();
+    state.midiConfig.nav_buttons = {
+      page_up:     { cc: 106, type: 'cc', channel: 1, action: 'bank_prev' },
+      page_down:   { cc: 107, type: 'cc', channel: 1, action: 'bank_next' },
+      track_left:  { cc: 103, type: 'cc', channel: 1, action: 'track_prev' },
+      track_right: { cc: 102, type: 'cc', channel: 1, action: 'track_next' }
+    };
     if (presetType === 'livepilot') {
       state.midiConfig.preset = 'livepilot';
       state.midiConfig.channel = 1;
@@ -1598,6 +1735,32 @@
               cancelLearnTarget();
             }
           }, 350);
+        } else if (targetType === 'nav') {
+          ensureNavButtonsConfig();
+          if (state.midiConfig.nav_buttons[targetIdx]) {
+            state.midiConfig.nav_buttons[targetIdx].cc = evt.num;
+            state.midiConfig.nav_buttons[targetIdx].type = isCC ? 'cc' : 'note';
+            state.midiConfig.nav_buttons[targetIdx].channel = evt.channel;
+          }
+          const card = document.getElementById(`midi-chip-nav-${targetIdx}`);
+          if (card) {
+            card.classList.remove('is-learning');
+            card.classList.add('active-rx');
+            const input = document.getElementById(`input-nav-cc-${targetIdx}`);
+            if (input) input.value = evt.num;
+            setTimeout(() => card.classList.remove('active-rx'), 500);
+          }
+          try { localStorage.setItem('livepilot_midi_config', JSON.stringify(state.midiConfig)); } catch (err) {}
+          sendAction('save_midi_config', { config: state.midiConfig });
+          learnDebounceTimer = setTimeout(() => {
+            learnDebounceTimer = null;
+            cancelLearnTarget();
+            const bTitle = document.getElementById('learn-banner-title');
+            const bDesc = document.getElementById('learn-banner-desc');
+            const def = NAV_BUTTON_DEFS.find(d => d.key === targetIdx);
+            if (bTitle) bTitle.textContent = `✓ ${def ? def.label : targetIdx} assigné sur CC #${evt.num} !`;
+            if (bDesc) bDesc.textContent = `Choisissez l'action souhaitée dans sa liste déroulante puis cliquez sur 'Enregistrer et Appliquer'.`;
+          }, 300);
         }
       }
     }
@@ -1617,28 +1780,38 @@
       }, 160);
     }
 
+    ensureNavButtonsConfig();
+    let matchedNavDef = null;
+    if (evt.type === 'cc') {
+      for (const def of NAV_BUTTON_DEFS) {
+        const nCfg = state.midiConfig.nav_buttons[def.key];
+        if ((nCfg && nCfg.cc === evt.num) || def.defaultCc === evt.num) {
+          matchedNavDef = def;
+          break;
+        }
+      }
+    }
+
     // 2. Texte détaillé du moniteur
     const txt = document.getElementById('midi-monitor-txt');
     if (txt) {
       let typeStr = (evt.type === 'cc') ? 'CC' : (evt.type === 'note_on' ? 'Note On' : (evt.type === 'prog_change' ? 'Program Change' : 'Note'));
       let targetName = '';
       if (evt.type === 'cc') {
-        if (evt.num === 30) {
+        if (matchedNavDef) {
+          const nCfg = state.midiConfig.nav_buttons[matchedNavDef.key];
+          const actObj = NAV_ACTION_OPTIONS.find(o => o.value === (nCfg ? nCfg.action : matchedNavDef.defaultAction));
+          targetName = ` → ${matchedNavDef.label} [${actObj ? actObj.label : ''}]`;
+        } else if (evt.num === 30) {
           targetName = ` → Novation Mode Select (Mode ${evt.val})`;
-        } else if (evt.num === 102) {
-          targetName = ` → Track ► (Piste suivante)`;
-        } else if (evt.num === 103) {
-          targetName = ` → Track ◄ (Piste précédente)`;
-        } else if (evt.num === 106) {
-          targetName = ` → Page ▲ (Banque précédente)`;
-        } else if (evt.num === 107) {
-          targetName = ` → Page ▼ (Banque suivante)`;
         } else {
-          const kIdx = state.midiConfig.knobs ? state.midiConfig.knobs.indexOf(evt.num) : -1;
+          let kIdx = state.midiConfig.knobs ? state.midiConfig.knobs.indexOf(evt.num) : -1;
+          if (kIdx < 0 && evt.channel === 16 && evt.num >= 13 && evt.num <= 36) kIdx = evt.num - 13;
           if (kIdx >= 0) targetName = ` → Knob #${kIdx + 1}`;
-          const bIdx = state.midiConfig.buttons ? state.midiConfig.buttons.indexOf(evt.num) : -1;
-          if (bIdx >= 0) targetName = ` → Piste #${bIdx + 1}`;
-          else if (evt.num >= 37 && evt.num <= 52) targetName = ` → Piste #${evt.num - 36}`;
+
+          let bIdx = state.midiConfig.buttons ? state.midiConfig.buttons.indexOf(evt.num) : -1;
+          if (evt.num >= 37 && evt.num <= 52) bIdx = evt.num - 37;
+          if (bIdx >= 0 && kIdx < 0) targetName = ` → Piste #${bIdx + 1}`;
         }
       } else if (evt.type === 'prog_change') {
         targetName = ` → Sélection Piste #${evt.num + 1}`;
@@ -1652,7 +1825,16 @@
     // 3. Highlight chip dans le modal si ouvert (sans être en mode learn actif)
     if (!activeLearnTarget) {
       if (evt.type === 'cc') {
-        const kIdx = state.midiConfig.knobs ? state.midiConfig.knobs.indexOf(evt.num) : -1;
+        if (matchedNavDef) {
+          const navCard = document.getElementById(`midi-chip-nav-${matchedNavDef.key}`);
+          if (navCard) {
+            navCard.classList.add('active-rx');
+            setTimeout(() => navCard.classList.remove('active-rx'), 250);
+          }
+          return;
+        }
+        let kIdx = state.midiConfig.knobs ? state.midiConfig.knobs.indexOf(evt.num) : -1;
+        if (kIdx < 0 && evt.channel === 16 && evt.num >= 13 && evt.num <= 36) kIdx = evt.num - 13;
         if (kIdx >= 0) {
           const chip = document.getElementById(`midi-chip-knob-${kIdx}`);
           if (chip) {
@@ -1660,7 +1842,8 @@
             setTimeout(() => chip.classList.remove('active-rx'), 200);
           }
         }
-        const bIdx = state.midiConfig.buttons ? state.midiConfig.buttons.indexOf(evt.num) : -1;
+        let bIdx = state.midiConfig.buttons ? state.midiConfig.buttons.indexOf(evt.num) : -1;
+        if (evt.num >= 37 && evt.num <= 52 && evt.channel !== 16) bIdx = evt.num - 37;
         if (bIdx >= 0) {
           const chip = document.getElementById(`midi-chip-btn-${bIdx}`);
           if (chip) {
@@ -1683,9 +1866,21 @@
 
   function saveMidiSettings() {
     cancelLearnTarget();
+    ensureNavButtonsConfig();
     const chSelect = document.getElementById('midi-channel-select');
     if (chSelect) {
       state.midiConfig.channel = parseInt(chSelect.value, 10);
+    }
+    for (const def of NAV_BUTTON_DEFS) {
+      const ccInp = document.getElementById(`input-nav-cc-${def.key}`);
+      const actSel = document.getElementById(`select-nav-action-${def.key}`);
+      if (ccInp) {
+        const v = parseInt(ccInp.value, 10);
+        if (!isNaN(v)) state.midiConfig.nav_buttons[def.key].cc = v;
+      }
+      if (actSel) {
+        state.midiConfig.nav_buttons[def.key].action = actSel.value;
+      }
     }
     for (let i = 0; i < 24; i++) {
       const inp = document.getElementById(`input-knob-cc-${i}`);
@@ -1753,6 +1948,7 @@
           if (!state.midiConfig.button_channels) {
             state.midiConfig.button_channels = Array.from({ length: 16 }, () => (state.midiConfig.channel || 1));
           }
+          ensureNavButtonsConfig();
         }
       }
     } catch (e) {}

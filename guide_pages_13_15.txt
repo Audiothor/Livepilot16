@@ -1,0 +1,81 @@
+=== PAGE 13 ===
+Controlling the screen
+• Stationary display: A default display which is shown unless any event requires a different 
+display to be temporarily shown above it.
+• Temporary display: A display triggered by an event, persisting for the length of the 
+display timeout user setting.
+• Parameter name: Used in association with a control, showing what it is controlling. Unless 
+provided by messages (SysEx), typically this is the MIDI entity (such as note or CC).
+• Parameter value: Used in association with a control, showing the current value of it. 
+Unless provided by messages (SysEx), this is the raw value of the MIDI entity controlled 
+(such as a number in range 0 - 127 in case of a 7-bit CC).
+Configure displays
+Hex:    F0h 00h 20h 29h 02h 15h 04h <target> <config> F7h 
+Dec:    240 0   32  41  2   21  4   <target> <config> 247 
+Once a display is configured for a given target, it can be triggered.
+Targets
+• 05h (5) - 24h (36): Temporary display for Analogue controls (same as CC indices, 05h 
+(5) - 0Ch (12): Faders, 0Dh (13) - 24h (36): Encoders)
+• 35h (53): Permanent/Stationary display
+• 36h (54): Overlay/Temporary display
+Config
+The <config> byte sets up the arrangement and operation of the display. 00h and 7Fh are 
+special values: they cancel (00h) or bring up (7Fh) the display with its current contents (as 
+MIDI Event, it is a compact way to trigger display).
+• Bit 6: Allow Launch Control XL 3 to generate temporary display automatically on Change 
+(default: Set).
+• Bit 5: Allow Launch Control XL 3 to generate temporary display automatically on Touch 
+(default: Set; this is the Shift + rotate).
+• Bit 0-4: Display arrangement
+Display arrangements:
+13
+
+=== PAGE 14 ===
+• 0: Special value for cancelling display.
+• 1-30: Arrangement IDs, see table below.
+• 31: Special value for triggering display.
+ID Description Num Fields F0 F1 F2
+1 2 lines: Parameter Name and Text Parameter Value No 2 Name Value -
+2 3 lines: Title, Parameter Name and Text Parameter Value No 3 Title Name Value
+3 1 line + 2x4: Title and 8 names (for encoder designations) No 9 Title Name ...
+4 2 lines: Parameter Name and Numeric Parameter Value (default) Yes 1 Name - -
+NOTE
+The arrangement is ignored for targets only setting names (22h(34) – 28h(40)), 
+however for changing triggerability, it needs to be set non-zero (since the value 
+0 for these still acts for cancelling the display).
+Setting text
+Once a display is configured, the following message can be used to fill in the text fields.
+Hex:    F0h 00h 20h 29h 02h 15h 06h <target> <field> <text…> F7h
+Dec:    240 0   32  41  2   21  6   <target> <field> <text…> 247
+The text uses the standard ASCII character mapping in the range 20h (32) – 7Eh (126) with 
+the addition of the below control codes, which have been reassigned to provide additional 
+non-ASCII characters.
+• Empty Box - 1Bh (27)
+• Filled Box - 1Ch (28)
+• Flat Symbol - 1Dh (29)
+• Heart - 1Eh (30)
+Other control characters should not be used as their behaviour may change in the future.
+Bitmap
+The screen can also display custom graphics by sending a bitmap to the device.
+Hex:    F0h 00h 20h 29h 02h 15h 09h <target> <bitmap_data> 7Fh 
+Dec:    240 0   32  41  2   21  9   <target> <bitmap_data> 127
+14
+
+=== PAGE 15 ===
+The <target> can be either the Stationary display (20h(32)) or the Global temporary display 
+(21h(33)). There is no effect on other targets.
+The <bitmap_data> is of fixed 1216 bytes, 19 bytes for each pixel row, for a total of 64 rows 
+(19 × 64 = 1216). The 7 bits of the SysEx byte encode pixels from left to right (highest bit 
+corresponding to the leftmost pixel), the 19 bytes covering the 128 pixels width of the display 
+(with five unused bits in the last byte).
+Upon success, there is a response to this message, which is suitable for timing fluid animations 
+(once receiving it, the Launch Control XL 3 is ready to accept a next Bitmap message):
+Hex:    F0h 00h 20h 29h 02h 15h 09h 7Fh
+Dec:    240 0   32  41  2   21  9   127
+The display can be cancelled by either cancelling it explicitly (using the Configure Display 
+SysEx or MIDI Event), or triggering the normal display (whose parameters are preserved while 
+the bitmap is displaying).
+IMPORT ANT
+The firmware can only hold one bitmap in its memory at once.
+15
+
