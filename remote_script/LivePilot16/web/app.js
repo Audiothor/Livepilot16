@@ -1108,6 +1108,48 @@
       });
     }
 
+    // --- GUIDE DE CONFIGURATION ABLETON LIVE ---
+    const btnHeaderAbleton = document.getElementById('btn-header-ableton-guide');
+    if (btnHeaderAbleton) {
+      btnHeaderAbleton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAbletonGuideModal();
+      });
+    }
+
+    const btnBodyAbleton = document.getElementById('btn-body-ableton-guide');
+    if (btnBodyAbleton) {
+      btnBodyAbleton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAbletonGuideModal();
+      });
+    }
+
+    const btnCloseAbletonGuide = document.getElementById('btn-close-ableton-guide');
+    if (btnCloseAbletonGuide) {
+      btnCloseAbletonGuide.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAbletonGuideModal();
+      });
+    }
+
+    const btnFinishAbletonGuide = document.getElementById('btn-finish-ableton-guide');
+    if (btnFinishAbletonGuide) {
+      btnFinishAbletonGuide.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAbletonGuideModal();
+      });
+    }
+
+    const abletonGuideModalBackdrop = document.getElementById('ableton-guide-modal');
+    if (abletonGuideModalBackdrop) {
+      abletonGuideModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === abletonGuideModalBackdrop) {
+          closeAbletonGuideModal();
+        }
+      });
+    }
+
     const btnPresetLivePilot = document.getElementById('preset-livepilot-btn');
     if (btnPresetLivePilot) {
       btnPresetLivePilot.addEventListener('click', () => applyPreset('livepilot'));
@@ -1315,6 +1357,20 @@
     const modal = document.getElementById('settings-modal');
     if (modal) modal.classList.add('hidden');
     cancelLearnTarget();
+  }
+
+  function openAbletonGuideModal() {
+    const modal = document.getElementById('ableton-guide-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
+  }
+
+  function closeAbletonGuideModal() {
+    const modal = document.getElementById('ableton-guide-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
   }
 
   function renderMidiConfigGrids() {

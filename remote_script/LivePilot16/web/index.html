@@ -247,7 +247,12 @@
             <span class="modal-ico">⚙️</span>
             <h3>PARAMÈTRES — Configuration MIDI Launch Control XL</h3>
           </div>
-          <button id="btn-close-modal" class="modal-close-btn" title="Fermer">✕</button>
+          <div class="modal-header-actions">
+            <button id="btn-header-ableton-guide" class="btn-guide-pill" title="Guide de configuration Ableton Live">
+              <span>📘</span> Comment configurer dans Ableton Live ?
+            </button>
+            <button id="btn-close-modal" class="modal-close-btn" title="Fermer">✕</button>
+          </div>
         </div>
 
         <div class="modal-body">
@@ -274,7 +279,12 @@
 
           <!-- Guide de configuration Ableton Live -->
           <div class="settings-notice">
-            <div class="notice-title">💡 Branchement requis dans Ableton Live :</div>
+            <div class="notice-header-row">
+              <div class="notice-title">💡 Branchement requis dans Ableton Live :</div>
+              <button id="btn-body-ableton-guide" class="btn-notice-guide-btn">
+                <span>📘</span> Guide illustré pas-à-pas Ableton Live
+              </button>
+            </div>
             <div class="notice-desc">
               Dans <strong>Options > Préférences > Link, Tempo & MIDI</strong>, assurez-vous de configurer :<br>
               • <strong>Surface de contrôle :</strong> <code>LivePilot 16</code><br>
@@ -332,6 +342,121 @@
         <div class="modal-footer">
           <button id="btn-reset-midi" class="btn-modal secondary">Réinitialiser par défaut</button>
           <button id="btn-save-midi" class="btn-modal primary">Enregistrer et Appliquer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. MODAL GUIDE DE CONFIGURATION ABLETON LIVE -->
+    <div id="ableton-guide-modal" class="modal-backdrop hidden">
+      <div class="modal-card ableton-guide-card">
+        <div class="modal-header ableton-guide-header">
+          <div class="modal-title">
+            <span class="modal-ico">🎛️</span>
+            <h3>GUIDE — Configuration d'Ableton Live pour LivePilot 16</h3>
+          </div>
+          <button id="btn-close-ableton-guide" class="modal-close-btn" title="Fermer le guide">✕</button>
+        </div>
+
+        <div class="modal-body ableton-guide-body">
+          <div class="guide-intro-banner">
+            <div class="guide-intro-icon">🚀</div>
+            <div class="guide-intro-text">
+              <strong>Configuration en 3 étapes :</strong> Suivez ce pas-à-pas pour activer la synchronisation temps réel entre Ableton Live, le Launch Control XL (retour LED rouge / vert / off) et le cockpit tablette.
+            </div>
+          </div>
+
+          <!-- Étape 1 -->
+          <div class="guide-step-card">
+            <div class="step-badge">1</div>
+            <div class="step-content">
+              <h4>Ouvrir les Préférences MIDI d'Ableton Live</h4>
+              <p>Dans la barre supérieure d'Ableton Live, ouvrez les Préférences :</p>
+              <div class="step-shortcut">
+                Menu <code>Options</code> ➔ <code>Préférences</code> (ou raccourci clavier <kbd>Ctrl</kbd> + <kbd>,</kbd> sous Windows / <kbd>Cmd</kbd> + <kbd>,</kbd> sous Mac)
+              </div>
+              <p>Dans la colonne de gauche de la fenêtre, cliquez sur l'onglet <strong>Link, Tempo & MIDI</strong>.</p>
+            </div>
+          </div>
+
+          <!-- Étape 2 -->
+          <div class="guide-step-card">
+            <div class="step-badge">2</div>
+            <div class="step-content">
+              <h4>Déclarer la Surface de Contrôle LivePilot 16</h4>
+              <p>Dans la section supérieure <strong>Surfaces de contrôle</strong>, configurez la première ligne :</p>
+              
+              <!-- Simulation visuelle du tableau Ableton -->
+              <div class="ableton-table-sim">
+                <div class="table-sim-header">
+                  <div class="sim-col">Surface de contrôle</div>
+                  <div class="sim-col">Entrée</div>
+                  <div class="sim-col">Sortie</div>
+                </div>
+                <div class="table-sim-row active-row">
+                  <div class="sim-col"><span class="sim-select highlight">LivePilot 16</span></div>
+                  <div class="sim-col"><span class="sim-select highlight">Launch Control XL</span></div>
+                  <div class="sim-col"><span class="sim-select highlight">Launch Control XL</span></div>
+                </div>
+              </div>
+
+              <div class="step-tip">
+                <span class="tip-ico">💡</span>
+                <span><strong>Nom sous Windows :</strong> Selon vos pilotes USB, le port peut apparaître sous le nom <code>Launch Control XL</code> ou <code>LCXL3 1 MIDI</code>. Sélectionnez impérativement le même nom dans les colonnes <em>Entrée</em> et <em>Sortie</em>.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 3 -->
+          <div class="guide-step-card">
+            <div class="step-badge">3</div>
+            <div class="step-content">
+              <h4>Activer les Ports MIDI (Piste & Télécommande)</h4>
+              <p>Dans la section inférieure <strong>Ports MIDI</strong>, activez impérativement :</p>
+
+              <!-- Simulation visuelle des switches Ableton -->
+              <div class="ports-switches-sim">
+                <div class="port-row">
+                  <span class="port-name">► Entrée : Launch Control XL</span>
+                  <div class="port-switches">
+                    <span class="switch-badge on">Piste : Oui</span>
+                    <span class="switch-badge off">Sync : Non</span>
+                    <span class="switch-badge on">Télécomm. : Oui</span>
+                  </div>
+                </div>
+                <div class="port-row">
+                  <span class="port-name">► Sortie : Launch Control XL</span>
+                  <div class="port-switches">
+                    <span class="switch-badge on">Piste : Oui</span>
+                    <span class="switch-badge off">Sync : Non</span>
+                    <span class="switch-badge on">Télécomm. : Oui</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-warning">
+                <span class="warn-ico">⚡</span>
+                <span><strong>Capital pour les LED :</strong> La ligne <strong>Sortie : Launch Control XL</strong> avec <em>Télécomm. : Oui</em> est indispensable. C'est elle qui transmet les retours SysEx et allume le pad actif en <strong>Rouge</strong>, les autres en <strong>Vert</strong> et éteint les pistes vides.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 4 -->
+          <div class="guide-step-card">
+            <div class="step-badge">4</div>
+            <div class="step-content">
+              <h4>Vérifier le Template sur le Launch Control XL</h4>
+              <p>Sur votre contrôleur physique :</p>
+              <ul class="step-bullet-list">
+                <li>Maintenez le bouton <strong>User / Mode</strong> et sélectionnez le slot Custom <strong>« Livepilot16 »</strong>.</li>
+                <li>Les potentiomètres envoient les <strong>CC 1 à 24</strong>, les faders les <strong>CC 25 à 32</strong>, et les pads les <strong>CC 33 à 48</strong> sur le Canal 1.</li>
+                <li>Si vous utilisez un Launch Control XL 3, les boutons de navigation <strong>Track ◄ / Track ►</strong> sont également interceptés et déverrouillés en parallèle.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-finish-ableton-guide" class="btn-modal primary">✓ J'ai compris, revenir aux assignations</button>
         </div>
       </div>
     </div>
