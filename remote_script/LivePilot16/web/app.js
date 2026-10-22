@@ -1219,6 +1219,12 @@
     if (!midi) return;
     try {
       webMidiOutputs = Array.from(midi.outputs.values());
+      for (const out of webMidiOutputs) {
+        try {
+          // Déverrouiller les touches de fonction Track < > et Page < > en mode Custom (Guide p.16)
+          out.send([0x9F, 0x0B, 0x7F]);
+        } catch (e) {}
+      }
     } catch (e) {
       webMidiOutputs = [];
     }
