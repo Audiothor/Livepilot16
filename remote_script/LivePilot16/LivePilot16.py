@@ -19,7 +19,9 @@ from .consts import (
     CC_NAV_DEV_PREV, CC_NAV_DEV_NEXT, CC_BASE_TRACK_SEL,
     NUM_TRACKS_PER_BANK, NUM_ENCODERS, DEFAULT_HTTP_PORT,
     NOVATION_FEATURE_CONTROLS_ON_NOTE, LCXL3_BUTTON_INDICES, LCXL3_RGB_SYSEX_HEADER,
-    CC_NAV_TRACK_LEFT, CC_NAV_TRACK_RIGHT, CC_NAV_PAGE_UP, CC_NAV_PAGE_DOWN
+    CC_NAV_TRACK_LEFT, CC_NAV_TRACK_RIGHT, CC_NAV_PAGE_UP, CC_NAV_PAGE_DOWN,
+    DAW_FADER_CCS, DAW_KNOB_CCS, DAW_BUTTON_CCS,
+    CC_HW_PLAY, CC_HW_RECORD, CC_HW_SOLO_ARM, CC_HW_MUTE_SELECT, CC_HW_CLIP_STOP
 )
 from .web_server import LivePilotWebServer
 
@@ -33,18 +35,18 @@ def int_to_hex_color(color_int):
     return "#{:02x}{:02x}{:02x}".format(r, g, b)
 
 class LivePilot16(ControlSurface):
-    """
-    Surface de contrôle officielle LivePilot pour Ableton Live.
-    
-    Gestion intégrée du Setup Live sans écran d'ordinateur :
-    - Launchpad Pro MK3 : Lancement de clips / scènes, session, note mode.
-    - Launch Control XL : 8 faders de volume, 24 knobs pour les plugins et envois.
-    - Tablette Android (Cockpit Web) : Affichage tête haute (HUD) temps réel via WebSocket.
-    """
+    _master_instance = None
+    _instances = []
 
     def __init__(self, c_instance):
         super(LivePilot16, self).__init__(c_instance)
-        self.log_message("LivePilot : Initialisation du Remote Script & Serveur Cockpit...")
+        LivePilot16._instances.append(self)
+        self._is_master = False
+        if LivePilot16._master_instance is None:
+            LivePilot16._master_instance = self
+            self._is_master = True
+
+        self.log_message("LivePilot : Initialisation Remote Script (%s)..." % ("MASTER (Port 1)" if self._is_master else "COMPAGNON (Port 2)"))
 
         self._current_bank_index = 0
         self._current_track = None
@@ -67,31 +69,49 @@ class LivePilot16(ControlSurface):
             'button_type': 'cc'
         }
 
-        # Démarrage du serveur Web / WebSocket pour la tablette Android
-        self._web_server = LivePilotWebServer(
-            port=DEFAULT_HTTP_PORT,
-            on_client_message=self._on_web_client_message,
-            logger=self.log_message
-        )
-        self._web_server.start()
+        # Démarrage du serveur Web / WebSocket UNIQUEMENT sur l'instance Master
+        if self._is_master:
+            self._web_server = LivePilotWebServer(
+                port=DEFAULT_HTTP_PORT,
+                on_client_message=self._on_web_client_message,
+                logger=self.log_message
+            )
+            self._web_server.start()
+        else:
+            self._web_server = None
 
-        # Initialisation des écouteurs LOM
-        with self.component_guard():
-            self._setup_listeners()
-            self._full_resync()
-            try:
-                self.request_rebuild_midi_map()
-            except Exception:
-                pass
-
-        # Démarrage de la boucle de polling des VU-mètres
-        self._schedule_meter_poll()
+        # Initialisation du moteur LOM
+        if self._is_master:
+            with self.component_guard():
+                self._setup_listeners()
+                self._full_resync()
+                try:
+                    self.request_rebuild_midi_map()
+                except Exception:
+                    pass
+            self._schedule_meter_poll()
+        else:
+            with self.component_guard():
+                try:
+                    self.request_rebuild_midi_map()
+                except Exception:
+                    pass
+            # Pour l'instance compagnon (Port 2) : lancer une resynchronisation complète depuis le Master
+            if LivePilot16._master_instance:
+                try:
+                    self.schedule_message(1, LivePilot16._master_instance._full_resync)
+                except Exception:
+                    pass
 
         self.log_message("LivePilot : Pret pour le Live !")
 
     def disconnect(self):
         """Nettoyage lors de la fermeture d'Ableton Live"""
         self.log_message("LivePilot : Deconnexion de la surface de controle.")
+        if self in LivePilot16._instances:
+            LivePilot16._instances.remove(self)
+        if LivePilot16._master_instance is self:
+            LivePilot16._master_instance = LivePilot16._instances[0] if LivePilot16._instances else None
         try:
             self._send_midi(NOVATION_DAW_MODE_OFF_SYSEX)
             self._send_midi(NOVATION_DAW_MODE_OFF_NOTE)
@@ -100,16 +120,20 @@ class LivePilot16(ControlSurface):
         if self._web_server:
             self._web_server.stop()
             self._web_server = None
-        self._cleanup_listeners()
-        self._detach_scene_listeners()
-        self._detach_track_devices_listener()
-        self._detach_track_clip_listeners()
-        self._remove_parameter_listeners()
+        if self._is_master:
+            self._cleanup_listeners()
+            self._detach_scene_listeners()
+            self._detach_track_devices_listener()
+            self._detach_track_clip_listeners()
+            self._remove_parameter_listeners()
         super(LivePilot16, self).disconnect()
 
     def update(self):
         super(LivePilot16, self).update()
-        self._update_pad_leds()
+        if self._is_master:
+            self._update_pad_leds()
+            self._update_knob_leds()
+            self._update_nav_leds()
 
     # =========================================================================
     # ÉCOUTEURS DU LIVE OBJECT MODEL (LOM)
@@ -276,6 +300,9 @@ class LivePilot16(ControlSurface):
         self._send_parameters_info()
         self._broadcast_selected_track()
         self._update_pad_leds()
+        self._update_knob_leds()
+        self._update_nav_leds()
+        self._update_screen_display()
 
     def _auto_align_bank_for_track(self, track):
         """Ajuste automatiquement la banque visible de 8 pistes si nécessaire"""
@@ -344,6 +371,7 @@ class LivePilot16(ControlSurface):
         else:
             self._current_device_idx = 0
             self._current_device = None
+        self._update_knob_leds()
 
     def _can_navigate_devices(self):
         return len(self._assigned_devices) > 1
@@ -357,6 +385,8 @@ class LivePilot16(ControlSurface):
         self._send_active_device_info()
         self._send_parameters_info()
         self._broadcast_selected_device()
+        self._update_knob_leds()
+        self._update_screen_display()
 
     def _nav_device_next(self):
         if not self._can_navigate_devices():
@@ -367,6 +397,8 @@ class LivePilot16(ControlSurface):
         self._send_active_device_info()
         self._send_parameters_info()
         self._broadcast_selected_device()
+        self._update_knob_leds()
+        self._update_screen_display()
 
     def _attach_parameter_listeners(self):
         self._remove_parameter_listeners()
@@ -458,6 +490,9 @@ class LivePilot16(ControlSurface):
         self._send_parameters_info()
         self._broadcast_selected_track()
         self._update_pad_leds()
+        self._update_knob_leds()
+        self._update_nav_leds()
+        self._update_screen_display()
 
     def _select_next_track(self):
         tracks = list(self.song().tracks)
@@ -478,6 +513,9 @@ class LivePilot16(ControlSurface):
         self._send_parameters_info()
         self._broadcast_selected_track()
         self._update_pad_leds()
+        self._update_knob_leds()
+        self._update_nav_leds()
+        self._update_screen_display()
 
     def _get_all_groups(self):
         return [t for t in self.song().tracks if getattr(t, 'is_foldable', False)]
@@ -1095,6 +1133,12 @@ class LivePilot16(ControlSurface):
     def receive_midi(self, midi_bytes):
         if not midi_bytes:
             return
+
+        # Si cette instance est un compagnon (Port 2), relayer immédiatement le message au Master
+        if not self._is_master and LivePilot16._master_instance:
+            LivePilot16._master_instance.receive_midi(midi_bytes)
+            return
+
         status = midi_bytes[0]
         msg_type = status & 0xF0
         channel = (status & 0x0F) + 1
@@ -1162,117 +1206,8 @@ class LivePilot16(ControlSurface):
         if msg_type == 0xB0:
             cc_num, cc_val = data1, data2
 
-            # GESTION DU RELÂCHEMENT DES PADS (cc_val == 0) :
-            # Les pads physiques en mode "Momentary" renvoient 0 au relâchement.
-            # On renvoie immédiatement 127 au pad sélectionné pour maintenir sa LED ROUGE,
-            # et 0 aux autres pads pour qu'ils restent VERTS (éteints).
-            btn_items = cfg.get('button_items', [])
-            btn_types = cfg.get('button_types', [])
-            is_button_cc = (cc_num in cfg_buttons) or \
-                           any(it.get('num') == cc_num for it in btn_items) or \
-                           (cc_num in LCXL_MODE16_BUTTON_CCS) or \
-                           (btn_types and any(btn_types[idx] == 'cc' and cfg_buttons[idx] == cc_num for idx in range(min(len(btn_types), len(cfg_buttons)))))
-            if is_button_cc and cc_val == 0:
-                self._update_pad_leds()
-                try:
-                    self.schedule_message(1, self._update_pad_leds)
-                    self.schedule_message(3, self._update_pad_leds)
-                except Exception:
-                    pass
-                return
-
-            # 0. Pads appris via MIDI Learn interactif (priorité absolue à la configuration apprise)
-            if btn_items and cc_val > 0:
-                same_num_items = [it for it in btn_items if it.get('num') == cc_num and it.get('type') == 'cc']
-                for item in btn_items:
-                    if item.get('type') == 'cc' and item.get('num') == cc_num:
-                        it_ch = item.get('channel')
-                        if it_ch and it_ch > 0 and (channel + 1) != it_ch:
-                            continue
-
-                        # Si plusieurs pads partagent le même CC (ex: CC 30 Novation Mode Select),
-                        # la valeur CC (data2 / mode) permet de distinguer les 16 boutons
-                        exp_val = item.get('val')
-                        if len(same_num_items) > 1 and exp_val is not None:
-                            if cc_val != exp_val:
-                                continue
-
-                        target_idx = item.get('index', 0)
-                        self.log_message("LivePilot : Pad appris TRK %d detecte (CC %d, val %d, ch %d) -> Selection Piste %d" % (target_idx + 1, cc_num, cc_val, channel + 1, target_idx + 1))
-                        self._select_track_in_bank(target_idx)
-                        return
-
-            # 1. 16 Boutons de Sélection de Piste (Priorité absolue aux boutons configurés : CC 33..48 par défaut)
-            btn_types = cfg.get('button_types', [])
-            if btn_types and len(btn_types) == NUM_TRACKS_PER_BANK and cc_val > 0:
-                for idx, b_num in enumerate(cfg_buttons[:NUM_TRACKS_PER_BANK]):
-                    if btn_types[idx] == 'cc' and cc_num == b_num:
-                        self.log_message("LivePilot : Pad TRK %d CC %d detecte -> Selection Piste %d" % (idx + 1, cc_num, idx + 1))
-                        self._select_track_in_bank(idx)
-                        return
-
-            if cc_num in cfg_buttons and cc_val > 0:
-                btn_idx = cfg_buttons.index(cc_num)
-                if btn_idx < NUM_TRACKS_PER_BANK:
-                    self.log_message("LivePilot : Pad TRK %d CC %d detecte -> Selection Piste %d" % (btn_idx + 1, cc_num, btn_idx + 1))
-                    self._select_track_in_bank(btn_idx)
-                    return
-
-            # 2. NOVATION SURFACE MODE SELECT (CC 30, ex: Canal 7) si non mappé par bouton personnalisé
-            if cc_num == CC_NOVATION_MODE_SELECT:
-                target_trk = None
-                if cc_val in NOVATION_MODE_TO_TRACK:
-                    target_trk = NOVATION_MODE_TO_TRACK[cc_val]
-                elif 1 <= cc_val <= NUM_TRACKS_PER_BANK:
-                    target_trk = cc_val - 1
-                elif 0 <= cc_val < NUM_TRACKS_PER_BANK:
-                    target_trk = cc_val
-
-                if target_trk is not None:
-                    self.log_message("LivePilot : Novation Mode Select detecte (val=%d) -> Selection Piste %d" % (cc_val, target_trk + 1))
-                    self._select_track_in_bank(target_trk)
-                    return
-
-            # 3. 24 Knobs Potentiomètres configurés (CC 1..24 par défaut)
-            if cc_num in cfg_knobs:
-                knob_idx = cfg_knobs.index(cc_num)
-                if knob_idx < NUM_ENCODERS:
-                    norm_val = round(cc_val / 127.0, 3)
-                    self._set_encoder_value(knob_idx, norm_val)
-                    return
-
-            # 4. 8 Faders physiques du Launch Control XL (CC 25 à 32) -> Volume des Pistes 1 à 8
-            if cc_num in DEFAULT_FADER_CCS:
-                fader_idx = DEFAULT_FADER_CCS.index(cc_num)
-                trk_idx = self._current_bank_index * NUM_TRACKS_PER_BANK + fader_idx
-                tracks = list(self.song().tracks)
-                if trk_idx < len(tracks):
-                    try:
-                        tracks[trk_idx].mixer_device.volume.value = cc_val / 127.0
-                    except Exception:
-                        pass
-                return
-
-            # 5. Knobs Factory (uniquement si le preset est 'factory' pour éviter d'intercepter CC 33..36)
-            if cfg.get('preset') == 'factory' and cc_num in FACTORY_KNOB_CCS:
-                knob_idx = FACTORY_KNOB_CCS.index(cc_num)
-                if knob_idx < NUM_ENCODERS:
-                    norm_val = round(cc_val / 127.0, 3)
-                    self._set_encoder_value(knob_idx, norm_val)
-                    return
-
-            # 6. Fallback templates d'usine additionnels
-            elif cc_num in LCXL_MODE16_BUTTON_CCS and cc_val > 0:
-                btn_idx = LCXL_MODE16_BUTTON_CCS.index(cc_num)
-                if btn_idx < NUM_TRACKS_PER_BANK:
-                    self._select_track_in_bank(btn_idx)
-                    return
-            elif CC_BASE_TRACK_SEL <= cc_num < CC_BASE_TRACK_SEL + NUM_TRACKS_PER_BANK and cc_val > 0:
-                self._select_track_in_bank(cc_num - CC_BASE_TRACK_SEL)
-                return
-
-            # 3. Boutons de Navigation Système & Matérielle Launch Control XL
-            elif (cc_num in (CC_NAV_TRACK_LEFT, CC_NAV_TRACK_PREV, 103)) and cc_val > 0:
+            # 1. NAVIGATION MATÉRIELLE LAUNCH CONTROL XL 3 (Track ◄/►, Page ▲/▼)
+            if (cc_num in (CC_NAV_TRACK_LEFT, CC_NAV_TRACK_PREV, 103)) and cc_val > 0:
                 self.log_message("LivePilot : Track Left (◄) detecte (CC %d) -> Piste precedente" % cc_num)
                 self._select_prev_track()
                 return
@@ -1288,7 +1223,134 @@ class LivePilot16(ControlSurface):
                 self.log_message("LivePilot : Page Down (▼) detecte (CC %d) -> Banque suivante" % cc_num)
                 self._nav_bank_next()
                 return
-            elif cc_num == CC_NAV_GROUP_PREV and cc_val > 0:
+
+            # Transport matériel Launch Control XL 3
+            elif cc_num == CC_HW_PLAY and cc_val > 0:
+                self.song().is_playing = not self.song().is_playing
+                self._update_nav_leds()
+                return
+            elif cc_num == CC_HW_RECORD and cc_val > 0:
+                self.song().record_mode = not self.song().record_mode
+                self._update_nav_leds()
+                return
+            elif cc_num == CC_HW_SOLO_ARM and cc_val > 0:
+                if self._current_track and hasattr(self._current_track, 'arm'):
+                    try:
+                        self._current_track.arm = not self._current_track.arm
+                    except Exception:
+                        pass
+                return
+            elif cc_num == CC_HW_MUTE_SELECT and cc_val > 0:
+                if self._current_track and hasattr(self._current_track.mixer_device, 'track_activator'):
+                    try:
+                        act = self._current_track.mixer_device.track_activator
+                        act.value = not act.value
+                    except Exception:
+                        pass
+                return
+
+            # 2. 8 FADERS DE VOLUME
+            # Mode DAW Novation : CC 5 à 12 (sur canal 16 ou tout canal si 5 <= cc_num <= 12)
+            # Mode Custom Novation : CC 25 à 32 (DEFAULT_FADER_CCS)
+            fader_idx = None
+            if 5 <= cc_num <= 12 and (channel == 16 or cc_num in DAW_FADER_CCS):
+                fader_idx = cc_num - 5
+            elif cc_num in DEFAULT_FADER_CCS:
+                fader_idx = DEFAULT_FADER_CCS.index(cc_num)
+
+            if fader_idx is not None and fader_idx < 8:
+                trk_idx = self._current_bank_index * NUM_TRACKS_PER_BANK + fader_idx
+                tracks = list(self.song().tracks)
+                if trk_idx < len(tracks):
+                    try:
+                        tracks[trk_idx].mixer_device.volume.value = cc_val / 127.0
+                    except Exception:
+                        pass
+                return
+
+            # 3. 24 POTENTIOMÈTRES KNOBS
+            # Mode DAW Novation : CC 13 à 36 (sur canal 16)
+            # Mode Custom Novation : CC 1 à 24 (sur canal 1)
+            knob_idx = None
+            if channel == 16 and 13 <= cc_num <= 36:
+                knob_idx = cc_num - 13
+            elif channel != 16 and cc_num in cfg_knobs:
+                knob_idx = cfg_knobs.index(cc_num)
+            elif cc_num in cfg_knobs and cc_num not in range(13, 37):
+                knob_idx = cfg_knobs.index(cc_num)
+
+            if knob_idx is not None and knob_idx < NUM_ENCODERS:
+                norm_val = round(cc_val / 127.0, 3)
+                self._set_encoder_value(knob_idx, norm_val)
+                return
+
+            # 4. GESTION DU RELÂCHEMENT DES PADS (cc_val == 0)
+            btn_items = cfg.get('button_items', [])
+            btn_types = cfg.get('button_types', [])
+            is_button_cc = (cc_num in cfg_buttons) or \
+                           (37 <= cc_num <= 52) or \
+                           any(it.get('num') == cc_num for it in btn_items) or \
+                           (cc_num in LCXL_MODE16_BUTTON_CCS) or \
+                           (btn_types and any(btn_types[idx] == 'cc' and cfg_buttons[idx] == cc_num for idx in range(min(len(btn_types), len(cfg_buttons)))))
+            if is_button_cc and cc_val == 0:
+                self._update_pad_leds()
+                try:
+                    self.schedule_message(1, self._update_pad_leds)
+                    self.schedule_message(3, self._update_pad_leds)
+                except Exception:
+                    pass
+                return
+
+            # 5. PADS APPRIS VIA MIDI LEARN INTERACTIF
+            if btn_items and cc_val > 0:
+                same_num_items = [it for it in btn_items if it.get('num') == cc_num and it.get('type') == 'cc']
+                for item in btn_items:
+                    if item.get('type') == 'cc' and item.get('num') == cc_num:
+                        it_ch = item.get('channel')
+                        if it_ch and it_ch > 0 and (channel + 1) != it_ch:
+                            continue
+                        exp_val = item.get('val')
+                        if len(same_num_items) > 1 and exp_val is not None:
+                            if cc_val != exp_val:
+                                continue
+                        target_idx = item.get('index', 0)
+                        self.log_message("LivePilot : Pad appris TRK %d detecte (CC %d, val %d, ch %d) -> Selection Piste %d" % (target_idx + 1, cc_num, cc_val, channel + 1, target_idx + 1))
+                        self._select_track_in_bank(target_idx)
+                        return
+
+            # 6. 16 PADS DE SÉLECTION DE PISTES
+            # A. Mode DAW Novation : CC 37 à 52 (Pistes 1 à 16)
+            if 37 <= cc_num <= 52 and cc_val > 0:
+                pad_idx = cc_num - 37
+                self.log_message("LivePilot : Pad DAW TRK %d CC %d detecte -> Selection Piste %d" % (pad_idx + 1, cc_num, pad_idx + 1))
+                self._select_track_in_bank(pad_idx)
+                return
+
+            # B. Mode Custom Novation : CC 33 à 48 (cfg_buttons)
+            if cc_num in cfg_buttons and cc_val > 0:
+                btn_idx = cfg_buttons.index(cc_num)
+                if btn_idx < NUM_TRACKS_PER_BANK:
+                    self.log_message("LivePilot : Pad Custom TRK %d CC %d detecte -> Selection Piste %d" % (btn_idx + 1, cc_num, btn_idx + 1))
+                    self._select_track_in_bank(btn_idx)
+                    return
+
+            # 7. NOVATION SURFACE MODE SELECT (CC 30, ex: Canal 7)
+            if cc_num == CC_NOVATION_MODE_SELECT:
+                target_trk = None
+                if cc_val in NOVATION_MODE_TO_TRACK:
+                    target_trk = NOVATION_MODE_TO_TRACK[cc_val]
+                elif 1 <= cc_val <= NUM_TRACKS_PER_BANK:
+                    target_trk = cc_val - 1
+                elif 0 <= cc_val < NUM_TRACKS_PER_BANK:
+                    target_trk = cc_val
+
+                if target_trk is not None:
+                    self.log_message("LivePilot : Novation Mode Select detecte (val=%d) -> Selection Piste %d" % (cc_val, target_trk + 1))
+                    self._select_track_in_bank(target_trk)
+                    return
+
+            # 8. Navigation additionnelle et Jog
+            if cc_num == CC_NAV_GROUP_PREV and cc_val > 0:
                 self._nav_group_prev()
                 return
             elif cc_num == CC_NAV_GROUP_NEXT and cc_val > 0:
@@ -1382,6 +1444,12 @@ class LivePilot16(ControlSurface):
 
     def handle_sysex(self, midi_bytes):
         """Interception des trames SysEx Novation (changement de template / mode)"""
+        if not midi_bytes:
+            return
+        if not self._is_master and LivePilot16._master_instance:
+            LivePilot16._master_instance.handle_sysex(midi_bytes)
+            return
+
         if len(midi_bytes) >= 6 and midi_bytes[1:4] == (0x00, 0x20, 0x29):
             mode_byte = midi_bytes[-2] if midi_bytes[-1] == 0xF7 else midi_bytes[-1]
             if mode_byte in NOVATION_MODE_TO_TRACK:
@@ -1396,10 +1464,11 @@ class LivePilot16(ControlSurface):
 
     def _full_resync(self):
         # Activation native du DAW Mode Novation Launch Control XL 3 (Page 8 & 16 du Guide Officiel)
+        # pour déverrouiller Track ◄/►, Page ▲/▼, les LEDs RGB des 24 knobs et des 16 pads, et l'écran OLED
         try:
-            self._send_midi(NOVATION_DAW_MODE_ON_SYSEX)
-            self._send_midi(NOVATION_DAW_MODE_ON_NOTE)
-            self._send_midi(NOVATION_FEATURE_CONTROLS_ON_NOTE)
+            self._send_midi_all(NOVATION_DAW_MODE_ON_SYSEX)
+            self._send_midi_all(NOVATION_DAW_MODE_ON_NOTE)
+            self._send_midi_all(NOVATION_FEATURE_CONTROLS_ON_NOTE)
         except Exception:
             pass
 
@@ -1413,11 +1482,20 @@ class LivePilot16(ControlSurface):
         except Exception:
             pass
 
+    def _send_midi_all(self, midi_bytes):
+        """Diffuse un message MIDI vers toutes les instances LivePilot16 actives (Port 1 et Port 2)"""
+        for inst in list(LivePilot16._instances):
+            try:
+                inst._send_midi(midi_bytes)
+            except Exception:
+                pass
+
     def _update_pad_leds(self):
         """Met a jour l'etat lumineux des 16 pads physiques du Launch Control XL.
         - Piste active selectionnee : Valeur 127 (LED Rouge / Active).
         - Pistes existantes non selectionnees : Valeur 0 (LED Inactive / Verte).
         - Pistes inexistantes dans le projet Ableton : Eteint / Aucune couleur (Black).
+        Diffuse à la fois pour le mode DAW (indices 37..52) et le mode Custom (CC 33..48).
         """
         try:
             selected_track = self.song().view.selected_track
@@ -1475,7 +1553,6 @@ class LivePilot16(ControlSurface):
                     continue
 
                 ch_idx = max(0, min(15, (b_ch - 1) if (b_ch and b_ch > 0) else 0))
-
                 ctrl_idx = LCXL3_BUTTON_INDICES[i] if (i < len(LCXL3_BUTTON_INDICES)) else (37 + i)
 
                 if track_exists:
@@ -1484,43 +1561,129 @@ class LivePilot16(ControlSurface):
                         # 1. Piste active sélectionnée -> ROUGE VIF
                         val = 127
                         # SysEx RGB natif Novation LCXL3 (Page 12: F0 00 20 29 02 15 01 53 <ctrl_idx> 127 0 0 F7)
-                        self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 127, 0, 0, 0xF7))
-                        # Palette CC (Page 11: B0h <ctrl_idx> 5 = Rouge)
-                        self._send_midi((0xB0, ctrl_idx, 5))
+                        self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 127, 0, 0, 0xF7))
+                        # Palette CC DAW (Page 11: B0h <ctrl_idx> 5 = Rouge)
+                        self._send_midi_all((0xB0, ctrl_idx, 5))
                     else:
                         # 2. Piste existante inactive -> VERT
                         val = 0
                         # SysEx RGB natif Novation LCXL3 (Page 12: F0 00 20 29 02 15 01 53 <ctrl_idx> 0 127 0 F7)
-                        self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 127, 0, 0xF7))
-                        # Palette CC (Page 11: B0h <ctrl_idx> 60 = Vert)
-                        self._send_midi((0xB0, ctrl_idx, 60))
+                        self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 127, 0, 0xF7))
+                        # Palette CC DAW (Page 11: B0h <ctrl_idx> 60 = Vert)
+                        self._send_midi_all((0xB0, ctrl_idx, 60))
 
+                    # Émission CC / Note pour Custom Mode
                     if b_type == 'cc':
                         status_byte = 0xB0 | ch_idx
                     else:
                         status_byte = 0x90 | ch_idx
-                    self._send_midi((status_byte, b_num, val))
+                    self._send_midi_all((status_byte, b_num, val))
                 else:
                     # PISTE INEXISTANTE DANS ABLETON -> AUCUNE COULEUR (ÉTEINT / NOIR TOTAL)
                     # 1. SysEx RGB natif Novation LCXL3 (Page 12: F0 00 20 29 02 15 01 53 <ctrl_idx> 0 0 0 F7)
-                    self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
-                    try:
-                        self._send_midi((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, b_num, 0, 0, 0, 0xF7))
-                    except Exception:
-                        pass
-                    # 2. Palette CC (Page 11: B0h <ctrl_idx> 0 = Black / Off)
-                    self._send_midi((0xB0, ctrl_idx, 0))
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
+                    # 2. Palette CC DAW (Page 11: B0h <ctrl_idx> 0 = Black / Off)
+                    self._send_midi_all((0xB0, ctrl_idx, 0))
                     # 3. Fallback Custom Mode CC (valeur 0)
                     if b_type == 'cc':
                         status_byte = 0xB0 | ch_idx
                     else:
                         status_byte = 0x90 | ch_idx
-                    self._send_midi((status_byte, b_num, 0))
+                    self._send_midi_all((status_byte, b_num, 0))
                     # 4. Note Off si bouton en mode note
                     if b_type == 'note':
-                        self._send_midi((0x80 | ch_idx, b_num, 0))
+                        self._send_midi_all((0x80 | ch_idx, b_num, 0))
         except Exception as e:
             self.log_message("LivePilot : Erreur dans _update_pad_leds : %s" % str(e))
+
+    def _update_knob_leds(self):
+        """Met a jour les LEDs sous les 24 potentiometres du Launch Control XL (indices 13..36 en mode DAW)"""
+        try:
+            dev = self._current_device
+            num_params = len(dev.parameters[1:]) if dev else 0
+
+            # Couleurs distinctes pour les 3 rangées de potentiomètres :
+            # Ligne 1 (Knobs 1..8,  indices 13..20) : Cyan (R=0, G=127, B=127, CC 37)
+            # Ligne 2 (Knobs 9..16, indices 21..28) : Ambre / Jaune (R=127, G=80, B=0, CC 13)
+            # Ligne 3 (Knobs 17..24, indices 29..36) : Magenta / Violet (R=127, G=0, B=127, CC 53)
+            row_colors = [
+                (0, 127, 127, 37),
+                (127, 80, 0, 13),
+                (127, 0, 127, 53)
+            ]
+
+            for k in range(NUM_ENCODERS):
+                ctrl_idx = 13 + k
+                row = k // 8
+                r, g, b, pal_cc = row_colors[min(row, 2)]
+
+                if dev and k < num_params:
+                    # Paramètre actif assigné -> Allume la LED sous le potentiomètre
+                    self._send_midi_all((0xB0, ctrl_idx, pal_cc))
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, r, g, b, 0xF7))
+                else:
+                    # Paramètre non assigné -> LED éteinte
+                    self._send_midi_all((0xB0, ctrl_idx, 0))
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
+        except Exception as e:
+            self.log_message("LivePilot : Erreur dans _update_knob_leds : %s" % str(e))
+
+    def _update_nav_leds(self):
+        """Met a jour les LEDs des touches matérielles (Track ◄/►, Page ▲/▼, Play, Record)"""
+        try:
+            selected_track = self.song().view.selected_track
+            tracks = list(self.song().tracks)
+            total_tracks = len(tracks)
+            track_idx = tracks.index(selected_track) if selected_track in tracks else 0
+
+            # Touches Track ◄ (103) et Track ► (102) : Vert si déplacement possible
+            has_prev_track = (track_idx > 0)
+            has_next_track = (track_idx < total_tracks - 1)
+            self._send_midi_all((0xB0, CC_NAV_TRACK_LEFT, 60 if has_prev_track else 0))
+            self._send_midi_all((0xB0, CC_NAV_TRACK_RIGHT, 60 if has_next_track else 0))
+
+            # Touches Page ▲ (106) et Page ▼ (107) : Cyan si changement de banque possible
+            total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
+            has_prev_bank = (self._current_bank_index > 0)
+            has_next_bank = (self._current_bank_index < total_banks - 1)
+            self._send_midi_all((0xB0, CC_NAV_PAGE_UP, 37 if has_prev_bank else 0))
+            self._send_midi_all((0xB0, CC_NAV_PAGE_DOWN, 37 if has_next_bank else 0))
+
+            # Touche Play (116) : Vert vif si en lecture, Vert tamisé si à l'arrêt
+            is_playing = self.song().is_playing
+            self._send_midi_all((0xB0, CC_HW_PLAY, 60 if is_playing else 62))
+
+            # Touche Record (118) : Rouge vif si enregistrement actif, éteint sinon
+            is_recording = self.song().record_mode
+            self._send_midi_all((0xB0, CC_HW_RECORD, 5 if is_recording else 0))
+        except Exception as e:
+            self.log_message("LivePilot : Erreur dans _update_nav_leds : %s" % str(e))
+
+    def _update_screen_display(self):
+        """Affiche le nom de la piste active et du device sur l'écran OLED du Launch Control XL 3"""
+        try:
+            if not self._current_track:
+                return
+            t_name = self._current_track.name
+            clean_track = ''.join([c for c in t_name if 32 <= ord(c) <= 126])[:16]
+            if not clean_track:
+                clean_track = "Piste"
+
+            d_name = self._current_device.name if self._current_device else "Cockpit Mode"
+            clean_dev = ''.join([c for c in d_name if 32 <= ord(c) <= 126])[:16]
+
+            # Configuration affichage stationnaire (Target 0x35, arrangement 1: 2 lignes)
+            self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x04, 0x35, 0x01, 0xF7))
+
+            # Ligne 1 : Nom de la piste (Field 0)
+            tb1 = [ord(c) for c in clean_track]
+            self._send_midi_all(tuple([0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x06, 0x35, 0x00] + tb1 + [0xF7]))
+
+            # Ligne 2 : Nom du plugin (Field 1)
+            tb2 = [ord(c) for c in clean_dev]
+            self._send_midi_all(tuple([0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x06, 0x35, 0x01] + tb2 + [0xF7]))
+        except Exception as e:
+            self.log_message("LivePilot : Erreur dans _update_screen_display : %s" % str(e))
 
     def _send_bank_info(self):
         total_tracks = len(self.song().tracks)

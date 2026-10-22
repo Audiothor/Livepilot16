@@ -75,9 +75,21 @@ LCXL3_BUTTON_INDICES = [
 ]
 LCXL3_RGB_SYSEX_HEADER = (0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53)
 
-# CC Virtuels Jog / Poussoir Master (déplacés pour éviter tout conflit avec boutons CC 40/41)
-CC_ENC17_JOG       = 104  # CC 104 (Master Jog / BPM virtuel)
-CC_ENC17_PUSH      = 105  # CC 105 (Clic poussoir Master virtuel)
+# En mode DAW Novation (Indices officiels du Programmer's Reference Guide)
+DAW_FADER_CCS = list(range(5, 13))    # CC 5 à 12 (8 faders sur canal 16)
+DAW_KNOB_CCS = list(range(13, 37))    # CC 13 à 36 (24 knobs sur canal 16)
+DAW_BUTTON_CCS = list(range(37, 53))  # CC 37 à 52 (16 pads sur canal 1)
+
+# Boutons matériels supplémentaires Launch Control XL 3 (DAW Mode)
+CC_HW_PLAY         = 116  # Bouton Play matériel
+CC_HW_RECORD       = 118  # Bouton Record matériel
+CC_HW_SOLO_ARM     = 65   # Bouton Solo/Arm matériel
+CC_HW_MUTE_SELECT  = 66   # Bouton Mute/Select matériel
+CC_HW_CLIP_STOP    = 104  # Bouton Clip Stop matériel
+
+# CC Virtuels Jog / Poussoir Master
+CC_ENC17_JOG       = 109  # CC 109 (Master Jog / BPM virtuel)
+CC_ENC17_PUSH      = 110  # CC 110 (Clic poussoir Master virtuel)
 
 # Boutons de Navigation Système
 CC_NAV_LEFT        = 54  # Flèche Gauche ◄
