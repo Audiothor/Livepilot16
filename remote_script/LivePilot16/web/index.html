@@ -76,11 +76,33 @@
 
     <!-- 3. MAIN WORKSPACE -->
     <div class="workspace-split">
-      <!-- LEFT COLUMN (TRACKS + 24 KNOBS) -->
+      <!-- LEFT COLUMN (24 KNOBS TOP + 16 TRACKS BOTTOM) -->
       <div class="left-column">
         
-        <!-- PISTES (16 TRACKS) -->
-        <div class="deck-panel" style="flex: 1.15; min-height: 0;">
+        <!-- 1. 24 KNOBS PANEL (EN HAUT) -->
+        <div class="deck-panel knobs-panel">
+          <div class="deck-header">
+            <div class="deck-title-group">
+              <svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="3" x2="12" y2="7"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+                <line x1="3" y1="12" x2="7" y2="12"/>
+                <line x1="17" y1="12" x2="21" y2="12"/>
+              </svg>
+              <span id="plugin-deck-title">PLUGIN &nbsp;—&nbsp; [2/5] Serum</span>
+            </div>
+          </div>
+
+          <!-- 24 KNOBS GRID -->
+          <div class="knobs-grid" id="knobs-container">
+            <!-- Dynamically populated by app.js -->
+          </div>
+        </div>
+
+        <!-- 2. PISTES (16 TRACKS EN BAS) -->
+        <div class="deck-panel tracks-panel" style="flex: 1.15; min-height: 0;">
           <div class="deck-header">
             <div class="deck-title-group">
               <svg class="deck-icon" viewBox="0 0 24 24">
@@ -101,28 +123,6 @@
 
           <!-- 16 TRACKS GRID -->
           <div class="tracks-grid" id="tracks-container">
-            <!-- Dynamically populated by app.js -->
-          </div>
-        </div>
-
-        <!-- 24 KNOBS PANEL WITH NEW STREAMLINED HEADER -->
-        <div class="deck-panel knobs-panel">
-          <div class="deck-header">
-            <div class="deck-title-group">
-              <svg class="deck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="9"/>
-                <circle cx="12" cy="12" r="3"/>
-                <line x1="12" y1="3" x2="12" y2="7"/>
-                <line x1="12" y1="17" x2="12" y2="21"/>
-                <line x1="3" y1="12" x2="7" y2="12"/>
-                <line x1="17" y1="12" x2="21" y2="12"/>
-              </svg>
-              <span id="plugin-deck-title">PLUGIN &nbsp;—&nbsp; [2/5] Serum</span>
-            </div>
-          </div>
-
-          <!-- 24 KNOBS GRID -->
-          <div class="knobs-grid" id="knobs-container">
             <!-- Dynamically populated by app.js -->
           </div>
         </div>
@@ -246,6 +246,7 @@
           <div class="modal-title">
             <span class="modal-ico">⚙️</span>
             <h3>PARAMÈTRES — Configuration MIDI Launch Control XL</h3>
+            <span id="app-version-badge" class="app-version-badge" title="Version LivePilot 16 (Majeure.Mineure.Correction)">LivePilot16 v1.2.0</span>
           </div>
           <div class="modal-header-actions">
             <button id="btn-header-ableton-guide" class="btn-guide-pill" title="Guide de configuration Ableton Live">

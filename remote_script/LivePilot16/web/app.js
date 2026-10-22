@@ -138,8 +138,11 @@
     '#7e57c2', '#ff9800', '#ffeb3b', '#00e676', '#00bcd4', '#2196f3', '#673ab7', '#e91e63'
   ];
 
+  const LIVEPILOT_VERSION = 'v1.2.0';
+
   // --- STATE ---
   const state = {
+    version: LIVEPILOT_VERSION,
     connected: false,
     tempo: 120.0,
     signature: '4 / 4',
@@ -161,6 +164,7 @@
     totalBanks: 4,
     selectedTrackIndex: 1,
     tracks: [],
+    lastMeters: [],
     devices: [],
     activeDeviceIndex: 0,
     activeDeviceName: '',
@@ -172,6 +176,7 @@
       is_assigned: false
     })),
     midiConfig: {
+      schema_version: LIVEPILOT_VERSION,
       preset: 'livepilot',
       channel: 1,
       knobs: Array.from({ length: 24 }, (_, i) => i + 1), // 1..24
@@ -184,8 +189,8 @@
       nav_buttons: {
         page_up:     { cc: 106, type: 'cc', channel: 1, action: 'bank_prev' },
         page_down:   { cc: 107, type: 'cc', channel: 1, action: 'bank_next' },
-        track_left:  { cc: 103, type: 'cc', channel: 1, action: 'track_prev' },
-        track_right: { cc: 102, type: 'cc', channel: 1, action: 'track_next' }
+        track_left:  { cc: 103, type: 'cc', channel: 1, action: 'device_prev' },
+        track_right: { cc: 102, type: 'cc', channel: 1, action: 'device_next' }
       }
     }
   };
@@ -298,7 +303,16 @@
     }
   }
 
+  function renderVersionBadge() {
+    const badge = document.getElementById('app-version-badge');
+    if (badge) {
+      badge.textContent = `LivePilot16 ${state.version || LIVEPILOT_VERSION}`;
+    }
+  }
+
   function updateFullSync(data) {
+    if (data.version) state.version = data.version;
+    renderVersionBadge();
     if (data.tempo !== undefined) state.tempo = data.tempo;
     if (data.signature) state.signature = data.signature;
     if (data.is_playing !== undefined) state.isPlaying = data.is_playing;
@@ -323,8 +337,8 @@
         nav_buttons: {
           page_up:     { cc: 106, type: 'cc', channel: 1, action: 'bank_prev', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.page_up ? data.midi_config.nav_buttons.page_up : {}) },
           page_down:   { cc: 107, type: 'cc', channel: 1, action: 'bank_next', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.page_down ? data.midi_config.nav_buttons.page_down : {}) },
-          track_left:  { cc: 103, type: 'cc', channel: 1, action: 'track_prev', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.track_left ? data.midi_config.nav_buttons.track_left : {}) },
-          track_right: { cc: 102, type: 'cc', channel: 1, action: 'track_next', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.track_right ? data.midi_config.nav_buttons.track_right : {}) }
+          track_left:  { cc: 103, type: 'cc', channel: 1, action: 'device_prev', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.track_left ? data.midi_config.nav_buttons.track_left : {}) },
+          track_right: { cc: 102, type: 'cc', channel: 1, action: 'device_next', ...(data.midi_config.nav_buttons && data.midi_config.nav_buttons.track_right ? data.midi_config.nav_buttons.track_right : {}) }
         }
       };
       syncMidiSettingsUI();
@@ -340,6 +354,7 @@
 
   function updateMeters(meters) {
     if (!Array.isArray(meters)) return;
+    state.lastMeters = meters;
     meters.forEach((m, idx) => {
       const card = document.getElementById(`track-card-${idx}`);
       if (!card || card.classList.contains('empty')) return;
@@ -364,6 +379,8 @@
 
   function updateSelectedTrack(data) {
     state.selectedTrackIndex = data.track_index;
+    if (data.bank_index !== undefined) state.bankIndex = data.bank_index;
+    if (data.total_banks !== undefined) state.totalBanks = data.total_banks;
     if (data.tracks) state.tracks = data.tracks;
     if (data.devices !== undefined) state.devices = data.devices;
     if (data.active_device_name !== undefined) state.activeDeviceName = data.active_device_name;
@@ -373,7 +390,6 @@
     renderTracks();
     renderKnobs();
     renderSidebar();
-    sendMidiLedFeedback(data.track_index % 16);
   }
 
   function updateSelectedDevice(data) {
@@ -534,6 +550,10 @@
           clipPlaying ? 'clip-playing' : ''
         ].filter(Boolean).join(' ');
 
+        const mCached = (state.lastMeters && state.lastMeters[i]) ? state.lastMeters[i] : null;
+        const initL = (mCached && mCached.left !== undefined) ? Math.min(100, Math.round(mCached.left * 100)) : 0;
+        const initR = (mCached && mCached.right !== undefined) ? Math.min(100, Math.round(mCached.right * 100)) : 0;
+
         card.className = cardClasses;
         card.innerHTML = `
           <div class="track-top-banner" style="background: ${color}; color: ${textColor};">
@@ -545,11 +565,11 @@
             ${clipRow}
             <div class="meter-stereo-wrap">
               <div class="meter-channel-bar">
-                <div class="meter-gradient-fill left" style="width: 0%;"></div>
+                <div class="meter-gradient-fill left" style="width: ${initL}%;"></div>
                 <div class="meter-tick-ref" style="left: 80%;"></div>
               </div>
               <div class="meter-channel-bar">
-                <div class="meter-gradient-fill right" style="width: 0%;"></div>
+                <div class="meter-gradient-fill right" style="width: ${initR}%;"></div>
                 <div class="meter-tick-ref" style="left: 80%;"></div>
               </div>
               <div class="meter-scale-legend">
@@ -571,8 +591,9 @@
 
         card.addEventListener('click', () => {
           state.selectedTrackIndex = trackIndex;
-          renderTracks();
-          renderSidebar();
+          document.querySelectorAll('#tracks-container .track-card').forEach((el, idx) => {
+            el.classList.toggle('selected', idx === i);
+          });
           sendAction('select_track', { track_index: trackIndex });
         });
       } else {
@@ -1228,58 +1249,14 @@
     }
   }
 
-  let webMidiOutputs = [];
-
   function setupWebMidiPorts(midi) {
     if (!midi) return;
-    try {
-      webMidiOutputs = Array.from(midi.outputs.values());
-    } catch (e) {
-      webMidiOutputs = [];
-    }
     setupWebMidiInputs(midi);
-    if (state.selectedTrackIndex !== undefined) {
-      sendMidiLedFeedback(state.selectedTrackIndex % 16);
-    }
   }
 
-  function sendMidiLedFeedback(padIndex) {
-    if (!webMidiOutputs || webMidiOutputs.length === 0) return;
-    const cfg = state.midiConfig || {};
-    const defaultCh = cfg.channel || 1;
-    const totalTracks = state.tracks ? state.tracks.length : 0;
-    const startIdx = (state.bankIndex || 0) * 16;
-
-    for (let i = 0; i < 16; i++) {
-      const globalTrkIdx = startIdx + i;
-      const trackExists = (totalTracks === 0) || (globalTrkIdx < totalTracks);
-
-      let num = (cfg.buttons && cfg.buttons[i] !== undefined) ? cfg.buttons[i] : (33 + i);
-      let type = (cfg.button_types && cfg.button_types[i]) ? cfg.button_types[i] : (cfg.button_type || 'cc');
-      let ch = (cfg.button_channels && cfg.button_channels[i]) ? cfg.button_channels[i] : defaultCh;
-      let targetChIdx = Math.max(0, Math.min(15, ch - 1));
-
-      if (trackExists) {
-        const val = (i === padIndex) ? 127 : 0;
-        const status = (type === 'cc') ? (0xB0 | targetChIdx) : (0x90 | targetChIdx);
-        for (const out of webMidiOutputs) {
-          try {
-            out.send([status, num, val]);
-          } catch (e) {}
-        }
-      } else {
-        // Piste inexistante : extinction SysEx
-        for (const out of webMidiOutputs) {
-          try {
-            out.send([0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, num, 0, 0, 0, 0xF7]);
-            out.send([0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, i, 0, 0, 0, 0xF7]);
-            if (type === 'note') {
-              out.send([0x80 | targetChIdx, num, 0]);
-            }
-          } catch (e) {}
-        }
-      }
-    }
+  function sendMidiLedFeedback() {
+    // Le Remote Script Python LivePilot16 pilote directement toutes les LEDs matérielles
+    // en mode DAW Novation (indices 37..52 pour les pads, 13..36 pour les knobs) sans aucun conflit.
   }
 
   function setupWebMidiInputs(midi) {
@@ -1309,17 +1286,17 @@
   const NAV_BUTTON_DEFS = [
     { key: 'page_up',     icon: '▲', label: 'Page ▲ (Haut)',    defaultCc: 106, defaultAction: 'bank_prev' },
     { key: 'page_down',   icon: '▼', label: 'Page ▼ (Bas)',     defaultCc: 107, defaultAction: 'bank_next' },
-    { key: 'track_left',  icon: '◄', label: 'Track ◄ (Gauche)', defaultCc: 103, defaultAction: 'track_prev' },
-    { key: 'track_right', icon: '►', label: 'Track ► (Droite)', defaultCc: 102, defaultAction: 'track_next' }
+    { key: 'track_left',  icon: '◄', label: 'Track ◄ (Gauche)', defaultCc: 103, defaultAction: 'device_prev' },
+    { key: 'track_right', icon: '►', label: 'Track ► (Droite)', defaultCc: 102, defaultAction: 'device_next' }
   ];
 
   const NAV_ACTION_OPTIONS = [
+    { value: 'device_prev',         label: '◄ Plugin / Effet précédent (-1)' },
+    { value: 'device_next',         label: '► Plugin / Effet suivant (+1)' },
     { value: 'track_prev',          label: '◄ Piste précédente (-1)' },
     { value: 'track_next',          label: '► Piste suivante (+1)' },
     { value: 'bank_prev',           label: '▲ Banque 16 pistes précédente (-16)' },
     { value: 'bank_next',           label: '▼ Banque 16 pistes suivante (+16)' },
-    { value: 'device_prev',         label: '◄ Plugin / Effet précédent' },
-    { value: 'device_next',         label: '► Plugin / Effet suivant' },
     { value: 'scene_prev',          label: '▲ Sélectionner scène précédente' },
     { value: 'scene_next',          label: '▼ Sélectionner scène suivante' },
     { value: 'scene_fire_next',     label: '▶ Lancer scène suivante' },
@@ -1612,11 +1589,12 @@
 
   function applyPreset(presetType) {
     cancelLearnTarget();
+    state.midiConfig.schema_version = LIVEPILOT_VERSION;
     state.midiConfig.nav_buttons = {
       page_up:     { cc: 106, type: 'cc', channel: 1, action: 'bank_prev' },
       page_down:   { cc: 107, type: 'cc', channel: 1, action: 'bank_next' },
-      track_left:  { cc: 103, type: 'cc', channel: 1, action: 'track_prev' },
-      track_right: { cc: 102, type: 'cc', channel: 1, action: 'track_next' }
+      track_left:  { cc: 103, type: 'cc', channel: 1, action: 'device_prev' },
+      track_right: { cc: 102, type: 'cc', channel: 1, action: 'device_next' }
     };
     if (presetType === 'livepilot') {
       state.midiConfig.preset = 'livepilot';
@@ -1912,6 +1890,7 @@
       });
     }
 
+    state.midiConfig.schema_version = LIVEPILOT_VERSION;
     try {
       localStorage.setItem('livepilot_midi_config', JSON.stringify(state.midiConfig));
     } catch (e) {}
@@ -1949,6 +1928,25 @@
             state.midiConfig.button_channels = Array.from({ length: 16 }, () => (state.midiConfig.channel || 1));
           }
           ensureNavButtonsConfig();
+          // Migration v1.2.0 : Track ◄ / Track ► parcourent le plugin de la piste actuelle -1 / +1
+          if (state.midiConfig.schema_version !== LIVEPILOT_VERSION) {
+            state.midiConfig.schema_version = LIVEPILOT_VERSION;
+            state.midiConfig.nav_buttons.track_left = {
+              ...(state.midiConfig.nav_buttons.track_left || {}),
+              cc: (state.midiConfig.nav_buttons.track_left && state.midiConfig.nav_buttons.track_left.cc) || 103,
+              type: 'cc',
+              channel: 1,
+              action: 'device_prev'
+            };
+            state.midiConfig.nav_buttons.track_right = {
+              ...(state.midiConfig.nav_buttons.track_right || {}),
+              cc: (state.midiConfig.nav_buttons.track_right && state.midiConfig.nav_buttons.track_right.cc) || 102,
+              type: 'cc',
+              channel: 1,
+              action: 'device_next'
+            };
+            localStorage.setItem('livepilot_midi_config', JSON.stringify(state.midiConfig));
+          }
         }
       }
     } catch (e) {}
@@ -1999,6 +1997,7 @@
     }
 
     initListeners();
+    renderVersionBadge();
     renderTopBar();
     renderSceneBanner();
     renderTracks();

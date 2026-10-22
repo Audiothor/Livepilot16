@@ -1,6 +1,8 @@
 # LivePilot 16 — Constantes de communication MIDI, SysEx & Web Cockpit
 # Compatible Ableton Live 11 (Python 3.7) & Ableton Live 12 (Python 3.11)
 
+LIVEPILOT_VERSION = "v1.2.0"
+
 # En-tête SysEx
 SYSEX_START = 0xF0
 SYSEX_END = 0xF7
@@ -80,8 +82,8 @@ NOVATION_ENCODER_ROW3_ABS = (0xB6, 0x49, 0x00)
 DEFAULT_NAV_BUTTONS = {
     'page_up':     {'cc': 106, 'type': 'cc', 'channel': 1, 'action': 'bank_prev'},
     'page_down':   {'cc': 107, 'type': 'cc', 'channel': 1, 'action': 'bank_next'},
-    'track_left':  {'cc': 103, 'type': 'cc', 'channel': 1, 'action': 'track_prev'},
-    'track_right': {'cc': 102, 'type': 'cc', 'channel': 1, 'action': 'track_next'}
+    'track_left':  {'cc': 103, 'type': 'cc', 'channel': 1, 'action': 'device_prev'},
+    'track_right': {'cc': 102, 'type': 'cc', 'channel': 1, 'action': 'device_next'}
 }
 
 # Indices matériels officiels des 16 boutons (Guide Développeur Page 9)
