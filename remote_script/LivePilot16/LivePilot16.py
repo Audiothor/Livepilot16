@@ -66,6 +66,9 @@ class LivePilot16(ControlSurface):
         self._master_mode_bpm = True
         self._meter_polling_active = False
         self._lcxl3_surface_mode = 'daw'
+        self._updating_from_hardware = False
+        self._encoder_synced = [False] * NUM_ENCODERS
+        self._encoder_last_raw = [None] * NUM_ENCODERS
 
         # Configuration MIDI du Launch Control XL (par défaut : LivePilot CC 1..24 & CC 25..40)
         self._midi_config = {
@@ -143,6 +146,7 @@ class LivePilot16(ControlSurface):
             self._update_pad_leds()
             self._update_knob_leds()
             self._update_nav_leds()
+            self._sync_hardware_encoders()
 
     # =========================================================================
     # ÉCOUTEURS DU LIVE OBJECT MODEL (LOM)
@@ -303,6 +307,8 @@ class LivePilot16(ControlSurface):
         self._auto_align_bank_for_track(self._current_track)
         self._attach_track_devices_listener()
         self._refresh_assigned_devices()
+        self._reset_encoder_sync_state()
+        self._sync_hardware_encoders()
         self._send_active_track_info()
         self._send_bank_colors()
         self._send_active_device_info()
@@ -312,6 +318,7 @@ class LivePilot16(ControlSurface):
         self._update_knob_leds()
         self._update_nav_leds()
         self._update_screen_display()
+        self._schedule_led_refresh()
 
     def _auto_align_bank_for_track(self, track):
         """Ajuste automatiquement la banque visible de 8 pistes si nécessaire"""
@@ -345,9 +352,13 @@ class LivePilot16(ControlSurface):
 
     def _on_track_devices_changed(self):
         self._refresh_assigned_devices()
+        self._reset_encoder_sync_state()
+        self._sync_hardware_encoders()
         self._send_active_device_info()
         self._send_parameters_info()
         self._broadcast_selected_track()
+        self._update_knob_leds()
+        self._update_nav_leds()
 
     # =========================================================================
     # GESTION DES DEVICES & PARAMÈTRES
@@ -396,6 +407,8 @@ class LivePilot16(ControlSurface):
         except Exception:
             pass
         self._attach_parameter_listeners()
+        self._reset_encoder_sync_state()
+        self._sync_hardware_encoders()
         self._send_active_device_info()
         self._send_parameters_info()
         self._broadcast_selected_device()
@@ -415,6 +428,8 @@ class LivePilot16(ControlSurface):
         except Exception:
             pass
         self._attach_parameter_listeners()
+        self._reset_encoder_sync_state()
+        self._sync_hardware_encoders()
         self._send_active_device_info()
         self._send_parameters_info()
         self._broadcast_selected_device()
@@ -444,25 +459,103 @@ class LivePilot16(ControlSurface):
     def _on_parameter_value_changed(self):
         self._send_parameters_info()
         self._broadcast_all_parameters()
+        if not getattr(self, '_updating_from_hardware', False):
+            self._sync_hardware_encoders()
 
-    def _set_encoder_value(self, encoder_idx, norm_val):
-        """Met à jour un paramètre absolu (0.0..1.0) depuis un potentiomètre physique du Launch Control XL"""
+    def _reset_encoder_sync_state(self):
+        """Réinitialise l'état anti-saut des 24 encodeurs lors d'un changement de piste ou de plugin"""
+        self._encoder_synced = [False] * NUM_ENCODERS
+        self._encoder_last_raw = [None] * NUM_ENCODERS
+
+    def _sync_hardware_encoders(self):
+        """Envoie la position actuelle (0..127) des 24 paramètres au Launch Control XL 3 (Canal 16, CC 13..36).
+        Selon le Guide du Programmeur LCXL3 (Page 10) :
+        'By default encoders are in absolute mode and provide standard CCs.
+         If the DAW sends them position information, they automatically pick that up.'"""
+        try:
+            dev = self._current_device
+            params = dev.parameters[1:NUM_ENCODERS+1] if dev else []
+            for idx in range(NUM_ENCODERS):
+                cc_num = 13 + idx
+                if idx < len(params):
+                    p = params[idx]
+                    v_range = max(0.0001, (p.max - p.min))
+                    val_7bit = int(round((p.value - p.min) / v_range * 127.0))
+                    val_7bit = max(0, min(127, val_7bit))
+                else:
+                    val_7bit = 0
+                self._send_midi_all((0xBF, cc_num, val_7bit))
+        except Exception as e:
+            self.log_message("LivePilot : Erreur dans _sync_hardware_encoders : %s" % str(e))
+
+    def _set_encoder_value(self, encoder_idx, cc_val):
+        """Met à jour un paramètre depuis un potentiomètre physique du Launch Control XL 3 sans jamais repartir de zéro"""
         if not self._current_device or encoder_idx >= NUM_ENCODERS:
             return
         params = self._current_device.parameters[1:NUM_ENCODERS+1]
-        if encoder_idx < len(params):
-            p = params[encoder_idx]
-            v_range = max(0.0001, (p.max - p.min))
+        if encoder_idx >= len(params):
+            return
+
+        p = params[encoder_idx]
+        v_range = max(0.0001, (p.max - p.min))
+        cur_norm = (p.value - p.min) / v_range
+        cur_7bit = max(0, min(127, int(round(cur_norm * 127.0))))
+
+        if isinstance(cc_val, float) and 0.0 <= cc_val <= 1.0 and cc_val not in (0, 1):
+            raw_cc = int(round(cc_val * 127.0))
+        else:
+            raw_cc = int(cc_val)
+        raw_cc = max(0, min(127, raw_cc))
+
+        if not hasattr(self, '_encoder_synced') or len(self._encoder_synced) != NUM_ENCODERS:
+            self._reset_encoder_sync_state()
+
+        last_raw = self._encoder_last_raw[encoder_idx]
+        self._encoder_last_raw[encoder_idx] = raw_cc
+
+        # Protection anti-saut à la première manipulation du knob :
+        # Si la valeur envoyée par le contrôleur est éloignée de la valeur actuelle du plugin (ex: repart de 0),
+        # on applique uniquement le déplacement relatif (+/- pas) à partir de la valeur actuelle du plugin
+        # et on synchronise immédiatement le registre interne du potentiomètre sur le Launch Control XL 3.
+        if not self._encoder_synced[encoder_idx] and abs(raw_cc - cur_7bit) > 4:
+            if last_raw is not None:
+                delta = raw_cc - last_raw
+                if delta == 0:
+                    delta = -1 if raw_cc == 0 else (1 if raw_cc == 127 else 0)
+                delta = max(-4, min(4, delta))
+            else:
+                if raw_cc == 0:
+                    delta = -1
+                elif raw_cc <= 5 and cur_7bit > 8:
+                    delta = max(1, raw_cc)
+                elif raw_cc >= 122 and cur_7bit < 119:
+                    delta = min(-1, raw_cc - 127)
+                else:
+                    delta = 1 if raw_cc > cur_7bit else -1
+
+            target_7bit = max(0, min(127, cur_7bit + delta))
+            # Synchronise immédiatement le registre matériel du knob sur le Launch Control XL 3
+            self._send_midi_all((0xBF, 13 + encoder_idx, target_7bit))
+        else:
+            self._encoder_synced[encoder_idx] = True
+            target_7bit = raw_cc
+
+        norm_val = target_7bit / 127.0
+        self._updating_from_hardware = True
+        try:
             p.value = max(p.min, min(p.max, p.min + (norm_val * v_range)))
-            if self._web_server:
-                self._web_server.broadcast({
-                    'type': 'param_value',
-                    'data': {
-                        'index': encoder_idx,
-                        'value': norm_val,
-                        'str': str(p)[:12]
-                    }
-                })
+        finally:
+            self._updating_from_hardware = False
+
+        if self._web_server:
+            self._web_server.broadcast({
+                'type': 'param_value',
+                'data': {
+                    'index': encoder_idx,
+                    'value': round(norm_val, 3),
+                    'str': str(p)[:12]
+                }
+            })
 
     def _adjust_parameter(self, encoder_idx, rel_value):
         if not self._current_device or encoder_idx >= NUM_ENCODERS:
@@ -470,9 +563,26 @@ class LivePilot16(ControlSurface):
         params = self._current_device.parameters[1:NUM_ENCODERS+1]
         if encoder_idx < len(params):
             p = params[encoder_idx]
-            step = (p.max - p.min) / 127.0
-            new_val = p.value + (rel_value * step)
-            p.value = max(p.min, min(p.max, new_val))
+            v_range = max(0.0001, (p.max - p.min))
+            step = v_range / 127.0
+            new_val = max(p.min, min(p.max, p.value + (rel_value * step)))
+            self._updating_from_hardware = True
+            try:
+                p.value = new_val
+            finally:
+                self._updating_from_hardware = False
+            norm_val = (new_val - p.min) / v_range
+            val_7bit = max(0, min(127, int(round(norm_val * 127.0))))
+            self._send_midi_all((0xBF, 13 + encoder_idx, val_7bit))
+            if self._web_server:
+                self._web_server.broadcast({
+                    'type': 'param_value',
+                    'data': {
+                        'index': encoder_idx,
+                        'value': round(norm_val, 3),
+                        'str': str(p)[:12]
+                    }
+                })
 
     # =========================================================================
     # NAVIGATION DE BANQUES & PISTES
@@ -580,12 +690,16 @@ class LivePilot16(ControlSurface):
                 self._update_pad_leds()
                 self._update_knob_leds()
                 self._update_nav_leds()
+                self._schedule_led_refresh()
             else:
                 # Modifier selected_track déclenche automatiquement _on_selected_track_changed()
                 self.song().view.selected_track = target_track
+                self._update_pad_leds()
+                self._schedule_led_refresh()
         else:
             self.log_message("LivePilot : Piste demandee hors limites (index=%d, total=%d)" % (track_idx, len(tracks)))
             self._update_pad_leds()
+            self._schedule_led_refresh()
 
     # =========================================================================
     # DIFFUSION WEBSOCKET (Ableton -> Tablette Android)
@@ -973,6 +1087,7 @@ class LivePilot16(ControlSurface):
 
         if action == 'request_full_sync':
             self._broadcast_full_sync()
+            self._schedule_led_refresh()
 
         elif action == 'select_track':
             t_idx = msg.get('track_index', 0)
@@ -986,6 +1101,7 @@ class LivePilot16(ControlSurface):
                     self._update_pad_leds()
                     self._update_knob_leds()
                     self._update_nav_leds()
+                    self._schedule_led_refresh()
 
         elif action == 'select_device':
             d_idx = msg.get('device_index', 0)
@@ -997,6 +1113,8 @@ class LivePilot16(ControlSurface):
                 except Exception:
                     pass
                 self._attach_parameter_listeners()
+                self._reset_encoder_sync_state()
+                self._sync_hardware_encoders()
                 self._send_active_device_info()
                 self._send_parameters_info()
                 self._broadcast_selected_device()
@@ -1015,6 +1133,8 @@ class LivePilot16(ControlSurface):
                 except Exception:
                     pass
                 self._attach_parameter_listeners()
+                self._reset_encoder_sync_state()
+                self._sync_hardware_encoders()
                 self._send_active_device_info()
                 self._send_parameters_info()
                 self._broadcast_selected_device()
@@ -1030,6 +1150,8 @@ class LivePilot16(ControlSurface):
                 if 0 <= p_idx < len(params):
                     p = params[p_idx]
                     p.value = p.min + norm_val * (p.max - p.min)
+                    val_7bit = max(0, min(127, int(round(norm_val * 127.0))))
+                    self._send_midi_all((0xBF, 13 + p_idx, val_7bit))
 
         elif action == 'trigger_scene':
             sc_idx = msg.get('scene_index', 0)
@@ -1409,12 +1531,12 @@ class LivePilot16(ControlSurface):
                 return
 
             # 2. 8 FADERS DE VOLUME
-            # Mode DAW Novation : CC 5 à 12 (sur canal 16 ou tout canal si 5 <= cc_num <= 12)
+            # Mode DAW Novation : CC 5 à 12 sur canal 16
             # Mode Custom Novation : CC 25 à 32 (DEFAULT_FADER_CCS)
             fader_idx = None
-            if 5 <= cc_num <= 12 and (channel == 16 or cc_num in DAW_FADER_CCS):
+            if 5 <= cc_num <= 12 and channel == 16:
                 fader_idx = cc_num - 5
-            elif cc_num in DEFAULT_FADER_CCS:
+            elif channel != 16 and cc_num in DEFAULT_FADER_CCS:
                 fader_idx = DEFAULT_FADER_CCS.index(cc_num)
 
             if fader_idx is not None and fader_idx < 8:
@@ -1428,7 +1550,15 @@ class LivePilot16(ControlSurface):
                 return
 
             # 3. 24 POTENTIOMÈTRES KNOBS
-            # Mode DAW Novation : CC 13 à 36 (sur canal 16)
+            # Mode DAW Relatif Novation : CC 77 à 100 sur canal 16 (pivot 64)
+            if channel == 16 and 77 <= cc_num <= 100:
+                rel_idx = cc_num - 77
+                rel_delta = cc_val - 64
+                if rel_delta != 0:
+                    self._adjust_parameter(rel_idx, rel_delta)
+                return
+
+            # Mode DAW Absolu Novation : CC 13 à 36 (sur canal 16)
             # Mode Custom Novation : CC 1 à 24 (sur canal 1)
             knob_idx = None
             if channel == 16 and 13 <= cc_num <= 36:
@@ -1439,8 +1569,7 @@ class LivePilot16(ControlSurface):
                 knob_idx = cfg_knobs.index(cc_num)
 
             if knob_idx is not None and knob_idx < NUM_ENCODERS:
-                norm_val = round(cc_val / 127.0, 3)
-                self._set_encoder_value(knob_idx, norm_val)
+                self._set_encoder_value(knob_idx, cc_val)
                 return
 
             # 4. GESTION DU RELÂCHEMENT DES PADS (cc_val == 0)
@@ -1453,11 +1582,12 @@ class LivePilot16(ControlSurface):
                            (btn_types and any(btn_types[idx] == 'cc' and cfg_buttons[idx] == cc_num for idx in range(min(len(btn_types), len(cfg_buttons)))))
             if is_button_cc and cc_val == 0:
                 self._update_pad_leds()
+                self._schedule_led_refresh()
                 return
 
             # 5. 16 PADS DE SÉLECTION DE PISTES EN MODE DAW (CC 37 à 52 sur Canal 1)
             # Prioritaire pour éviter tout conflit avec les anciens numéros Custom 33..48
-            if 37 <= cc_num <= 52 and cc_val > 0 and channel == 0:
+            if 37 <= cc_num <= 52 and cc_val > 0 and channel == 1:
                 pad_idx = cc_num - 37
                 self._select_track_in_bank(pad_idx)
                 return
@@ -1468,7 +1598,7 @@ class LivePilot16(ControlSurface):
                 for item in btn_items:
                     if item.get('type') == 'cc' and item.get('num') == cc_num:
                         it_ch = item.get('channel')
-                        if it_ch and it_ch > 0 and (channel + 1) != it_ch:
+                        if it_ch and it_ch > 0 and channel != it_ch:
                             continue
                         exp_val = item.get('val')
                         if len(same_num_items) > 1 and exp_val is not None:
@@ -1638,10 +1768,27 @@ class LivePilot16(ControlSurface):
         self._send_scene_info()
         self._on_selected_track_changed()
         self._broadcast_full_sync()
+        self._schedule_led_refresh()
         try:
             self.request_rebuild_midi_map()
         except Exception:
             pass
+
+    def _schedule_led_refresh(self):
+        """Planifie un rafraîchissement différé des LEDs et positions de knobs pour garantir que l'état
+        physique du contrôleur reste verrouillé (Rouge piste sélectionnée, Vert pistes existantes, Knobs synchronisés)
+        même après le relâchement physique d'un bouton ou une transition de mode."""
+        try:
+            self.schedule_message(1, self._refresh_all_hardware_feedback)
+            self.schedule_message(2, self._refresh_all_hardware_feedback)
+        except Exception:
+            pass
+
+    def _refresh_all_hardware_feedback(self):
+        self._update_pad_leds()
+        self._update_knob_leds()
+        self._update_nav_leds()
+        self._sync_hardware_encoders()
 
     def _send_midi_all(self, midi_bytes):
         """Diffuse un message MIDI vers toutes les instances LivePilot16 actives (Port 1 et Port 2)"""
@@ -1653,9 +1800,9 @@ class LivePilot16(ControlSurface):
 
     def _update_pad_leds(self):
         """Met a jour l'etat lumineux des 16 pads physiques du Launch Control XL 3 (indices 37..52 en mode DAW).
-        - Piste active selectionnee : Palette 5 (LED Rouge permanent).
-        - Pistes existantes non selectionnees : Palette 60 (LED Verte permanent).
-        - Pistes inexistantes dans le projet Ableton : Palette 0 (LED Eteinte / Off).
+        - Piste active selectionnee : Rouge permanent (Palette 5 + SysEx RGB 127,0,0).
+        - Pistes existantes non selectionnees : Vert permanent (Palette 60 + SysEx RGB 0,127,0).
+        - Pistes inexistantes dans le projet Ableton : Eteint / Off (Palette 0 + SysEx RGB 0,0,0).
         Aucun envoi sur les CC 33..36 pour ne jamais ecraser les Knobs 21..24 ni faire clignoter les pads !
         """
         try:
@@ -1676,13 +1823,16 @@ class LivePilot16(ControlSurface):
 
                 if track_exists:
                     if i == active_pad_idx:
-                        # Piste sélectionnée -> ROUGE PERMANENT (Palette 5)
+                        # Piste sélectionnée -> ROUGE PERMANENT (SysEx RGB 127,0,0 + Palette 5)
+                        self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 127, 0, 0, 0xF7))
                         self._send_midi_all((0xB0, ctrl_idx, 5))
                     else:
-                        # Piste existante non sélectionnée -> VERT PERMANENT (Palette 60)
+                        # Piste existante non sélectionnée -> VERT PERMANENT (SysEx RGB 0,127,0 + Palette 60)
+                        self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 127, 0, 0xF7))
                         self._send_midi_all((0xB0, ctrl_idx, 60))
                 else:
-                    # Piste inexistante -> ÉTEINT (Palette 0)
+                    # Piste inexistante -> ÉTEINT (SysEx RGB 0,0,0 + Palette 0)
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
                     self._send_midi_all((0xB0, ctrl_idx, 0))
         except Exception as e:
             self.log_message("LivePilot : Erreur dans _update_pad_leds : %s" % str(e))
@@ -1690,26 +1840,32 @@ class LivePilot16(ControlSurface):
     def _update_knob_leds(self):
         """Met a jour les LEDs sous les 24 potentiometres du Launch Control XL 3 (indices 13..36 en mode DAW).
         - Si le plugin actif possede un parametre pour ce knob : allume la LED de sa rangee.
-        - Si aucun plugin ou parametre inexistant : eteint la LED (Palette 0).
+        - Si aucun plugin ou parametre inexistant : eteint la LED (Palette 0 + SysEx RGB 0,0,0).
         """
         try:
             dev = self._current_device
             num_params = len(dev.parameters[1:]) if dev else 0
 
-            # Couleurs distinctes pour les 3 rangées de potentiomètres (Palette Novation DAW) :
-            # Ligne 1 (Knobs 1..8,  indices 13..20) : Cyan (Palette 37)
-            # Ligne 2 (Knobs 9..16, indices 21..28) : Ambre / Jaune (Palette 13)
-            # Ligne 3 (Knobs 17..24, indices 29..36) : Magenta / Violet (Palette 53)
-            row_palettes = [37, 13, 53]
+            # Couleurs distinctes pour les 3 rangées de potentiomètres (Palette Novation DAW + RGB) :
+            # Ligne 1 (Knobs 1..8,  indices 13..20) : Cyan (Palette 37, RGB 0,127,127)
+            # Ligne 2 (Knobs 9..16, indices 21..28) : Ambre / Jaune (Palette 13, RGB 127,80,0)
+            # Ligne 3 (Knobs 17..24, indices 29..36) : Magenta / Violet (Palette 53, RGB 127,0,127)
+            row_colors = [
+                (0, 127, 127, 37),
+                (127, 80, 0, 13),
+                (127, 0, 127, 53)
+            ]
 
             for k in range(NUM_ENCODERS):
                 ctrl_idx = 13 + k
                 row = k // 8
-                pal_cc = row_palettes[min(row, 2)]
+                r, g, b, pal_cc = row_colors[min(row, 2)]
 
                 if dev and k < num_params:
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, r, g, b, 0xF7))
                     self._send_midi_all((0xB0, ctrl_idx, pal_cc))
                 else:
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
                     self._send_midi_all((0xB0, ctrl_idx, 0))
         except Exception as e:
             self.log_message("LivePilot : Erreur dans _update_knob_leds : %s" % str(e))

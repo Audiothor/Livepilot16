@@ -255,7 +255,8 @@ class LivePilotWebServer(object):
                 "Content-Type: {}\r\n"
                 "Content-Length: {}\r\n"
                 "Access-Control-Allow-Origin: *\r\n"
-                "Cache-Control: no-cache\r\n\r\n"
+                "Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n"
+                "Pragma: no-cache\r\n\r\n"
             ).format(mime_type, len(content))
             sock.sendall(header.encode("ascii") + content)
         except Exception:

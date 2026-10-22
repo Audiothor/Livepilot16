@@ -1,7 +1,7 @@
 # LivePilot 16 — Constantes de communication MIDI, SysEx & Web Cockpit
 # Compatible Ableton Live 11 (Python 3.7) & Ableton Live 12 (Python 3.11)
 
-LIVEPILOT_VERSION = "v1.2.0"
+LIVEPILOT_VERSION = "v1.2.1"
 
 # En-tête SysEx
 SYSEX_START = 0xF0
