@@ -1619,6 +1619,14 @@
       if (evt.type === 'cc') {
         if (evt.num === 30) {
           targetName = ` → Novation Mode Select (Mode ${evt.val})`;
+        } else if (evt.num === 102) {
+          targetName = ` → Track ► (Piste suivante)`;
+        } else if (evt.num === 103) {
+          targetName = ` → Track ◄ (Piste précédente)`;
+        } else if (evt.num === 106) {
+          targetName = ` → Page ▲ (Banque précédente)`;
+        } else if (evt.num === 107) {
+          targetName = ` → Page ▼ (Banque suivante)`;
         } else {
           const kIdx = state.midiConfig.knobs ? state.midiConfig.knobs.indexOf(evt.num) : -1;
           if (kIdx >= 0) targetName = ` → Knob #${kIdx + 1}`;

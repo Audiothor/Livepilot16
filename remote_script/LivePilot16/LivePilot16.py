@@ -18,7 +18,8 @@ from .consts import (
     CC_NAV_TRACK_PREV, CC_NAV_TRACK_NEXT, CC_NAV_GROUP_PREV, CC_NAV_GROUP_NEXT,
     CC_NAV_DEV_PREV, CC_NAV_DEV_NEXT, CC_BASE_TRACK_SEL,
     NUM_TRACKS_PER_BANK, NUM_ENCODERS, DEFAULT_HTTP_PORT,
-    NOVATION_FEATURE_CONTROLS_ON_NOTE, LCXL3_BUTTON_INDICES, LCXL3_RGB_SYSEX_HEADER
+    NOVATION_FEATURE_CONTROLS_ON_NOTE, LCXL3_BUTTON_INDICES, LCXL3_RGB_SYSEX_HEADER,
+    CC_NAV_TRACK_LEFT, CC_NAV_TRACK_RIGHT, CC_NAV_PAGE_UP, CC_NAV_PAGE_DOWN
 )
 from .web_server import LivePilotWebServer
 
@@ -437,6 +438,46 @@ class LivePilot16(ControlSurface):
             self._send_bank_info()
             self._send_bank_colors()
             self._broadcast_full_sync()
+
+    def _select_prev_track(self):
+        tracks = list(self.song().tracks)
+        if not tracks:
+            return
+        cur_track = self.song().view.selected_track
+        idx = tracks.index(cur_track) if cur_track in tracks else 0
+        new_idx = max(0, idx - 1)
+        target = tracks[new_idx]
+        self.song().view.selected_track = target
+        self._current_track = target
+        self._auto_align_bank_for_track(target)
+        self._attach_track_devices_listener()
+        self._refresh_assigned_devices()
+        self._send_active_track_info()
+        self._send_bank_colors()
+        self._send_active_device_info()
+        self._send_parameters_info()
+        self._broadcast_selected_track()
+        self._update_pad_leds()
+
+    def _select_next_track(self):
+        tracks = list(self.song().tracks)
+        if not tracks:
+            return
+        cur_track = self.song().view.selected_track
+        idx = tracks.index(cur_track) if cur_track in tracks else 0
+        new_idx = min(len(tracks) - 1, idx + 1)
+        target = tracks[new_idx]
+        self.song().view.selected_track = target
+        self._current_track = target
+        self._auto_align_bank_for_track(target)
+        self._attach_track_devices_listener()
+        self._refresh_assigned_devices()
+        self._send_active_track_info()
+        self._send_bank_colors()
+        self._send_active_device_info()
+        self._send_parameters_info()
+        self._broadcast_selected_track()
+        self._update_pad_leds()
 
     def _get_all_groups(self):
         return [t for t in self.song().tracks if getattr(t, 'is_foldable', False)]
@@ -1230,11 +1271,21 @@ class LivePilot16(ControlSurface):
                 self._select_track_in_bank(cc_num - CC_BASE_TRACK_SEL)
                 return
 
-            # 3. Boutons de Navigation Système
-            elif cc_num == CC_NAV_TRACK_PREV and cc_val > 0:
+            # 3. Boutons de Navigation Système & Matérielle Launch Control XL
+            elif (cc_num in (CC_NAV_TRACK_LEFT, CC_NAV_TRACK_PREV, 103)) and cc_val > 0:
+                self.log_message("LivePilot : Track Left (◄) detecte (CC %d) -> Piste precedente" % cc_num)
+                self._select_prev_track()
+                return
+            elif (cc_num in (CC_NAV_TRACK_RIGHT, CC_NAV_TRACK_NEXT, 102)) and cc_val > 0:
+                self.log_message("LivePilot : Track Right (►) detecte (CC %d) -> Piste suivante" % cc_num)
+                self._select_next_track()
+                return
+            elif (cc_num in (CC_NAV_PAGE_UP, 106)) and cc_val > 0:
+                self.log_message("LivePilot : Page Up (▲) detecte (CC %d) -> Banque precedente" % cc_num)
                 self._nav_bank_prev()
                 return
-            elif cc_num == CC_NAV_TRACK_NEXT and cc_val > 0:
+            elif (cc_num in (CC_NAV_PAGE_DOWN, 107)) and cc_val > 0:
+                self.log_message("LivePilot : Page Down (▼) detecte (CC %d) -> Banque suivante" % cc_num)
                 self._nav_bank_next()
                 return
             elif cc_num == CC_NAV_GROUP_PREV and cc_val > 0:

@@ -85,10 +85,16 @@ CC_NAV_RIGHT       = 55  # Flèche Droite ►
 CC_BTN_VALID       = 56  # Bouton de validation [VALID]
 CC_NAV_GROUP_PREV  = 58  # Group < (Groupe précédent)
 CC_NAV_GROUP_NEXT  = 59  # Group > (Groupe suivant)
-CC_NAV_TRACK_PREV  = 60  # Track < (Banque précédente)
-CC_NAV_TRACK_NEXT  = 61  # Track > (Banque suivante)
+CC_NAV_TRACK_PREV  = 60  # Track < (Banque précédente fallback)
+CC_NAV_TRACK_NEXT  = 61  # Track > (Banque suivante fallback)
 CC_NAV_DEV_PREV    = 62  # Device < (Device précédent)
 CC_NAV_DEV_NEXT    = 63  # Device > (Device suivant)
+
+# Boutons de Navigation Matérielle Launch Control XL / Launch Control XL 3
+CC_NAV_TRACK_LEFT   = 103  # Track ◄ (Piste précédente)
+CC_NAV_TRACK_RIGHT  = 102  # Track ► (Piste suivante)
+CC_NAV_PAGE_UP      = 106  # Page ▲ (Banque précédente)
+CC_NAV_PAGE_DOWN    = 107  # Page ▼ (Banque suivante)
 
 # 16 Boutons de Sélection de Piste du Launch Control XL (Mode CC alternatif)
 CC_BASE_TRACK_SEL  = 64  # CC 64 à 79 (Boutons 1 à 16)
