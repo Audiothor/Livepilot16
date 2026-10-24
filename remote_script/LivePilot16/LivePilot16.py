@@ -1900,7 +1900,7 @@ class LivePilot16(ControlSurface):
     def _update_pad_leds(self, force=False, force_pad_idx=None):
         """Met a jour l'etat lumineux des 16 pads physiques du Launch Control XL 3 (indices 37..52 en mode DAW).
         - Piste active selectionnee : Rouge permanent (SysEx RGB 127,0,0 + Palette 5 sur port DAW).
-        - Pistes existantes non selectionnees : Vert permanent (SysEx RGB 0,127,0 + Palette 60 sur port DAW).
+        - Pistes existantes non selectionnees : Vert permanent (SysEx RGB 0,127,0 + Palette 21 = Vert pur sur port DAW).
         - Pistes inexistantes dans le projet Ableton : Eteint / Off (SysEx RGB 0,0,0 + Palette 0 sur port DAW).
         Utilise un cache d'etat par pad (_pad_led_cache) pour n'envoyer de messages MIDI QU'AUX pads
         dont l'etat change reellement (ex: ancienne piste Rouge -> Vert, nouvelle piste Vert -> Rouge).
@@ -1939,9 +1939,9 @@ class LivePilot16(ControlSurface):
                     self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 127, 0, 0, 0xF7))
                     self._send_midi_daw((0xB0, ctrl_idx, 5))
                 elif desired_state == 'green':
-                    # Piste existante non sélectionnée -> VERT PERMANENT (SysEx RGB 0,127,0 + Palette 60 sur port DAW)
+                    # Piste existante non sélectionnée -> VERT PERMANENT (SysEx RGB 0,127,0 + Palette 21 = Vert pur sur port DAW)
                     self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 127, 0, 0xF7))
-                    self._send_midi_daw((0xB0, ctrl_idx, 60))
+                    self._send_midi_daw((0xB0, ctrl_idx, 21))
                 else:
                     # Piste inexistante -> ÉTEINT (SysEx RGB 0,0,0 + Palette 0 sur port DAW)
                     self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
