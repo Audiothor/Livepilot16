@@ -138,7 +138,7 @@
     '#7e57c2', '#ff9800', '#ffeb3b', '#00e676', '#00bcd4', '#2196f3', '#673ab7', '#e91e63'
   ];
 
-  const LIVEPILOT_VERSION = 'v1.2.1';
+  const LIVEPILOT_VERSION = 'v1.2.2';
 
   // --- STATE ---
   const state = {

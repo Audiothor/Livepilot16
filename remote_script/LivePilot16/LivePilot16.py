@@ -69,6 +69,8 @@ class LivePilot16(ControlSurface):
         self._updating_from_hardware = False
         self._encoder_synced = [False] * NUM_ENCODERS
         self._encoder_last_raw = [None] * NUM_ENCODERS
+        self._pad_led_cache = [None] * NUM_TRACKS_PER_BANK
+        self._knob_led_cache = [None] * NUM_ENCODERS
 
         # Configuration MIDI du Launch Control XL (par défaut : LivePilot CC 1..24 & CC 25..40)
         self._midi_config = {
@@ -143,8 +145,8 @@ class LivePilot16(ControlSurface):
     def update(self):
         super(LivePilot16, self).update()
         if self._is_master:
-            self._update_pad_leds()
-            self._update_knob_leds()
+            self._update_pad_leds(force=True)
+            self._update_knob_leds(force=True)
             self._update_nav_leds()
             self._sync_hardware_encoders()
 
@@ -258,6 +260,9 @@ class LivePilot16(ControlSurface):
 
     def _on_tracks_changed(self):
         self._attach_track_clip_listeners()
+        self._update_pad_leds(force=True)
+        self._update_knob_leds(force=True)
+        self._update_nav_leds()
         self._send_bank_info()
         self._send_bank_colors()
         self._broadcast_full_sync()
@@ -308,26 +313,27 @@ class LivePilot16(ControlSurface):
         self._attach_track_devices_listener()
         self._refresh_assigned_devices()
         self._reset_encoder_sync_state()
+        # Mise à jour matérielle immédiate et prioritaire (sans jamais faire clignoter les autres pads)
+        self._update_pad_leds()
+        self._update_knob_leds()
+        self._update_nav_leds()
         self._sync_hardware_encoders()
+        self._update_screen_display()
         self._send_active_track_info()
         self._send_bank_colors()
         self._send_active_device_info()
         self._send_parameters_info()
         self._broadcast_selected_track()
-        self._update_pad_leds()
-        self._update_knob_leds()
-        self._update_nav_leds()
-        self._update_screen_display()
-        self._schedule_led_refresh()
 
     def _auto_align_bank_for_track(self, track):
-        """Ajuste automatiquement la banque visible de 8 pistes si nécessaire"""
+        """Ajuste automatiquement la banque visible de 16 pistes si nécessaire"""
         tracks = list(self.song().tracks)
         if track in tracks:
             idx = tracks.index(track)
             target_bank = idx // NUM_TRACKS_PER_BANK
             if target_bank != self._current_bank_index:
                 self._current_bank_index = target_bank
+                self._pad_led_cache = [None] * NUM_TRACKS_PER_BANK
                 self._send_bank_info()
                 self._send_bank_colors()
 
@@ -590,10 +596,11 @@ class LivePilot16(ControlSurface):
     def _nav_bank_prev(self):
         if self._current_bank_index > 0:
             self._current_bank_index -= 1
+            self._pad_led_cache = [None] * NUM_TRACKS_PER_BANK
             self._send_bank_info()
             self._send_bank_colors()
             self._broadcast_full_sync()
-            self._update_pad_leds()
+            self._update_pad_leds(force=True)
             self._update_nav_leds()
 
     def _nav_bank_next(self):
@@ -601,10 +608,11 @@ class LivePilot16(ControlSurface):
         total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
         if self._current_bank_index < total_banks - 1:
             self._current_bank_index += 1
+            self._pad_led_cache = [None] * NUM_TRACKS_PER_BANK
             self._send_bank_info()
             self._send_bank_colors()
             self._broadcast_full_sync()
-            self._update_pad_leds()
+            self._update_pad_leds(force=True)
             self._update_nav_leds()
 
     def _select_prev_track(self):
@@ -671,6 +679,7 @@ class LivePilot16(ControlSurface):
             target_bank = idx // NUM_TRACKS_PER_BANK
             if target_bank != self._current_bank_index:
                 self._current_bank_index = target_bank
+                self._pad_led_cache = [None] * NUM_TRACKS_PER_BANK
                 self._send_bank_info()
                 self._send_bank_colors()
             self.song().view.selected_track = target_track
@@ -682,38 +691,74 @@ class LivePilot16(ControlSurface):
             target_track = tracks[track_idx]
             self.log_message("LivePilot : Selection de la piste %d (%s)" % (track_idx + 1, target_track.name))
             if target_track == self.song().view.selected_track:
-                if getattr(target_track, 'is_foldable', False):
-                    try:
-                        target_track.fold_state = not target_track.fold_state
-                    except Exception:
-                        pass
-                self._update_pad_leds()
-                self._update_knob_leds()
+                self._update_pad_leds(force_pad_idx=index_in_bank)
                 self._update_nav_leds()
-                self._schedule_led_refresh()
             else:
                 # Modifier selected_track déclenche automatiquement _on_selected_track_changed()
                 self.song().view.selected_track = target_track
-                self._update_pad_leds()
-                self._schedule_led_refresh()
+                self._update_pad_leds(force_pad_idx=index_in_bank)
         else:
             self.log_message("LivePilot : Piste demandee hors limites (index=%d, total=%d)" % (track_idx, len(tracks)))
-            self._update_pad_leds()
-            self._schedule_led_refresh()
+            self._update_pad_leds(force_pad_idx=index_in_bank)
 
     # =========================================================================
     # DIFFUSION WEBSOCKET (Ableton -> Tablette Android)
     # =========================================================================
+    def _safe_get_arm(self, track):
+        """Lit l'état Arm d'une piste en toute sécurité (les pistes Group, Return et Main n'ont pas d'état Arm
+        dans Ableton Live et lèvent RuntimeError si on accède à track.arm)."""
+        if not track:
+            return False
+        try:
+            if getattr(track, 'is_foldable', False):
+                return False
+            if not getattr(track, 'can_be_armed', False):
+                return False
+            return bool(track.arm)
+        except Exception:
+            return False
+
+    def _safe_toggle_arm(self, track):
+        """Inverse l'état Arm d'une piste uniquement si elle peut être armée (ignore les pistes Group/Return/Main)"""
+        if not track:
+            return
+        try:
+            if getattr(track, 'is_foldable', False):
+                return
+            if not getattr(track, 'can_be_armed', False):
+                return
+            track.arm = not track.arm
+        except Exception:
+            pass
+
     def _build_track_dict(self, track, global_index, active_scene_idx=None):
         if not track:
             return None
-        vol_str = str(track.mixer_device.volume) if hasattr(track, 'mixer_device') else '0 dB'
-        pan_str = str(track.mixer_device.panning) if hasattr(track, 'mixer_device') else 'C'
-        pan_val = round(float(track.mixer_device.panning.value), 2) if (hasattr(track, 'mixer_device') and hasattr(track.mixer_device, 'panning')) else 0.0
-        is_group = bool(getattr(track, 'is_foldable', False))
-        fold_state = bool(getattr(track, 'fold_state', False)) if is_group else False
-        is_grouped = bool(getattr(track, 'is_grouped', False))
-        group_name = track.group_track.name if (is_grouped and getattr(track, 'group_track', None)) else ""
+        try:
+            vol_str = str(track.mixer_device.volume) if (hasattr(track, 'mixer_device') and track.mixer_device) else '0 dB'
+        except Exception:
+            vol_str = '0 dB'
+        try:
+            pan_str = str(track.mixer_device.panning) if (hasattr(track, 'mixer_device') and track.mixer_device) else 'C'
+            pan_val = round(float(track.mixer_device.panning.value), 2) if (hasattr(track, 'mixer_device') and track.mixer_device and hasattr(track.mixer_device, 'panning')) else 0.0
+        except Exception:
+            pan_str = 'C'
+            pan_val = 0.0
+
+        try:
+            is_group = bool(getattr(track, 'is_foldable', False))
+        except Exception:
+            is_group = False
+        try:
+            fold_state = bool(getattr(track, 'fold_state', False)) if is_group else False
+        except Exception:
+            fold_state = False
+        try:
+            is_grouped = bool(getattr(track, 'is_grouped', False))
+            group_name = str(track.group_track.name) if (is_grouped and getattr(track, 'group_track', None)) else ""
+        except Exception:
+            is_grouped = False
+            group_name = ""
 
         if active_scene_idx is None:
             active_scene_idx = self._get_active_scene_index()
@@ -724,34 +769,60 @@ class LivePilot16(ControlSurface):
         clip_is_playing = False
         clip_is_triggered = False
 
-        if hasattr(track, 'clip_slots') and track.clip_slots:
-            clip_slots = track.clip_slots
-            if 0 <= active_scene_idx < len(clip_slots):
-                slot = clip_slots[active_scene_idx]
-                if getattr(slot, 'has_clip', False) and getattr(slot, 'clip', None):
-                    has_clip = True
-                    clip = slot.clip
-                    clip_name = str(getattr(clip, 'name', '') or '')
-                    clip_color = int_to_hex_color(getattr(clip, 'color', None))
-                    clip_is_playing = bool(getattr(clip, 'is_playing', False))
-                    clip_is_triggered = bool(getattr(clip, 'is_triggered', False))
+        try:
+            if hasattr(track, 'clip_slots') and track.clip_slots:
+                clip_slots = track.clip_slots
+                if 0 <= active_scene_idx < len(clip_slots):
+                    slot = clip_slots[active_scene_idx]
+                    if getattr(slot, 'has_clip', False) and getattr(slot, 'clip', None):
+                        has_clip = True
+                        clip = slot.clip
+                        clip_name = str(getattr(clip, 'name', '') or '')
+                        clip_color = int_to_hex_color(getattr(clip, 'color', None))
+                        clip_is_playing = bool(getattr(clip, 'is_playing', False))
+                        clip_is_triggered = bool(getattr(clip, 'is_triggered', False))
+        except Exception:
+            pass
 
-        playing_slot_idx = int(getattr(track, 'playing_slot_index', -1))
+        try:
+            playing_slot_idx = int(getattr(track, 'playing_slot_index', -1))
+        except Exception:
+            playing_slot_idx = -1
         is_track_playing = (playing_slot_idx >= 0)
         if is_track_playing and has_clip and playing_slot_idx == active_scene_idx:
             clip_is_playing = True
 
+        try:
+            t_name = str(getattr(track, 'name', '') or ('Track %d' % (global_index + 1)))
+        except Exception:
+            t_name = 'Track %d' % (global_index + 1)
+
+        try:
+            t_color = int_to_hex_color(getattr(track, 'color', None))
+        except Exception:
+            t_color = '#444b60'
+
+        try:
+            t_mute = bool(getattr(track, 'mute', False))
+        except Exception:
+            t_mute = False
+
+        try:
+            t_solo = bool(getattr(track, 'solo', False))
+        except Exception:
+            t_solo = False
+
         return {
             'index': global_index,
-            'name': track.name,
-            'color': int_to_hex_color(getattr(track, 'color', None)),
+            'name': t_name,
+            'color': t_color,
             'is_group': is_group,
             'fold_state': fold_state,
             'is_grouped': is_grouped,
             'group_name': group_name,
-            'mute': bool(getattr(track, 'mute', False)),
-            'solo': bool(getattr(track, 'solo', False)),
-            'arm': bool(getattr(track, 'arm', False)),
+            'mute': t_mute,
+            'solo': t_solo,
+            'arm': self._safe_get_arm(track),
             'vol_str': vol_str,
             'pan_str': pan_str,
             'pan_val': pan_val,
@@ -862,82 +933,85 @@ class LivePilot16(ControlSurface):
     def _broadcast_full_sync(self):
         if not self._web_server:
             return
-        song = self.song()
-        tracks = song.tracks
-        total_tracks = len(tracks)
-        total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
+        try:
+            song = self.song()
+            tracks = song.tracks
+            total_tracks = len(tracks)
+            total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
 
-        # 16 pistes de la banque courante (miroir des 16 boutons du Launch Control XL)
-        bank_tracks = []
-        active_sc_idx = self._get_active_scene_index()
-        start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
-        for i in range(NUM_TRACKS_PER_BANK):
-            t_idx = start_idx + i
-            if t_idx < total_tracks:
-                bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx, active_sc_idx))
-            else:
-                bank_tracks.append(None)
+            # 16 pistes de la banque courante (miroir des 16 boutons du Launch Control XL)
+            bank_tracks = []
+            active_sc_idx = self._get_active_scene_index()
+            start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
+            for i in range(NUM_TRACKS_PER_BANK):
+                t_idx = start_idx + i
+                if t_idx < total_tracks:
+                    bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx, active_sc_idx))
+                else:
+                    bank_tracks.append(None)
 
-        # Liste de toutes les scènes
-        scenes_list = []
-        for idx, sc in enumerate(song.scenes):
-            scenes_list.append({
-                'index': idx,
-                'name': sc.name or ("Scene %d" % (idx + 1)),
-                'color': int_to_hex_color(getattr(sc, 'color', None)),
-                'is_playing': bool(getattr(sc, 'is_playing', False))
-            })
-
-        # Données de scène active sur 2 lignes
-        active_scene_data = self._get_active_scene_info()
-
-        # Chaîne des devices avec numérotation [1/3], [2/3]...
-        devs_data = []
-        total_devs = len(self._assigned_devices)
-        if self._current_track:
-            for idx, dev in enumerate(self._assigned_devices):
-                devs_data.append({
+            # Liste de toutes les scènes
+            scenes_list = []
+            for idx, sc in enumerate(song.scenes):
+                scenes_list.append({
                     'index': idx,
-                    'num': idx + 1,
-                    'total': total_devs,
-                    'name': dev.name,
-                    'maker': str(getattr(dev, 'class_display_name', '') or ''),
-                    'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
+                    'name': sc.name or ("Scene %d" % (idx + 1)),
+                    'color': int_to_hex_color(getattr(sc, 'color', None)),
+                    'is_playing': bool(getattr(sc, 'is_playing', False))
                 })
 
-        active_dev_label = "[%d/%d] %s" % (self._current_device_idx + 1, total_devs, self._current_device.name) if self._current_device else "No Assignment"
+            # Données de scène active sur 2 lignes
+            active_scene_data = self._get_active_scene_info()
 
-        cur_time = str(song.current_song_time) if hasattr(song, 'current_song_time') else '1.1.1'
+            # Chaîne des devices avec numérotation [1/3], [2/3]...
+            devs_data = []
+            total_devs = len(self._assigned_devices)
+            if self._current_track:
+                for idx, dev in enumerate(self._assigned_devices):
+                    devs_data.append({
+                        'index': idx,
+                        'num': idx + 1,
+                        'total': total_devs,
+                        'name': dev.name,
+                        'maker': str(getattr(dev, 'class_display_name', '') or ''),
+                        'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
+                    })
 
-        try:
-            sel_track_idx = list(tracks).index(self._current_track) if self._current_track in tracks else 0
-        except ValueError:
-            sel_track_idx = 0
+            active_dev_label = "[%d/%d] %s" % (self._current_device_idx + 1, total_devs, self._current_device.name) if self._current_device else "No Assignment"
 
-        m_vol = song.master_track.mixer_device.volume if (hasattr(song, 'master_track') and song.master_track) else None
-        m_vol_val = round(float(m_vol.value), 3) if m_vol else 0.85
-        m_vol_str = str(m_vol) if m_vol else '0.0 dB'
+            cur_time = str(song.current_song_time) if hasattr(song, 'current_song_time') else '1.1.1'
 
-        payload = {
-            'version': LIVEPILOT_VERSION,
-            'tempo': round(float(song.tempo), 1),
-            'is_playing': bool(song.is_playing),
-            'play_status': self._get_play_status_string(),
-            'position': cur_time,
-            'master_volume': {'value': m_vol_val, 'str': m_vol_str},
-            'active_scene': active_scene_data,
-            'scenes': scenes_list,
-            'bank_index': self._current_bank_index,
-            'total_banks': total_banks,
-            'selected_track_index': sel_track_idx,
-            'tracks': bank_tracks,
-            'devices': devs_data,
-            'active_device_index': self._current_device_idx,
-            'active_device_name': active_dev_label,
-            'parameters': self._build_params_list(),
-            'midi_config': getattr(self, '_midi_config', {})
-        }
-        self._web_server.broadcast({'type': 'full_sync', 'data': payload})
+            try:
+                sel_track_idx = list(tracks).index(self._current_track) if self._current_track in tracks else 0
+            except ValueError:
+                sel_track_idx = 0
+
+            m_vol = song.master_track.mixer_device.volume if (hasattr(song, 'master_track') and song.master_track) else None
+            m_vol_val = round(float(m_vol.value), 3) if m_vol else 0.85
+            m_vol_str = str(m_vol) if m_vol else '0.0 dB'
+
+            payload = {
+                'version': LIVEPILOT_VERSION,
+                'tempo': round(float(song.tempo), 1),
+                'is_playing': bool(song.is_playing),
+                'play_status': self._get_play_status_string(),
+                'position': cur_time,
+                'master_volume': {'value': m_vol_val, 'str': m_vol_str},
+                'active_scene': active_scene_data,
+                'scenes': scenes_list,
+                'bank_index': self._current_bank_index,
+                'total_banks': total_banks,
+                'selected_track_index': sel_track_idx,
+                'tracks': bank_tracks,
+                'devices': devs_data,
+                'active_device_index': self._current_device_idx,
+                'active_device_name': active_dev_label,
+                'parameters': self._build_params_list(),
+                'midi_config': getattr(self, '_midi_config', {})
+            }
+            self._web_server.broadcast({'type': 'full_sync', 'data': payload})
+        except Exception as e:
+            self.log_message("LivePilot : Erreur dans _broadcast_full_sync : %s" % str(e))
 
     def _broadcast_transport(self):
         if not self._web_server:
@@ -964,51 +1038,54 @@ class LivePilot16(ControlSurface):
     def _broadcast_selected_track(self):
         if not self._web_server:
             return
-        tracks = list(self.song().tracks)
-        total_tracks = len(tracks)
-        total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
         try:
-            sel_idx = tracks.index(self._current_track) if self._current_track in tracks else 0
-        except ValueError:
-            sel_idx = 0
+            tracks = list(self.song().tracks)
+            total_tracks = len(tracks)
+            total_banks = max(1, (total_tracks + NUM_TRACKS_PER_BANK - 1) // NUM_TRACKS_PER_BANK)
+            try:
+                sel_idx = tracks.index(self._current_track) if self._current_track in tracks else 0
+            except ValueError:
+                sel_idx = 0
 
-        bank_tracks = []
-        active_sc_idx = self._get_active_scene_index()
-        start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
-        for i in range(NUM_TRACKS_PER_BANK):
-            t_idx = start_idx + i
-            if t_idx < len(tracks):
-                bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx, active_sc_idx))
-            else:
-                bank_tracks.append(None)
+            bank_tracks = []
+            active_sc_idx = self._get_active_scene_index()
+            start_idx = self._current_bank_index * NUM_TRACKS_PER_BANK
+            for i in range(NUM_TRACKS_PER_BANK):
+                t_idx = start_idx + i
+                if t_idx < len(tracks):
+                    bank_tracks.append(self._build_track_dict(tracks[t_idx], t_idx, active_sc_idx))
+                else:
+                    bank_tracks.append(None)
 
-        total_devs = len(self._assigned_devices)
-        devs_data = []
-        for idx, dev in enumerate(self._assigned_devices):
-            devs_data.append({
-                'index': idx,
-                'num': idx + 1,
-                'total': total_devs,
-                'name': dev.name,
-                'maker': str(getattr(dev, 'class_display_name', '') or ''),
-                'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
+            total_devs = len(self._assigned_devices)
+            devs_data = []
+            for idx, dev in enumerate(self._assigned_devices):
+                devs_data.append({
+                    'index': idx,
+                    'num': idx + 1,
+                    'total': total_devs,
+                    'name': dev.name,
+                    'maker': str(getattr(dev, 'class_display_name', '') or ''),
+                    'label': "[%d/%d] %s" % (idx + 1, total_devs, dev.name)
+                })
+
+            active_dev_label = "[%d/%d] %s" % (self._current_device_idx + 1, total_devs, self._current_device.name) if self._current_device else "No Assignment"
+
+            self._web_server.broadcast({
+                'type': 'track_selected',
+                'data': {
+                    'track_index': sel_idx,
+                    'bank_index': self._current_bank_index,
+                    'total_banks': total_banks,
+                    'tracks': bank_tracks,
+                    'devices': devs_data,
+                    'active_device_name': active_dev_label,
+                    'active_device_index': self._current_device_idx,
+                    'parameters': self._build_params_list()
+                }
             })
-
-        active_dev_label = "[%d/%d] %s" % (self._current_device_idx + 1, total_devs, self._current_device.name) if self._current_device else "No Assignment"
-
-        self._web_server.broadcast({
-            'type': 'track_selected',
-            'data': {
-                'track_index': sel_idx,
-                'bank_index': self._current_bank_index,
-                'total_banks': total_banks,
-                'tracks': bank_tracks,
-                'devices': devs_data,
-                'active_device_name': active_dev_label,
-                'active_device_index': self._current_device_idx,
-                'parameters': self._build_params_list()
-            }
-        })
+        except Exception as e:
+            self.log_message("LivePilot : Erreur dans _broadcast_selected_track : %s" % str(e))
 
     def _broadcast_selected_device(self):
         if not self._web_server:
@@ -1087,7 +1164,9 @@ class LivePilot16(ControlSurface):
 
         if action == 'request_full_sync':
             self._broadcast_full_sync()
-            self._schedule_led_refresh()
+            self._update_pad_leds(force=True)
+            self._update_knob_leds(force=True)
+            self._update_nav_leds()
 
         elif action == 'select_track':
             t_idx = msg.get('track_index', 0)
@@ -1101,7 +1180,6 @@ class LivePilot16(ControlSurface):
                     self._update_pad_leds()
                     self._update_knob_leds()
                     self._update_nav_leds()
-                    self._schedule_led_refresh()
 
         elif action == 'select_device':
             d_idx = msg.get('device_index', 0)
@@ -1225,12 +1303,15 @@ class LivePilot16(ControlSurface):
             tracks = list(self.song().tracks)
             if 0 <= t_idx < len(tracks):
                 t = tracks[t_idx]
-                if action == 'toggle_mute':
-                    t.mute = not t.mute
-                elif action == 'toggle_solo':
-                    t.solo = not t.solo
-                elif action == 'toggle_arm':
-                    t.arm = not t.arm
+                try:
+                    if action == 'toggle_mute':
+                        t.mute = not t.mute
+                    elif action == 'toggle_solo':
+                        t.solo = not t.solo
+                    elif action == 'toggle_arm':
+                        self._safe_toggle_arm(t)
+                except Exception:
+                    pass
                 self._broadcast_selected_track()
 
         elif action == 'save_midi_config':
@@ -1329,12 +1410,9 @@ class LivePilot16(ControlSurface):
                 self._current_track.solo = not self._current_track.solo
                 self._broadcast_selected_track()
         elif action_name == 'arm_selected':
-            if self._current_track and hasattr(self._current_track, 'arm'):
-                try:
-                    self._current_track.arm = not self._current_track.arm
-                    self._broadcast_selected_track()
-                except Exception:
-                    pass
+            if self._current_track:
+                self._safe_toggle_arm(self._current_track)
+                self._broadcast_selected_track()
         self._update_nav_leds()
 
     # =========================================================================
@@ -1515,11 +1593,8 @@ class LivePilot16(ControlSurface):
                 self._update_nav_leds()
                 return
             elif cc_num == CC_HW_SOLO_ARM and cc_val > 0:
-                if self._current_track and hasattr(self._current_track, 'arm'):
-                    try:
-                        self._current_track.arm = not self._current_track.arm
-                    except Exception:
-                        pass
+                if self._current_track:
+                    self._safe_toggle_arm(self._current_track)
                 return
             elif cc_num == CC_HW_MUTE_SELECT and cc_val > 0:
                 if self._current_track and hasattr(self._current_track.mixer_device, 'track_activator'):
@@ -1573,17 +1648,26 @@ class LivePilot16(ControlSurface):
                 return
 
             # 4. GESTION DU RELÂCHEMENT DES PADS (cc_val == 0)
+            # Lors du relâchement physique d'un pad, on rafraîchit UNIQUEMENT ce pad spécifique
+            # pour ne jamais solliciter ni faire clignoter les 15 autres pads !
             btn_items = cfg.get('button_items', [])
             btn_types = cfg.get('button_types', [])
-            is_button_cc = (37 <= cc_num <= 52) or \
-                           (cc_num in cfg_buttons) or \
-                           any(it.get('num') == cc_num for it in btn_items) or \
-                           (cc_num in LCXL_MODE16_BUTTON_CCS) or \
-                           (btn_types and any(btn_types[idx] == 'cc' and cfg_buttons[idx] == cc_num for idx in range(min(len(btn_types), len(cfg_buttons)))))
-            if is_button_cc and cc_val == 0:
-                self._update_pad_leds()
-                self._schedule_led_refresh()
-                return
+            if cc_val == 0:
+                released_pad_idx = None
+                if 37 <= cc_num <= 52:
+                    released_pad_idx = cc_num - 37
+                elif cc_num in cfg_buttons:
+                    idx = cfg_buttons.index(cc_num)
+                    if idx < NUM_TRACKS_PER_BANK:
+                        released_pad_idx = idx
+                elif btn_items:
+                    for it in btn_items:
+                        if it.get('type') == 'cc' and it.get('num') == cc_num:
+                            released_pad_idx = it.get('index', 0)
+                            break
+                if released_pad_idx is not None:
+                    self._update_pad_leds(force_pad_idx=released_pad_idx)
+                    return
 
             # 5. 16 PADS DE SÉLECTION DE PISTES EN MODE DAW (CC 37 à 52 sur Canal 1)
             # Prioritaire pour éviter tout conflit avec les anciens numéros Custom 33..48
@@ -1761,26 +1845,27 @@ class LivePilot16(ControlSurface):
     def _full_resync(self):
         # Activation native du DAW Mode Novation Launch Control XL 3 (Page 8, 10 & 16 du Guide Officiel)
         # pour déverrouiller Track ◄/►, Page ▲/▼, les LEDs RGB des 24 knobs et des 16 pads, et l'écran OLED
+        self._pad_led_cache = [None] * NUM_TRACKS_PER_BANK
+        self._knob_led_cache = [None] * NUM_ENCODERS
         self._enforce_daw_control_mode()
 
         self._send_bank_info()
         self._send_bank_colors()
         self._send_scene_info()
         self._on_selected_track_changed()
+        self._update_pad_leds(force=True)
+        self._update_knob_leds(force=True)
+        self._update_nav_leds()
         self._broadcast_full_sync()
-        self._schedule_led_refresh()
         try:
             self.request_rebuild_midi_map()
         except Exception:
             pass
 
     def _schedule_led_refresh(self):
-        """Planifie un rafraîchissement différé des LEDs et positions de knobs pour garantir que l'état
-        physique du contrôleur reste verrouillé (Rouge piste sélectionnée, Vert pistes existantes, Knobs synchronisés)
-        même après le relâchement physique d'un bouton ou une transition de mode."""
+        """Rafraîchit l'état matériel uniquement pour les éléments modifiés (via cache delta)"""
         try:
             self.schedule_message(1, self._refresh_all_hardware_feedback)
-            self.schedule_message(2, self._refresh_all_hardware_feedback)
         except Exception:
             pass
 
@@ -1798,14 +1883,33 @@ class LivePilot16(ControlSurface):
             except Exception:
                 pass
 
-    def _update_pad_leds(self):
+    def _send_midi_daw(self, midi_bytes):
+        """Envoie un message MIDI uniquement sur le port DAW (Port 2 si présent, sinon Port 1).
+        Sur Windows (Guide Programmeur LCXL3 Page 5), le Port 1 (LCXL3 1 MIDI) est l'interface Custom Modes
+        où les CC 33..48 sur Canal 1 (0xB0) correspondent aux 16 boutons Custom (valeur > 0 = Rouge).
+        En n'envoyant les CC de palette DAW (0xB0) que sur le Port 2 (DAW In/Out), on élimine 100% du
+        conflit Rouge/Vert qui faisait clignoter les autres pads !"""
+        instances = list(LivePilot16._instances)
+        targets = instances[1:] if len(instances) > 1 else instances
+        for inst in targets:
+            try:
+                inst._send_midi(midi_bytes)
+            except Exception:
+                pass
+
+    def _update_pad_leds(self, force=False, force_pad_idx=None):
         """Met a jour l'etat lumineux des 16 pads physiques du Launch Control XL 3 (indices 37..52 en mode DAW).
-        - Piste active selectionnee : Rouge permanent (Palette 5 + SysEx RGB 127,0,0).
-        - Pistes existantes non selectionnees : Vert permanent (Palette 60 + SysEx RGB 0,127,0).
-        - Pistes inexistantes dans le projet Ableton : Eteint / Off (Palette 0 + SysEx RGB 0,0,0).
-        Aucun envoi sur les CC 33..36 pour ne jamais ecraser les Knobs 21..24 ni faire clignoter les pads !
+        - Piste active selectionnee : Rouge permanent (SysEx RGB 127,0,0 + Palette 5 sur port DAW).
+        - Pistes existantes non selectionnees : Vert permanent (SysEx RGB 0,127,0 + Palette 60 sur port DAW).
+        - Pistes inexistantes dans le projet Ableton : Eteint / Off (SysEx RGB 0,0,0 + Palette 0 sur port DAW).
+        Utilise un cache d'etat par pad (_pad_led_cache) pour n'envoyer de messages MIDI QU'AUX pads
+        dont l'etat change reellement (ex: ancienne piste Rouge -> Vert, nouvelle piste Vert -> Rouge).
+        Les autres pads ne recoivent aucun message MIDI lors d'une bascule et restent parfaitement stables !
         """
         try:
+            if not hasattr(self, '_pad_led_cache') or len(self._pad_led_cache) != NUM_TRACKS_PER_BANK:
+                self._pad_led_cache = [None] * NUM_TRACKS_PER_BANK
+
             selected_track = self.song().view.selected_track
             tracks = list(self.song().tracks)
             total_tracks = len(tracks)
@@ -1819,30 +1923,43 @@ class LivePilot16(ControlSurface):
             for i in range(NUM_TRACKS_PER_BANK):
                 global_trk_idx = start_idx + i
                 track_exists = (global_trk_idx < total_tracks)
+                if track_exists:
+                    desired_state = 'red' if (i == active_pad_idx) else 'green'
+                else:
+                    desired_state = 'off'
+
+                if not force and force_pad_idx != i and self._pad_led_cache[i] == desired_state:
+                    continue
+
+                self._pad_led_cache[i] = desired_state
                 ctrl_idx = LCXL3_BUTTON_INDICES[i] if (i < len(LCXL3_BUTTON_INDICES)) else (37 + i)
 
-                if track_exists:
-                    if i == active_pad_idx:
-                        # Piste sélectionnée -> ROUGE PERMANENT (SysEx RGB 127,0,0 + Palette 5)
-                        self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 127, 0, 0, 0xF7))
-                        self._send_midi_all((0xB0, ctrl_idx, 5))
-                    else:
-                        # Piste existante non sélectionnée -> VERT PERMANENT (SysEx RGB 0,127,0 + Palette 60)
-                        self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 127, 0, 0xF7))
-                        self._send_midi_all((0xB0, ctrl_idx, 60))
+                if desired_state == 'red':
+                    # Piste sélectionnée -> ROUGE PERMANENT (SysEx RGB 127,0,0 + Palette 5 sur port DAW)
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 127, 0, 0, 0xF7))
+                    self._send_midi_daw((0xB0, ctrl_idx, 5))
+                elif desired_state == 'green':
+                    # Piste existante non sélectionnée -> VERT PERMANENT (SysEx RGB 0,127,0 + Palette 60 sur port DAW)
+                    self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 127, 0, 0xF7))
+                    self._send_midi_daw((0xB0, ctrl_idx, 60))
                 else:
-                    # Piste inexistante -> ÉTEINT (SysEx RGB 0,0,0 + Palette 0)
+                    # Piste inexistante -> ÉTEINT (SysEx RGB 0,0,0 + Palette 0 sur port DAW)
                     self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
-                    self._send_midi_all((0xB0, ctrl_idx, 0))
+                    self._send_midi_daw((0xB0, ctrl_idx, 0))
         except Exception as e:
             self.log_message("LivePilot : Erreur dans _update_pad_leds : %s" % str(e))
 
-    def _update_knob_leds(self):
+    def _update_knob_leds(self, force=False):
         """Met a jour les LEDs sous les 24 potentiometres du Launch Control XL 3 (indices 13..36 en mode DAW).
         - Si le plugin actif possede un parametre pour ce knob : allume la LED de sa rangee.
-        - Si aucun plugin ou parametre inexistant : eteint la LED (Palette 0 + SysEx RGB 0,0,0).
+        - Si aucun plugin ou parametre inexistant : eteint la LED (SysEx RGB 0,0,0 + Palette 0 sur port DAW).
+        Utilise un cache (_knob_led_cache) et n'envoie jamais de CC 0xB0 sur le Port 1 Custom Mode
+        (ou les CC 33..36 correspondent aux Pads 1..4).
         """
         try:
+            if not hasattr(self, '_knob_led_cache') or len(self._knob_led_cache) != NUM_ENCODERS:
+                self._knob_led_cache = [None] * NUM_ENCODERS
+
             dev = self._current_device
             num_params = len(dev.parameters[1:]) if dev else 0
 
@@ -1857,16 +1974,21 @@ class LivePilot16(ControlSurface):
             ]
 
             for k in range(NUM_ENCODERS):
+                is_active = bool(dev and k < num_params)
+                if not force and self._knob_led_cache[k] == is_active:
+                    continue
+                self._knob_led_cache[k] = is_active
+
                 ctrl_idx = 13 + k
                 row = k // 8
                 r, g, b, pal_cc = row_colors[min(row, 2)]
 
-                if dev and k < num_params:
+                if is_active:
                     self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, r, g, b, 0xF7))
-                    self._send_midi_all((0xB0, ctrl_idx, pal_cc))
+                    self._send_midi_daw((0xB0, ctrl_idx, pal_cc))
                 else:
                     self._send_midi_all((0xF0, 0x00, 0x20, 0x29, 0x02, 0x15, 0x01, 0x53, ctrl_idx, 0, 0, 0, 0xF7))
-                    self._send_midi_all((0xB0, ctrl_idx, 0))
+                    self._send_midi_daw((0xB0, ctrl_idx, 0))
         except Exception as e:
             self.log_message("LivePilot : Erreur dans _update_knob_leds : %s" % str(e))
 
@@ -1908,22 +2030,22 @@ class LivePilot16(ControlSurface):
             # Touches Track ◄ (103) et Track ► (102) : Allumées (Blanc/Vert vif 60) si le plugin -1 / +1 existe, éteintes (0) sinon
             tl_col = 60 if self._is_nav_action_available(tl_act) else 0
             tr_col = 60 if self._is_nav_action_available(tr_act) else 0
-            self._send_midi_all((0xB0, CC_NAV_TRACK_LEFT, tl_col))
-            self._send_midi_all((0xB0, CC_NAV_TRACK_RIGHT, tr_col))
+            self._send_midi_daw((0xB0, CC_NAV_TRACK_LEFT, tl_col))
+            self._send_midi_daw((0xB0, CC_NAV_TRACK_RIGHT, tr_col))
 
             # Touches Page ▲ (106) et Page ▼ (107) : Allumées (Cyan vif 37) si la banque existe, éteintes (0) sinon
             pu_col = 37 if self._is_nav_action_available(pu_act) else 0
             pd_col = 37 if self._is_nav_action_available(pd_act) else 0
-            self._send_midi_all((0xB0, CC_NAV_PAGE_UP, pu_col))
-            self._send_midi_all((0xB0, CC_NAV_PAGE_DOWN, pd_col))
+            self._send_midi_daw((0xB0, CC_NAV_PAGE_UP, pu_col))
+            self._send_midi_daw((0xB0, CC_NAV_PAGE_DOWN, pd_col))
 
             # Touche Play (116) : Vert vif (60) si en lecture, éteint (0) à l'arrêt
             is_playing = self.song().is_playing
-            self._send_midi_all((0xB0, CC_HW_PLAY, 60 if is_playing else 0))
+            self._send_midi_daw((0xB0, CC_HW_PLAY, 60 if is_playing else 0))
 
             # Touche Record (118) : Rouge vif (5) si enregistrement actif, éteint (0) sinon
             is_recording = self.song().record_mode
-            self._send_midi_all((0xB0, CC_HW_RECORD, 5 if is_recording else 0))
+            self._send_midi_daw((0xB0, CC_HW_RECORD, 5 if is_recording else 0))
         except Exception as e:
             self.log_message("LivePilot : Erreur dans _update_nav_leds : %s" % str(e))
 
